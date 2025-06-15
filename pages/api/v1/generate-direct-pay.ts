@@ -16,7 +16,7 @@ const RATE_LIMIT_MAX_REQUESTS = 100; // requests per minute
 // Direct pricing configuration
 const DIRECT_PRICING = {
   "fal-ai/imagen4/preview": 0.1, // $0.10 per image
-  "fal-ai/kling-video/v2/master/text-to-video": 1.4, // $1.40 per 5s video ($0.28/second)
+  "fal-ai/kling-video/v2/master/text-to-video": 1.5, // $1.50 per 5s video ($0.30/second)
 } as const;
 
 function checkRateLimit(userId: string): {

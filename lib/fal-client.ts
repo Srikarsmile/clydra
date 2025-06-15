@@ -27,7 +27,7 @@ export const AVAILABLE_MODELS = {
     type: "video",
     description:
       "Advanced text-to-video generation with enhanced motion quality, complex scene understanding, and cinematic output",
-    pricing: 0.28, // per second ($1.40 for 5s, $2.80 for 10s)
+    pricing: 0.30, // per second ($1.50 for 5s, $3.00 for 10s)
     pricingModel: "per-second",
     category: "Video Generation",
     maxPromptLength: 2000,

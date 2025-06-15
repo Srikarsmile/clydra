@@ -79,7 +79,7 @@ function Dashboard() {
       description: "Professional videos from prompts",
       icon: "🎬",
       type: "video",
-      cost: (videoDuration === 5 ? 1.40 : 2.80), // $1.40 for 5s, $2.80 for 10s
+      cost: (videoDuration === 5 ? 1.50 : 3.00), // $1.50 for 5s, $3.00 for 10s
       features: ["4K quality", "Custom duration", "Cinematic effects"],
     },
   ];

@@ -94,7 +94,7 @@ export function calculateDollarsNeeded(modelId: string, settings?: { duration?: 
   
   // Special handling for video generation with duration
   if (modelId === "fal-ai/kling-video/v2/master/text-to-video" && settings?.duration) {
-    return settings.duration === 5 ? 1.40 : 2.80; // 5s = $1.40, 10s = $2.80
+    return settings.duration === 5 ? 1.50 : 3.00; // 5s = $1.50, 10s = $3.00
   }
   
   return baseCost;
