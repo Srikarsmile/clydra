@@ -192,7 +192,7 @@ export default function Layout({ children }: LayoutProps) {
             </div>
 
             <div className="text-callout text-text-muted mt-4 md:mt-0">
-              © 2024 Rivo Labs. All rights reserved.
+              © 2025 Rivo Labs. All rights reserved.
             </div>
           </div>
         </div>
