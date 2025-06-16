@@ -4,6 +4,7 @@ import { GetServerSideProps } from "next";
 import { buildClerkProps } from "@clerk/nextjs/server";
 // import Image from "next/image"; // Currently using regular img tags
 import Layout from "../components/Layout";
+import UsageBars from "../components/UsageBars";
 import Link from "next/link";
 
 interface GenerationResult {
@@ -263,6 +264,21 @@ function Dashboard() {
       // Save to database
       await saveGenerationToDatabase(result, prompt, activeModel, currentModelCost, latency);
       
+      // Deduct credits
+      try {
+        await fetch("/api/credits", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            deltaImages: activeModel === "imagen4" ? 1 : 0,
+            deltaSeconds: activeModel === "kling" ? videoDuration : 0,
+            deltaUsd: -currentModelCost, // Negative to deduct
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to update credits:", error);
+      }
+      
       // Refresh balance
       await fetchBalance();
       
@@ -361,15 +377,20 @@ function Dashboard() {
                       }`}
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] to-secondary/[0.02] rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      <div className="relative z-10">
+                      {/* Provider Badge */}
+                      <span className="absolute top-3 left-3 text-xs bg-neutral-200 px-2 py-0.5 rounded-full text-text-muted">
+                        Engine: {model.id === 'imagen4' ? 'Imagen 4' : 'Fal Kling Video'}
+                      </span>
+                      {/* Cost Badge */}
+                      <span className="absolute top-3 right-3 text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full font-medium">
+                        ${model.cost.toFixed(2)} / {model.type === "video" ? "video" : "img"}
+                      </span>
+                      <div className="relative z-10 mt-6">
                         <div className="flex items-center space-x-3 mb-3">
                           <span className="text-2xl">{model.icon}</span>
                           <h3 className="text-callout font-semibold text-text-main">{model.name}</h3>
                         </div>
                         <p className="text-footnote text-text-muted mb-4 font-normal">{model.description}</p>
-                        <div className="text-caption-1 text-primary font-medium mb-3">
-                          ${model.cost.toFixed(2)}/{model.type === "video" ? "video" : "image"}
-                            </div>
                         <div className="space-y-1">
                           {model.features.slice(0, 2).map((feature, index) => (
                             <div key={index} className="flex items-center space-x-2">
@@ -414,29 +435,14 @@ function Dashboard() {
                               tag: "Commercial"
                             },
                             {
-                              title: "Portrait Art",
-                              prompt: "Artistic portrait of a person with dramatic lighting, oil painting style, rich colors, detailed facial features, professional composition",
-                              tag: "Portrait"
-                            },
-                            {
-                              title: "Landscape",
-                              prompt: "Breathtaking mountain vista at golden hour, misty valleys, dramatic clouds, cinematic composition, ultra-detailed nature photography",
-                              tag: "Nature"
-                            },
-                            {
                               title: "Social Media",
                               prompt: "Instagram-ready flat lay of modern workspace with laptop, coffee, plants, minimal aesthetic, bright natural lighting, square format",
                               tag: "Social"
                             },
                             {
-                              title: "Concept Art",
-                              prompt: "Futuristic cityscape with neon lights, cyberpunk atmosphere, flying vehicles, detailed architecture, sci-fi digital art style",
-                              tag: "Fantasy"
-                            },
-                            {
-                              title: "Food Photography",
-                              prompt: "Gourmet dish beautifully plated, professional food styling, warm lighting, shallow depth of field, restaurant quality presentation",
-                              tag: "Food"
+                              title: "Portrait Art",
+                              prompt: "Artistic portrait of a person with dramatic lighting, oil painting style, rich colors, detailed facial features, professional composition",
+                              tag: "Portrait"
                             }
                           ].map((example, index) => (
                             <button
@@ -497,21 +503,6 @@ function Dashboard() {
                               title: "Food Content",
                               prompt: "Delicious food preparation in slow motion, steam rising, close-up details, warm kitchen lighting, appetizing presentation",
                               tag: "Food & Drink"
-                            },
-                            {
-                              title: "Tech Demo",
-                              prompt: "Sleek technology device floating in space, holographic elements, futuristic interface, clean backgrounds, premium feel",
-                              tag: "Technology"
-                            },
-                            {
-                              title: "Nature Scene",
-                              prompt: "Serene waterfall cascading over moss-covered rocks, golden hour lighting, peaceful forest atmosphere, gentle mist",
-                              tag: "Nature"
-                            },
-                            {
-                              title: "Abstract Art",
-                              prompt: "Flowing liquid metal with rainbow reflections, geometric patterns emerging, smooth transformations, artistic movement",
-                              tag: "Creative"
                             }
                           ].map((example, index) => (
                             <button
@@ -573,12 +564,25 @@ function Dashboard() {
                             </div>
                             <div className="text-caption-1 text-text-muted mt-1">
                               ${duration === 5 ? '1.40' : '2.80'}
-                        </div>
+                            </div>
+                            <p className="mt-1 text-text-muted text-xs">
+                              {Math.ceil((duration === 5 ? 1.40 : 2.80) / 0.10)} credits
+                            </p>
                       </button>
                         ))}
                     </div>
                   </div>
                 )}
+
+                  {/* Credit Preview */}
+                  <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg border border-border/30">
+                    <span className="text-sm text-text-muted">
+                      You will spend <span className="font-medium text-text-main">{Math.ceil(currentModelCost / 0.10)} credits</span>
+                    </span>
+                    <span className="text-xs text-accent">
+                      ${currentModelCost.toFixed(2)}
+                    </span>
+                  </div>
 
                   <button
                     onClick={handleGenerate}
@@ -726,30 +730,7 @@ function Dashboard() {
               </div>
 
               {/* Usage Stats */}
-              <div className="bg-surface/80 backdrop-blur-xl rounded-3xl p-6 border border-border/50 shadow-lg">
-                <h3 className="text-title-3 font-semibold text-text-main mb-4 tracking-tight">Usage This Month</h3>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-callout text-text-main font-normal">Images Generated</span>
-                      <span className="text-callout text-text-main font-semibold">0/500</span>
-                    </div>
-                    <div className="h-2 bg-border rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-secondary to-secondary/80 rounded-full" style={{width: '0%'}}></div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-callout text-text-main font-normal">Videos Created</span>
-                      <span className="text-callout text-text-main font-semibold">0/50</span>
-                            </div>
-                    <div className="h-2 bg-border rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-accent to-accent/80 rounded-full" style={{width: '0%'}}></div>
-                      </div>
-                  </div>
-                </div>
-              </div>
+              <UsageBars />
             </div>
           </div>
         </div>

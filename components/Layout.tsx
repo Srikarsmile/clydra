@@ -2,6 +2,8 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
+import WelcomePopup from "./WelcomePopup";
+import PageTransition from "./PageTransition";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -63,7 +65,8 @@ export default function Layout({ children }: LayoutProps) {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-callout font-medium transition-all duration-200 ${
+                    prefetch={true}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-callout font-medium transition-all duration-150 ${
                       router.pathname === item.href
                         ? "bg-primary text-white shadow-primary-glow"
                         : "text-text-muted hover:text-text-main hover:bg-surface/50"
@@ -141,7 +144,8 @@ export default function Layout({ children }: LayoutProps) {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-callout font-medium transition-all duration-200 ${
+                  prefetch={true}
+                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-callout font-medium transition-all duration-150 ${
                     router.pathname === item.href
                       ? "bg-primary text-white shadow-primary-glow"
                       : "text-text-muted hover:text-text-main hover:bg-surface/50"
@@ -156,12 +160,17 @@ export default function Layout({ children }: LayoutProps) {
         )}
       </nav>
 
+      {/* Welcome Popup */}
+      {isSignedIn && <WelcomePopup />}
+
       {/* Main Content */}
       <main className="relative">
         {/* Background Pattern */}
         <div className="fixed inset-0 bg-wave-pattern opacity-30 pointer-events-none" />
         <div className="relative z-10">
-          {children}
+          <PageTransition>
+            {children}
+          </PageTransition>
         </div>
       </main>
 
