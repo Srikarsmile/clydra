@@ -4,16 +4,23 @@ import path from "path";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 const FILE = path.resolve("./data/credits.json");
-type Row = { userId: string; images: number; seconds: number; balanceUsd: number };
+type Row = {
+  userId: string;
+  images: number;
+  seconds: number;
+  balanceUsd: number;
+};
 
-const read = (): Row[] => (fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, "utf8")) : []);
-const write = (rows: Row[]) => fs.writeFileSync(FILE, JSON.stringify(rows, null, 2));
+const read = (): Row[] =>
+  fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, "utf8")) : [];
+const write = (rows: Row[]) =>
+  fs.writeFileSync(FILE, JSON.stringify(rows, null, 2));
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const { userId } = getAuth(req);
-  if (!userId) return res.status(401).end();
+  if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
-  let db = read();
+  const db = read();
   let row = db.find((r) => r.userId === userId);
 
   // init row if first-time sign-in
@@ -40,4 +47,4 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     secondCap: Math.floor(row.balanceUsd / 0.1) * 10, // $0.10 buys 10 s (fast)
     balanceUsd: row.balanceUsd.toFixed(2),
   });
-} 
+}

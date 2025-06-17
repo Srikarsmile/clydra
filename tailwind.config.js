@@ -4,7 +4,7 @@ module.exports = {
     "./pages/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
   ],
-  darkMode: 'class',
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
@@ -16,12 +16,12 @@ module.exports = {
           300: "#4dafc8",
           400: "#2d9fb8",
           500: "#003E5F", // Deep Ocean Blue - trust & depth
-          600: "#003550", 
+          600: "#003550",
           700: "#002d41",
           800: "#002432",
           900: "#001b23",
           light: "#0090B7", // Brighter for dark mode
-          dark: "#003E5F",  // Deep Ocean for light mode
+          dark: "#003E5F", // Deep Ocean for light mode
           DEFAULT: "#003E5F",
         },
         secondary: {
@@ -57,7 +57,7 @@ module.exports = {
         // Ocean Depth Palette
         ocean: {
           50: "#f0f9ff",
-          100: "#e0f2fe", 
+          100: "#e0f2fe",
           200: "#bae6fd",
           300: "#7dd3fc",
           400: "#38bdf8",
@@ -68,11 +68,11 @@ module.exports = {
           900: "#0c4a6e",
           950: "#003E5F", // Deep Ocean
         },
-        // Emerald Wave Palette  
+        // Emerald Wave Palette
         wave: {
           50: "#ecfdf5",
           100: "#d1fae5",
-          200: "#a7f3d0", 
+          200: "#a7f3d0",
           300: "#6ee7b7",
           400: "#34d399",
           500: "#5BE7A9", // Fresh Emerald
@@ -85,9 +85,9 @@ module.exports = {
         bg: {
           base: {
             light: "#1B1B1E", // Charcoal for dark mode
-            dark: "#F8FAFC",  // Soft white for light mode
+            dark: "#F8FAFC", // Soft white for light mode
             DEFAULT: "#F8FAFC",
-          }
+          },
         },
         surface: {
           light: "#26272C",
@@ -105,7 +105,7 @@ module.exports = {
             light: "#A6ADBF",
             dark: "#64748B",
             DEFAULT: "#64748B",
-          }
+          },
         },
         // Borders
         border: {
@@ -113,12 +113,12 @@ module.exports = {
           dark: "#E2E8F0",
           DEFAULT: "#E2E8F0",
         },
-        
+
         // Legacy brand colors (backward compatibility)
         brand: {
           primary: {
             50: "#e6f4f8",
-            100: "#b3dde8", 
+            100: "#b3dde8",
             200: "#80c6d8",
             300: "#4dafc8",
             400: "#2d9fb8",
@@ -184,48 +184,54 @@ module.exports = {
       fontFamily: {
         // Apple System Font Stack
         sans: [
-          "-apple-system", 
-          "BlinkMacSystemFont", 
+          "-apple-system",
+          "BlinkMacSystemFont",
           "Inter",
           "SF Pro",
-          "system-ui", 
-          "Roboto", 
-          "Helvetica Neue", 
-          "Arial", 
-          "sans-serif"
+          "system-ui",
+          "Roboto",
+          "Helvetica Neue",
+          "Arial",
+          "sans-serif",
         ],
         mono: [
           "SF Mono",
-          "Monaco", 
+          "Monaco",
           "JetBrains Mono",
-          "Inconsolata", 
-          "Roboto Mono", 
-          "Consolas", 
-          "monospace"
+          "Inconsolata",
+          "Roboto Mono",
+          "Consolas",
+          "monospace",
         ],
         display: [
-          "-apple-system", 
-          "BlinkMacSystemFont", 
+          "-apple-system",
+          "BlinkMacSystemFont",
           "Inter",
           "SF Pro Display",
-          "system-ui", 
-          "sans-serif"
+          "system-ui",
+          "sans-serif",
         ],
       },
       fontSize: {
         // Apple HIG Typography Scale
-        'caption-2': ['11px', { lineHeight: '1.26', letterSpacing: '0.06em' }],
-        'caption-1': ['12px', { lineHeight: '1.33', letterSpacing: '0' }],
-        'footnote': ['13px', { lineHeight: '1.38', letterSpacing: '-0.08px' }],
-        'subhead': ['15px', { lineHeight: '1.27', letterSpacing: '-0.24px' }],
-        'callout': ['16px', { lineHeight: '1.34', letterSpacing: '-0.32px' }],
-        'body': ['17px', { lineHeight: '1.34', letterSpacing: '-0.41px' }],
-        'headline': ['17px', { lineHeight: '1.34', letterSpacing: '-0.41px', fontWeight: '600' }],
-        'title-3': ['20px', { lineHeight: '1.2', letterSpacing: '0.38px' }],
-        'title-2': ['22px', { lineHeight: '1.18', letterSpacing: '0.35px' }],
-        'title-1': ['28px', { lineHeight: '1.11', letterSpacing: '0.36px' }],
-        'large-title': ['34px', { lineHeight: '1.06', letterSpacing: '0.37px' }],
-        
+        "caption-2": ["11px", { lineHeight: "1.26", letterSpacing: "0.06em" }],
+        "caption-1": ["12px", { lineHeight: "1.33", letterSpacing: "0" }],
+        footnote: ["13px", { lineHeight: "1.38", letterSpacing: "-0.08px" }],
+        subhead: ["15px", { lineHeight: "1.27", letterSpacing: "-0.24px" }],
+        callout: ["16px", { lineHeight: "1.34", letterSpacing: "-0.32px" }],
+        body: ["17px", { lineHeight: "1.34", letterSpacing: "-0.41px" }],
+        headline: [
+          "17px",
+          { lineHeight: "1.34", letterSpacing: "-0.41px", fontWeight: "600" },
+        ],
+        "title-3": ["20px", { lineHeight: "1.2", letterSpacing: "0.38px" }],
+        "title-2": ["22px", { lineHeight: "1.18", letterSpacing: "0.35px" }],
+        "title-1": ["28px", { lineHeight: "1.11", letterSpacing: "0.36px" }],
+        "large-title": [
+          "34px",
+          { lineHeight: "1.06", letterSpacing: "0.37px" },
+        ],
+
         // Legacy sizes for compatibility
         xs: ["0.75rem", { lineHeight: "1rem", letterSpacing: "0.025em" }],
         sm: ["0.875rem", { lineHeight: "1.25rem", letterSpacing: "0.025em" }],
@@ -233,7 +239,10 @@ module.exports = {
         lg: ["1.125rem", { lineHeight: "1.75rem", letterSpacing: "-0.025em" }],
         xl: ["1.25rem", { lineHeight: "1.75rem", letterSpacing: "-0.025em" }],
         "2xl": ["1.5rem", { lineHeight: "2rem", letterSpacing: "-0.025em" }],
-        "3xl": ["1.875rem", { lineHeight: "2.25rem", letterSpacing: "-0.05em" }],
+        "3xl": [
+          "1.875rem",
+          { lineHeight: "2.25rem", letterSpacing: "-0.05em" },
+        ],
         "4xl": ["2.25rem", { lineHeight: "2.5rem", letterSpacing: "-0.05em" }],
         "5xl": ["3rem", { lineHeight: "1.1", letterSpacing: "-0.05em" }],
         "6xl": ["3.75rem", { lineHeight: "1.1", letterSpacing: "-0.05em" }],
@@ -243,14 +252,14 @@ module.exports = {
       },
       fontWeight: {
         // Apple font weights
-        'thin': '100',
-        'light': '200',
-        'normal': '400',
-        'medium': '500',
-        'semibold': '600',
-        'bold': '700',
-        'heavy': '800',
-        'black': '900',
+        thin: "100",
+        light: "200",
+        normal: "400",
+        medium: "500",
+        semibold: "600",
+        bold: "700",
+        heavy: "800",
+        black: "900",
       },
       spacing: {
         18: "4.5rem",
@@ -259,77 +268,85 @@ module.exports = {
         144: "36rem",
       },
       borderRadius: {
-        'none': '0',
-        'sm': '0.375rem',
-        'md': '0.625rem', 
-        'lg': '0.75rem',
-        'xl': '1rem',
-        '2xl': '1.25rem',
-        '3xl': '1.5rem',
-        'full': '9999px',
+        none: "0",
+        sm: "0.375rem",
+        md: "0.625rem",
+        lg: "0.75rem",
+        xl: "1rem",
+        "2xl": "1.25rem",
+        "3xl": "1.5rem",
+        full: "9999px",
       },
       boxShadow: {
-        'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-        'md': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
-        'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)',
-        'xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-        '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        sm: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        md: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
+        lg: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)",
+        xl: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+        "2xl": "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
         // Neo-Wave shadows
-        'ocean-glow': '0 0 0 1px rgba(0, 62, 95, 0.15), 0 0 25px rgba(0, 62, 95, 0.1)',
-        'wave-glow': '0 0 0 1px rgba(91, 231, 169, 0.15), 0 0 25px rgba(91, 231, 169, 0.1)',
-        'accent-glow': '0 0 0 1px rgba(255, 107, 53, 0.15), 0 0 25px rgba(255, 107, 53, 0.1)',
-        'primary-glow': '0 0 0 1px rgba(0, 62, 95, 0.15), 0 0 25px rgba(0, 62, 95, 0.1)',
-        'primary-glow-lg': '0 0 0 1px rgba(0, 62, 95, 0.2), 0 0 40px rgba(0, 62, 95, 0.15)',
+        "ocean-glow":
+          "0 0 0 1px rgba(0, 62, 95, 0.15), 0 0 25px rgba(0, 62, 95, 0.1)",
+        "wave-glow":
+          "0 0 0 1px rgba(91, 231, 169, 0.15), 0 0 25px rgba(91, 231, 169, 0.1)",
+        "accent-glow":
+          "0 0 0 1px rgba(255, 107, 53, 0.15), 0 0 25px rgba(255, 107, 53, 0.1)",
+        "primary-glow":
+          "0 0 0 1px rgba(0, 62, 95, 0.15), 0 0 25px rgba(0, 62, 95, 0.1)",
+        "primary-glow-lg":
+          "0 0 0 1px rgba(0, 62, 95, 0.2), 0 0 40px rgba(0, 62, 95, 0.15)",
       },
       animation: {
-        'fade-in-up': 'fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-        'scale-in-spring': 'scale-in-spring 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
-        'slide-in-right': 'slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-        'ocean-flow': 'ocean-flow 8s ease-in-out infinite',
-        'wave-ripple': 'wave-ripple 2s ease-out infinite',
-        'pulse-glow': 'pulse-glow 2s ease-in-out infinite alternate',
-        'float': 'float 6s ease-in-out infinite',
+        "fade-in-up": "fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "scale-in-spring":
+          "scale-in-spring 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards",
+        "slide-in-right":
+          "slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "ocean-flow": "ocean-flow 8s ease-in-out infinite",
+        "wave-ripple": "wave-ripple 2s ease-out infinite",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite alternate",
+        float: "float 6s ease-in-out infinite",
       },
       keyframes: {
-        'fade-in-up': {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' }
+        "fade-in-up": {
+          "0%": { opacity: "0", transform: "translateY(20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
-        'scale-in-spring': {
-          '0%': { opacity: '0', transform: 'scale(0.8)' },
-          '50%': { transform: 'scale(1.05)' },
-          '100%': { opacity: '1', transform: 'scale(1)' }
+        "scale-in-spring": {
+          "0%": { opacity: "0", transform: "scale(0.8)" },
+          "50%": { transform: "scale(1.05)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
         },
-        'slide-in-right': {
-          '0%': { opacity: '0', transform: 'translateX(20px)' },
-          '100%': { opacity: '1', transform: 'translateX(0)' }
+        "slide-in-right": {
+          "0%": { opacity: "0", transform: "translateX(20px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
         },
-        'ocean-flow': {
-          '0%, 100%': { backgroundPosition: '0% 50%' },
-          '50%': { backgroundPosition: '100% 50%' }
+        "ocean-flow": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
         },
-        'wave-ripple': {
-          '0%': { transform: 'scale(1)', opacity: '1' },
-          '100%': { transform: 'scale(2)', opacity: '0' }
+        "wave-ripple": {
+          "0%": { transform: "scale(1)", opacity: "1" },
+          "100%": { transform: "scale(2)", opacity: "0" },
         },
-        'pulse-glow': {
-          '0%': { boxShadow: '0 0 0 0 rgba(0, 62, 95, 0.1)' },
-          '100%': { boxShadow: '0 0 0 20px rgba(0, 62, 95, 0)' }
+        "pulse-glow": {
+          "0%": { boxShadow: "0 0 0 0 rgba(0, 62, 95, 0.1)" },
+          "100%": { boxShadow: "0 0 0 20px rgba(0, 62, 95, 0)" },
         },
-        'float': {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' }
-        }
+        float: {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
       },
       backgroundImage: {
-        'gradient-neo-wave': 'linear-gradient(135deg, #003E5F 0%, #0090B7 50%, #5BE7A9 100%)',
-        'gradient-ocean': 'linear-gradient(135deg, #003E5F 0%, #0ea5e9 100%)',
-        'gradient-wave': 'linear-gradient(135deg, #5BE7A9 0%, #3AD6A0 100%)',
-        'gradient-sunset': 'linear-gradient(135deg, #FF6B35 0%, #FF874F 100%)',
-        'wave-pattern': `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23003E5F' fill-opacity='0.05'%3E%3Cpath d='M30 30c0-6.627-5.373-12-12-12s-12 5.373-12 12 5.373 12 12 12 12-5.373 12-12zm12 0c0-6.627-5.373-12-12-12s-12 5.373-12 12 5.373 12 12 12 12-5.373 12-12z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        "gradient-neo-wave":
+          "linear-gradient(135deg, #003E5F 0%, #0090B7 50%, #5BE7A9 100%)",
+        "gradient-ocean": "linear-gradient(135deg, #003E5F 0%, #0ea5e9 100%)",
+        "gradient-wave": "linear-gradient(135deg, #5BE7A9 0%, #3AD6A0 100%)",
+        "gradient-sunset": "linear-gradient(135deg, #FF6B35 0%, #FF874F 100%)",
+        "wave-pattern": `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23003E5F' fill-opacity='0.05'%3E%3Cpath d='M30 30c0-6.627-5.373-12-12-12s-12 5.373-12 12 5.373 12 12 12 12-5.373 12-12zm12 0c0-6.627-5.373-12-12-12s-12 5.373-12 12 5.373 12 12 12 12-5.373 12-12z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
       },
       backdropBlur: {
-        'xs': '2px',
+        xs: "2px",
       },
       scale: {
         102: "1.02",
@@ -345,12 +362,12 @@ module.exports = {
         100: "100",
       },
       transitionTimingFunction: {
-        'apple': 'cubic-bezier(0.16, 1, 0.3, 1)',
-        'spring': 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        apple: "cubic-bezier(0.16, 1, 0.3, 1)",
+        spring: "cubic-bezier(0.175, 0.885, 0.32, 1.275)",
       },
       transitionDuration: {
-        '400': '400ms',
-      }
+        400: "400ms",
+      },
     },
   },
   plugins: [],

@@ -35,13 +35,13 @@ export const CREDIT_CONFIG = {
   BASE_COST_PER_IMAGE: 0.04,
 
   // Our markup (2.5x base cost)
-  COST_PER_IMAGE: 0.10, // $0.10 per image
+  COST_PER_IMAGE: 0.1, // $0.10 per image
 
   // Minimum balance required for generation
   MIN_BALANCE_FOR_GENERATION: 0.01, // $0.01
 
   // Free dollars for new users
-  FREE_DOLLARS_ON_SIGNUP: 3.00, // $3.00
+  FREE_DOLLARS_ON_SIGNUP: 3.0, // $3.00
 } as const;
 
 // Dollar packages with volume discounts
@@ -49,54 +49,61 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
   {
     id: "starter",
     name: "Starter Pack",
-    amount: 5.00,
-    price: 5.00,
+    amount: 5.0,
+    price: 5.0,
     description: "Perfect for trying out our AI services",
   },
   {
     id: "basic",
     name: "Basic Pack",
-    amount: 20.00,
-    price: 18.00, // 10% discount
-    bonus_amount: 2.00,
+    amount: 20.0,
+    price: 18.0, // 10% discount
+    bonus_amount: 2.0,
     description: "Great for regular users",
   },
   {
     id: "pro",
     name: "Pro Pack",
-    amount: 50.00,
-    price: 40.00, // 20% discount
-    bonus_amount: 10.00,
+    amount: 50.0,
+    price: 40.0, // 20% discount
+    bonus_amount: 10.0,
     popular: true,
     description: "Best value for power users",
   },
   {
     id: "enterprise",
     name: "Enterprise Pack",
-    amount: 200.00,
-    price: 150.00, // 25% discount
-    bonus_amount: 50.00,
+    amount: 200.0,
+    price: 150.0, // 25% discount
+    bonus_amount: 50.0,
     description: "For businesses and heavy users",
   },
 ];
 
 // Model-specific dollar costs
 export const MODEL_DOLLAR_COSTS = {
-  "fal-ai/imagen4/preview": 0.10, // $0.10 per image
-  "fal-ai/kling-video/v2/master/text-to-video": 1.40, // $1.40 for 5s video
+  "fal-ai/imagen4/preview": 0.1, // $0.10 per image
+  "fal-ai/kling-video/v2/master/text-to-video": 1.4, // $1.40 for 5s video
 } as const;
 
 /**
  * Calculate dollars needed for a model
  */
-export function calculateDollarsNeeded(modelId: string, settings?: { duration?: number }): number {
-  const baseCost = MODEL_DOLLAR_COSTS[modelId as keyof typeof MODEL_DOLLAR_COSTS] || 0.10;
-  
+export function calculateDollarsNeeded(
+  modelId: string,
+  settings?: { duration?: number }
+): number {
+  const baseCost =
+    MODEL_DOLLAR_COSTS[modelId as keyof typeof MODEL_DOLLAR_COSTS] || 0.1;
+
   // Special handling for video generation with duration
-  if (modelId === "fal-ai/kling-video/v2/master/text-to-video" && settings?.duration) {
-    return settings.duration === 5 ? 1.50 : 3.00; // 5s = $1.50, 10s = $3.00
+  if (
+    modelId === "fal-ai/kling-video/v2/master/text-to-video" &&
+    settings?.duration
+  ) {
+    return settings.duration === 5 ? 1.5 : 3.0; // 5s = $1.50, 10s = $3.00
   }
-  
+
   return baseCost;
 }
 

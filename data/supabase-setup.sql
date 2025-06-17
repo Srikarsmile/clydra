@@ -147,4 +147,50 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Grant necessary permissions
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated; 
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
+
+-- Usage meter table for chat token tracking
+CREATE TABLE IF NOT EXISTS usage_meter (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  gpt4o_tokens BIGINT DEFAULT 0,
+  claude_tokens BIGINT DEFAULT 0,
+  gemini_tokens BIGINT DEFAULT 0,
+  reset_date TIMESTAMP WITH TIME ZONE DEFAULT (DATE_TRUNC('month', NOW()) + INTERVAL '1 month'),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id)
+);
+
+-- Create indexes for usage_meter
+CREATE INDEX IF NOT EXISTS idx_usage_meter_user_id ON usage_meter(user_id);
+CREATE INDEX IF NOT EXISTS idx_usage_meter_reset_date ON usage_meter(reset_date);
+
+-- Enable RLS for usage_meter
+ALTER TABLE usage_meter ENABLE ROW LEVEL SECURITY;
+
+-- Usage meter policies
+CREATE POLICY "Users can view own usage" ON usage_meter
+  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+
+CREATE POLICY "Users can update own usage" ON usage_meter
+  FOR ALL USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+
+-- Add trigger for usage_meter updated_at
+CREATE TRIGGER update_usage_meter_updated_at BEFORE UPDATE ON usage_meter
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Function to reset monthly usage
+CREATE OR REPLACE FUNCTION reset_monthly_usage()
+RETURNS void AS $$
+BEGIN
+  UPDATE usage_meter 
+  SET 
+    gpt4o_tokens = 0,
+    claude_tokens = 0,
+    gemini_tokens = 0,
+    reset_date = DATE_TRUNC('month', NOW()) + INTERVAL '1 month',
+    updated_at = NOW()
+  WHERE reset_date <= NOW();
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER; 

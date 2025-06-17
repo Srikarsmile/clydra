@@ -17,7 +17,8 @@ export default function Home() {
   const services: Record<ServiceKey, Service> = {
     image: {
       title: "AI Image Generation",
-      description: "Create stunning visuals from text descriptions with advanced AI models",
+      description:
+        "Create stunning visuals from text descriptions with advanced AI models",
       features: [
         "Ultra-high resolution outputs",
         "Multiple artistic styles",
@@ -27,25 +28,26 @@ export default function Home() {
       pricing: "Starting at $0.10/image",
       examples: [
         "Product photography",
-        "Marketing visuals", 
+        "Marketing visuals",
         "Concept art",
         "Social media content",
       ],
     },
     video: {
       title: "AI Video Creation",
-      description: "Generate professional videos from simple prompts with cutting-edge technology",
+      description:
+        "Generate professional videos from simple prompts with cutting-edge technology",
       features: [
-        "4K video quality", 
-        "Custom durations", 
+        "4K video quality",
+        "Custom durations",
         "Multiple formats",
-        "Cinematic effects"
+        "Cinematic effects",
       ],
       pricing: "Starting at $1.40/video",
       examples: [
         "Marketing videos",
         "Social content",
-        "Product animations", 
+        "Product animations",
         "Explainer videos",
       ],
     },
@@ -59,11 +61,17 @@ export default function Home() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-neo-wave rounded-xl flex items-center justify-center shadow-primary-glow transition-transform duration-300 hover:scale-105 animate-float">
-                <span className="text-white font-semibold text-headline">R</span>
+                <span className="text-white font-semibold text-headline">
+                  R
+                </span>
               </div>
               <div className="flex flex-col">
-                <span className="text-title-2 font-semibold text-text-main">Rivo Labs</span>
-                <span className="text-caption-1 text-text-muted font-medium -mt-1">Neo-Wave Tech</span>
+                <span className="text-title-2 font-semibold text-text-main">
+                  Rivo Labs
+                </span>
+                <span className="text-caption-1 text-text-muted font-medium -mt-1">
+                  Neo-Wave Tech
+                </span>
               </div>
             </div>
 
@@ -111,7 +119,7 @@ export default function Home() {
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-wave-pattern opacity-30"></div>
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5"></div>
-        
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold text-text-main mb-6 animate-fade-in-up tracking-tight">
@@ -121,25 +129,39 @@ export default function Home() {
               </span>
             </h1>
             <p className="text-title-3 md:text-title-2 text-text-muted mb-8 leading-relaxed animate-fade-in-up animation-delay-200 text-balance font-normal max-w-3xl mx-auto">
-              Rivo Labs provides enterprise-grade AI services for image generation 
-              and video creation. Built on cutting-edge infrastructure 
-              for reliable, scalable results.
+              Rivo Labs provides enterprise-grade AI services for image
+              generation and video creation. Built on cutting-edge
+              infrastructure for reliable, scalable results.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animation-delay-400">
               <Link
                 href="/sign-up"
                 className="btn btn-primary btn-lg transform hover:scale-105 transition-all duration-300"
               >
-                <span className="text-callout font-semibold">Start Creating</span>
-                <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                <span className="text-callout font-semibold">
+                  Start Creating
+                </span>
+                <svg
+                  className="w-5 h-5 ml-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
                 </svg>
               </Link>
               <Link
                 href="#services"
                 className="btn btn-ghost btn-lg transform hover:scale-105 transition-all duration-300"
               >
-                <span className="text-callout font-medium">Explore Services</span>
+                <span className="text-callout font-medium">
+                  Explore Services
+                </span>
               </Link>
             </div>
           </div>
@@ -159,7 +181,8 @@ export default function Home() {
               Why Choose Rivo Labs?
             </h2>
             <p className="text-title-3 text-text-muted max-w-3xl mx-auto animate-fade-in-up animation-delay-100 font-normal">
-              Experience the future of AI-powered creativity with our cutting-edge platform
+              Experience the future of AI-powered creativity with our
+              cutting-edge platform
             </p>
           </div>
 
@@ -168,36 +191,69 @@ export default function Home() {
               {
                 icon: (
                   <div className="w-16 h-16 bg-gradient-to-br from-accent/20 to-accent/30 rounded-2xl flex items-center justify-center mb-6 shadow-accent-glow">
-                    <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    <svg
+                      className="w-8 h-8 text-accent"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
                     </svg>
                   </div>
                 ),
                 title: "Lightning Fast",
-                description: "Generate high-quality content in seconds with our optimized AI infrastructure and cutting-edge processing power."
+                description:
+                  "Generate high-quality content in seconds with our optimized AI infrastructure and cutting-edge processing power.",
               },
               {
                 icon: (
                   <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/30 rounded-2xl flex items-center justify-center mb-6 shadow-primary-glow">
-                    <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    <svg
+                      className="w-8 h-8 text-primary"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                      />
                     </svg>
                   </div>
                 ),
                 title: "Enterprise Grade",
-                description: "Built for scale with 99.9% uptime, enterprise-level security, and comprehensive data protection standards."
+                description:
+                  "Built for scale with 99.9% uptime, enterprise-level security, and comprehensive data protection standards.",
               },
               {
                 icon: (
                   <div className="w-16 h-16 bg-gradient-to-br from-secondary/20 to-secondary/30 rounded-2xl flex items-center justify-center mb-6 shadow-wave-glow">
-                    <svg className="w-8 h-8 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
+                    <svg
+                      className="w-8 h-8 text-secondary"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z"
+                      />
                     </svg>
                   </div>
                 ),
-                title: "Fluid Experience", 
-                description: "Intuitive interface designed for seamless creative workflows with Apple-inspired design principles."
-              }
+                title: "Fluid Experience",
+                description:
+                  "Intuitive interface designed for seamless creative workflows with Apple-inspired design principles.",
+              },
             ].map((feature, index) => (
               <div
                 key={index}
@@ -227,7 +283,8 @@ export default function Home() {
               Our AI Services
             </h2>
             <p className="text-title-3 text-text-muted max-w-3xl mx-auto font-normal">
-              Professional AI tools designed for businesses, creators, and developers
+              Professional AI tools designed for businesses, creators, and
+              developers
             </p>
           </div>
 
@@ -247,7 +304,9 @@ export default function Home() {
                   {activeTab === key && (
                     <span className="absolute inset-0 bg-gradient-neo-wave rounded-xl opacity-20"></span>
                   )}
-                  <span className="relative z-10 font-medium">{service.title}</span>
+                  <span className="relative z-10 font-medium">
+                    {service.title}
+                  </span>
                 </button>
               ))}
             </div>
@@ -282,18 +341,19 @@ export default function Home() {
                             />
                           </svg>
                         </div>
-                        <span className="text-body text-text-main font-normal">{feature}</span>
+                        <span className="text-body text-text-main font-normal">
+                          {feature}
+                        </span>
                       </div>
                     )
                   )}
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 items-start">
-                  <Link
-                    href="/sign-up"
-                    className="btn btn-primary btn-lg"
-                  >
-                    <span className="text-callout font-semibold">Get Started</span>
+                  <Link href="/sign-up" className="btn btn-primary btn-lg">
+                    <span className="text-callout font-semibold">
+                      Get Started
+                    </span>
                   </Link>
                   <div className="flex items-center space-x-2 px-4 py-3">
                     <span className="text-callout text-text-muted font-medium">
@@ -338,14 +398,17 @@ export default function Home() {
             Ready to Transform Your Creative Workflow?
           </h2>
           <p className="text-title-3 mb-8 opacity-90 max-w-3xl mx-auto animate-fade-in-up animation-delay-100 font-normal leading-relaxed">
-            Join thousands of creators and businesses already using Rivo Labs to bring their ideas to life.
+            Join thousands of creators and businesses already using Rivo Labs to
+            bring their ideas to life.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animation-delay-200">
             <Link
               href="/sign-up"
               className="btn bg-white text-primary hover:bg-white/90 btn-lg transform hover:scale-105 transition-all duration-300 shadow-xl"
             >
-              <span className="text-callout font-semibold">Start Creating Today</span>
+              <span className="text-callout font-semibold">
+                Start Creating Today
+              </span>
             </Link>
             <Link
               href="#pricing"
@@ -364,33 +427,78 @@ export default function Home() {
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-10 h-10 bg-gradient-neo-wave rounded-xl flex items-center justify-center shadow-primary-glow">
-                  <span className="text-white font-semibold text-headline">R</span>
+                  <span className="text-white font-semibold text-headline">
+                    R
+                  </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-title-3 font-semibold text-text-main">Rivo Labs</span>
-                  <span className="text-caption-1 text-text-muted font-medium -mt-1">Neo-Wave Tech</span>
+                  <span className="text-title-3 font-semibold text-text-main">
+                    Rivo Labs
+                  </span>
+                  <span className="text-caption-1 text-text-muted font-medium -mt-1">
+                    Neo-Wave Tech
+                  </span>
                 </div>
               </div>
               <p className="text-body text-text-muted max-w-md font-normal leading-relaxed">
-                Empowering creativity through advanced AI technology. 
-                Build, create, and innovate with our cutting-edge platform.
+                Empowering creativity through advanced AI technology. Build,
+                create, and innovate with our cutting-edge platform.
               </p>
             </div>
 
             <div>
-              <h4 className="text-headline font-semibold text-text-main mb-4">Services</h4>
+              <h4 className="text-headline font-semibold text-text-main mb-4">
+                Services
+              </h4>
               <ul className="space-y-2">
-                <li><Link href="#services" className="text-callout text-text-muted hover:text-primary transition-colors font-normal">Image Generation</Link></li>
-                <li><Link href="#services" className="text-callout text-text-muted hover:text-primary transition-colors font-normal">Video Creation</Link></li>
+                <li>
+                  <Link
+                    href="#services"
+                    className="text-callout text-text-muted hover:text-primary transition-colors font-normal"
+                  >
+                    Image Generation
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="#services"
+                    className="text-callout text-text-muted hover:text-primary transition-colors font-normal"
+                  >
+                    Video Creation
+                  </Link>
+                </li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-headline font-semibold text-text-main mb-4">Company</h4>
+              <h4 className="text-headline font-semibold text-text-main mb-4">
+                Company
+              </h4>
               <ul className="space-y-2">
-                <li><Link href="/privacy" className="text-callout text-text-muted hover:text-primary transition-colors font-normal">Privacy Policy</Link></li>
-                <li><Link href="/terms" className="text-callout text-text-muted hover:text-primary transition-colors font-normal">Terms of Service</Link></li>
-                <li><Link href="#about" className="text-callout text-text-muted hover:text-primary transition-colors font-normal">About Us</Link></li>
+                <li>
+                  <Link
+                    href="/privacy"
+                    className="text-callout text-text-muted hover:text-primary transition-colors font-normal"
+                  >
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/terms"
+                    className="text-callout text-text-muted hover:text-primary transition-colors font-normal"
+                  >
+                    Terms of Service
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="#about"
+                    className="text-callout text-text-muted hover:text-primary transition-colors font-normal"
+                  >
+                    About Us
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
@@ -400,7 +508,9 @@ export default function Home() {
               © 2025 Rivo Labs. All rights reserved.
             </p>
             <div className="flex items-center space-x-6 mt-4 md:mt-0">
-              <span className="text-footnote text-text-muted font-medium">Built with Neo-Wave Tech</span>
+              <span className="text-footnote text-text-muted font-medium">
+                Built with Neo-Wave Tech
+              </span>
             </div>
           </div>
         </div>

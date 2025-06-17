@@ -1,12 +1,27 @@
 /* components/UsageBars.tsx */
 import useSWR from "swr";
-const fetcher = (u:string)=>fetch(u).then(r=>r.json());
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Failed to fetch");
+  }
+  return res.json();
+};
 
 export default function UsageBars() {
-  const { data } = useSWR("/api/credits", fetcher);
+  const { data, error } = useSWR("/api/credits", fetcher);
+  if (error) return null;
   if (!data) return null;
 
-  const Bar = ({ used, cap, label }: { used: number; cap: number; label: string }) => (
+  const Bar = ({
+    used,
+    cap,
+    label,
+  }: {
+    used: number;
+    cap: number;
+    label: string;
+  }) => (
     <div className="mb-4">
       <div className="flex justify-between items-center mb-1">
         <span className="text-sm font-medium text-primary">{label}</span>
@@ -20,9 +35,7 @@ export default function UsageBars() {
           style={{ width: `${Math.min(100, (used / cap) * 100)}%` }}
         ></div>
       </div>
-      <p className="text-xs text-text-muted mt-1">
-        {cap - used} remaining
-      </p>
+      <p className="text-xs text-text-muted mt-1">{cap - used} remaining</p>
     </div>
   );
 
@@ -33,4 +46,4 @@ export default function UsageBars() {
       <Bar used={data.secondsUsed} cap={data.secondCap} label="Video Seconds" />
     </div>
   );
-} 
+}

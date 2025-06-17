@@ -38,4 +38,4 @@ export default function SignOutPage() {
       </div>
     </Layout>
   );
-} 
+}

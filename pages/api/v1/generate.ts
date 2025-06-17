@@ -81,55 +81,61 @@ export default async function handler(
     }
 
     // Validate request body
-    const { model, prompt, settings = {} } = req.body;
+    const { model, prompt, settings = {}, skipCreditCheck = false } = req.body;
 
     const validation = validateModelRequest({ model, prompt, settings });
     if (!validation.valid) {
       return res.status(400).json({ error: validation.error });
     }
 
-    // Check user balance
-    const creditCheck = await checkUserCredits(userId, model, settings);
+    let creditCheck: any = null;
+    let deductResult: any = null;
 
-    if (creditCheck.error) {
-      return res.status(500).json({
-        error: "Error checking balance",
-        details: creditCheck.error,
-      });
-    }
+    // Skip credit check for free tier usage
+    if (!skipCreditCheck) {
+      // Check user balance
+      creditCheck = await checkUserCredits(userId, model, settings);
 
-    if (!creditCheck.hasEnoughCredits) {
-      return res.status(402).json({
-        error: "Insufficient funds",
-        current_balance: creditCheck.currentBalance,
-        amount_needed: creditCheck.creditsNeeded,
-        message: `You need $${creditCheck.creditsNeeded.toFixed(2)} but only have $${creditCheck.currentBalance.toFixed(2)}. Please add funds to your account.`,
-      });
-    }
-
-    // IMPORTANT: Deduct dollars BEFORE generation to prevent race conditions
-    // If generation fails, we'll need to refund the amount
-    const deductResult = await deductUserCredits(
-      userId,
-      creditCheck.creditsNeeded,
-      `Generated ${model}`,
-      {
-        model,
-        prompt: prompt.substring(0, 100) + (prompt.length > 100 ? "..." : ""),
-        request_id: `${Date.now()}`,
+      if (creditCheck.error) {
+        return res.status(500).json({
+          error: "Error checking balance",
+          details: creditCheck.error,
+        });
       }
-    );
 
-    if (!deductResult.success) {
-      console.error("Error deducting balance:", deductResult.error);
-      return res.status(402).json({
-        error: "Balance deduction failed",
-        current_balance: creditCheck.currentBalance,
-        amount_needed: creditCheck.creditsNeeded,
-        message:
-          "Unable to deduct funds for generation. Please try again or contact support.",
-        details: deductResult.error,
-      });
+      if (!creditCheck.hasEnoughCredits) {
+        return res.status(402).json({
+          error: "Insufficient funds",
+          current_balance: creditCheck.currentBalance,
+          amount_needed: creditCheck.creditsNeeded,
+          message: `You need $${creditCheck.creditsNeeded.toFixed(2)} but only have $${creditCheck.currentBalance.toFixed(2)}. Please add funds to your account.`,
+        });
+      }
+
+      // IMPORTANT: Deduct dollars BEFORE generation to prevent race conditions
+      // If generation fails, we'll need to refund the amount
+      deductResult = await deductUserCredits(
+        userId,
+        creditCheck.creditsNeeded,
+        `Generated ${model}`,
+        {
+          model,
+          prompt: prompt.substring(0, 100) + (prompt.length > 100 ? "..." : ""),
+          request_id: `${Date.now()}`,
+        }
+      );
+
+      if (!deductResult.success) {
+        console.error("Error deducting balance:", deductResult.error);
+        return res.status(402).json({
+          error: "Balance deduction failed",
+          current_balance: creditCheck.currentBalance,
+          amount_needed: creditCheck.creditsNeeded,
+          message:
+            "Unable to deduct funds for generation. Please try again or contact support.",
+          details: deductResult.error,
+        });
+      }
     }
 
     // Execute model request
@@ -140,26 +146,29 @@ export default async function handler(
     });
 
     if (!result.success) {
-      // Generation failed - refund the amount we deducted
-      const refundResult = await addUserCredits(
-        userId,
-        creditCheck.creditsNeeded,
-        "bonus", // Use bonus type for refunds
-        `Refund for failed ${model} generation`,
-        {
-          model,
-          prompt: prompt.substring(0, 100) + (prompt.length > 100 ? "..." : ""),
-          original_request_id: `${Date.now()}`,
-          reason: "generation_failed",
-        }
-      );
-
-      if (!refundResult.success) {
-        console.error(
-          "Failed to refund amount after generation failure:",
-          refundResult.error
+      // Generation failed - refund the amount we deducted (only if we charged)
+      let refundResult = null;
+      if (!skipCreditCheck && creditCheck) {
+        refundResult = await addUserCredits(
+          userId,
+          creditCheck.creditsNeeded,
+          "bonus", // Use bonus type for refunds
+          `Refund for failed ${model} generation`,
+          {
+            model,
+            prompt: prompt.substring(0, 100) + (prompt.length > 100 ? "..." : ""),
+            original_request_id: `${Date.now()}`,
+            reason: "generation_failed",
+          }
         );
-        // Log this for manual intervention - user should be refunded
+
+        if (!refundResult.success) {
+          console.error(
+            "Failed to refund amount after generation failure:",
+            refundResult.error
+          );
+          // Log this for manual intervention - user should be refunded
+        }
       }
 
       // Log failed request
@@ -168,7 +177,7 @@ export default async function handler(
         model,
         prompt,
         response_data: null,
-        cost: creditCheck.creditsNeeded,
+        cost: skipCreditCheck ? 0 : (creditCheck?.creditsNeeded || 0),
         latency: result.latency,
         status: "error",
         error_message: result.error || null,
@@ -179,7 +188,7 @@ export default async function handler(
         details: result.error || "Unknown error from AI service",
         model,
         latency: result.latency,
-        amount_refunded: refundResult.success,
+        amount_refunded: refundResult?.success || false,
       });
     }
 
@@ -189,7 +198,7 @@ export default async function handler(
       model,
       prompt,
       response_data: result.data,
-      cost: creditCheck.creditsNeeded,
+      cost: skipCreditCheck ? 0 : (creditCheck?.creditsNeeded || 0),
       latency: result.latency,
       status: "success",
     });
@@ -201,10 +210,10 @@ export default async function handler(
       requestId: `${Date.now()}-${userId.substring(0, 8)}`,
       metadata: {
         model,
-        cost: creditCheck.creditsNeeded,
+        cost: skipCreditCheck ? 0 : (creditCheck?.creditsNeeded || 0),
         latency: result.latency,
-        amount_used: creditCheck.creditsNeeded,
-        balance_remaining: deductResult.newBalance,
+        amount_used: skipCreditCheck ? 0 : (creditCheck?.creditsNeeded || 0),
+        balance_remaining: skipCreditCheck ? null : deductResult?.newBalance,
       },
     });
   } catch (error) {

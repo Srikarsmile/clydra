@@ -27,7 +27,7 @@ export const AVAILABLE_MODELS = {
     type: "video",
     description:
       "Advanced text-to-video generation with enhanced motion quality, complex scene understanding, and cinematic output",
-    pricing: 0.30, // per second ($1.50 for 5s, $3.00 for 10s)
+    pricing: 0.3, // per second ($1.50 for 5s, $3.00 for 10s)
     pricingModel: "per-second",
     category: "Video Generation",
     maxPromptLength: 2000,
@@ -78,6 +78,8 @@ export async function executeModelRequest(
       throw new Error("FAL_KEY environment variable is not configured");
     }
 
+    console.log(`Starting ${modelConfig.type} generation with model: ${request.model}`);
+
     // Prepare the input based on model type and API requirements
     let input: Record<string, unknown>;
 
@@ -96,6 +98,8 @@ export async function executeModelRequest(
           request.settings?.negative_prompt || videoDefaults.negative_prompt,
         ...request.settings,
       };
+      
+      console.log('Video generation settings:', input);
     } else {
       // Google Imagen4 and other models
       input = {
@@ -105,16 +109,29 @@ export async function executeModelRequest(
     }
 
     // Execute the model
-    const result = await fal.subscribe(request.model, {
-      input,
-      logs: false,
-      onQueueUpdate: (update) => {
-        // Production: minimal logging only
-        if (update.status === "IN_PROGRESS") {
-          // Silent processing
-        }
-      },
-    });
+    console.log('Calling fal.subscribe with model:', request.model);
+    
+    // Set longer timeout for video generation
+    const timeoutMs = request.model.includes('video') ? 600000 : 120000; // 10 minutes for video, 2 minutes for image
+    
+    const result = await Promise.race([
+      fal.subscribe(request.model, {
+        input,
+        logs: false,
+        onQueueUpdate: (update) => {
+          console.log('Queue update:', update.status);
+          // Production: minimal logging only
+          if (update.status === "IN_PROGRESS") {
+            // Silent processing
+          }
+        },
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error(`Request timeout after ${timeoutMs/1000} seconds`)), timeoutMs)
+      )
+    ]);
+
+    console.log('FAL API returned result:', result);
 
     const latency = Date.now() - startTime;
 
@@ -135,13 +152,25 @@ export async function executeModelRequest(
   } catch (error) {
     const latency = Date.now() - startTime;
 
+    console.error("FAL API Error:", error);
+
     let errorMessage = "Unknown error";
 
     if (error instanceof Error) {
       errorMessage = error.message;
 
-      // Handle specific Fal API errors
-      if (
+      // Check for specific error body content (fal.ai returns detailed errors)
+      if (error.message.includes("safety checks")) {
+        errorMessage = "Content filtered by safety checks";
+      } else if (error.message.includes("Bad Request")) {
+        // Try to extract more specific error from error body
+        const errorStr = error.toString();
+        if (errorStr.includes("safety checks")) {
+          errorMessage = "All generated content was filtered by safety checks";
+        } else {
+          errorMessage = "Invalid request parameters";
+        }
+      } else if (
         errorMessage.includes("401") ||
         errorMessage.includes("Unauthorized")
       ) {
@@ -165,6 +194,25 @@ export async function executeModelRequest(
         errorMessage = "Request timeout - model processing took too long";
       }
     }
+
+    // Check if error has a body property (common with API errors)
+    if (typeof error === 'object' && error !== null && 'body' in error) {
+      const body = (error as any).body;
+      if (body && body.detail) {
+        if (body.detail.includes("safety checks")) {
+          errorMessage = "Content filtered by safety checks - try a different prompt";
+        } else {
+          errorMessage = body.detail;
+        }
+      }
+    }
+
+    // Log the full error for debugging
+    console.error('Full error details:', {
+      message: errorMessage,
+      originalError: error,
+      stack: error instanceof Error ? error.stack : undefined
+    });
 
     return {
       success: false,

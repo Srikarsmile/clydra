@@ -20,12 +20,12 @@ export default function Services() {
         "30 images",
         "20 seconds video",
         "Standard quality",
-        "Basic support"
+        "Basic support",
       ],
       cta: "Current Plan",
       ctaClass: "btn btn-ghost",
       ctaAction: () => {},
-      popular: false
+      popular: false,
     },
     {
       name: "Creator",
@@ -38,12 +38,12 @@ export default function Services() {
         "HD quality",
         "Priority support",
         "Custom styles",
-        "Commercial rights"
+        "Commercial rights",
       ],
       cta: "Coming Soon",
       ctaClass: "btn btn-primary",
       ctaAction: showComingSoonToast,
-      popular: true
+      popular: true,
     },
     {
       name: "Pro",
@@ -58,13 +58,13 @@ export default function Services() {
         "Advanced features",
         "Team collaboration",
         "API access",
-        "Priority processing"
+        "Priority processing",
       ],
       cta: "Coming Soon",
       ctaClass: "btn btn-primary",
       ctaAction: showComingSoonToast,
-      popular: false
-    }
+      popular: false,
+    },
   ];
 
   return (
@@ -81,7 +81,9 @@ export default function Services() {
         <div className="bg-gradient-neo-wave text-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
             <div className="text-center">
-              <h1 className="text-large-title font-semibold mb-4 tracking-tight">Simple, Transparent Pricing</h1>
+              <h1 className="text-large-title font-semibold mb-4 tracking-tight">
+                Simple, Transparent Pricing
+              </h1>
               <p className="text-title-3 font-normal opacity-90 max-w-3xl mx-auto">
                 Choose the perfect plan for your creative needs
               </p>
@@ -93,11 +95,11 @@ export default function Services() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {plans.map((plan, index) => (
-              <div 
+              <div
                 key={plan.name}
                 className={`relative bg-surface/80 backdrop-blur-xl rounded-3xl p-8 border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${
-                  plan.popular 
-                    ? "border-primary shadow-primary-glow scale-105" 
+                  plan.popular
+                    ? "border-primary shadow-primary-glow scale-105"
                     : "border-border/50"
                 }`}
               >
@@ -114,30 +116,45 @@ export default function Services() {
                     {plan.name}
                   </h3>
                   <div className="flex items-baseline justify-center mb-2">
-                    <span className="text-4xl font-bold text-text-main">{plan.price}</span>
-                    <span className="text-text-muted text-lg ml-1">{plan.period}</span>
+                    <span className="text-4xl font-bold text-text-main">
+                      {plan.price}
+                    </span>
+                    <span className="text-text-muted text-lg ml-1">
+                      {plan.period}
+                    </span>
                   </div>
-                  <p className="text-text-muted">
-                    {plan.description}
-                  </p>
+                  <p className="text-text-muted">{plan.description}</p>
                 </div>
 
                 <div className="space-y-4 mb-8">
                   {plan.features.map((feature, featureIndex) => (
-                    <div key={featureIndex} className="flex items-center space-x-3">
+                    <div
+                      key={featureIndex}
+                      className="flex items-center space-x-3"
+                    >
                       <div className="w-5 h-5 bg-secondary rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
-                      <span className="text-callout text-text-main">{feature}</span>
+                      <span className="text-callout text-text-main">
+                        {feature}
+                      </span>
                     </div>
                   ))}
                 </div>
 
-                <button 
+                <button
                   onClick={plan.ctaAction}
-                  className={`w-full ${plan.ctaClass} ${plan.popular ? 'btn-lg' : ''}`}
+                  className={`w-full ${plan.ctaClass} ${plan.popular ? "btn-lg" : ""}`}
                 >
                   {plan.cta}
                 </button>
@@ -162,7 +179,8 @@ export default function Services() {
                   What happens when I exceed my plan limits?
                 </h4>
                 <p className="text-caption-1 text-text-muted">
-                  You can purchase additional credits or upgrade to a higher plan anytime. No generation requests are blocked.
+                  You can purchase additional credits or upgrade to a higher
+                  plan anytime. No generation requests are blocked.
                 </p>
               </div>
 
@@ -171,7 +189,8 @@ export default function Services() {
                   Can I change plans anytime?
                 </h4>
                 <p className="text-caption-1 text-text-muted">
-                  Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately.
+                  Yes! You can upgrade or downgrade your plan at any time.
+                  Changes take effect immediately.
                 </p>
               </div>
 
@@ -180,7 +199,8 @@ export default function Services() {
                   Do credits roll over?
                 </h4>
                 <p className="text-caption-1 text-text-muted">
-                  Unused credits carry over to the next month. They never expire as long as you have an active subscription.
+                  Unused credits carry over to the next month. They never expire
+                  as long as you have an active subscription.
                 </p>
               </div>
 
@@ -189,7 +209,8 @@ export default function Services() {
                   Is there a free trial?
                 </h4>
                 <p className="text-caption-1 text-text-muted">
-                  Yes! Every new user gets $3 in free credits to try our platform. No credit card required.
+                  Yes! Every new user gets $3 in free credits to try our
+                  platform. No credit card required.
                 </p>
               </div>
             </div>
@@ -202,7 +223,8 @@ export default function Services() {
                 Ready to Start Creating?
               </h3>
               <p className="text-body text-text-muted mb-6 max-w-2xl mx-auto">
-                Join thousands of creators using our AI platform to bring their ideas to life
+                Join thousands of creators using our AI platform to bring their
+                ideas to life
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/sign-up" className="btn btn-primary btn-lg">
@@ -218,4 +240,4 @@ export default function Services() {
       </div>
     </Layout>
   );
-} 
+}

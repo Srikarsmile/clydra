@@ -1,26 +1,32 @@
 import useSWR from "swr";
 import { useState, useEffect } from "react";
 
-const fetcher = (u: string) => fetch(u).then((r) => r.json());
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Failed to fetch");
+  }
+  return res.json();
+};
 
 export default function WelcomePopup() {
-  const { data } = useSWR("/api/credits", fetcher);
+  const { data, error } = useSWR("/api/credits", fetcher);
   const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
-    if (!data) return;
-    
+    if (error || !data) return;
+
     // Show popup for first-time users who haven't used any credits
     const isNewUser = data.imagesUsed === 0 && data.secondsUsed === 0;
     const hasSeenWelcome = localStorage.getItem("rivoWelcomeShown") === "1";
-    
+
     if (isNewUser && !hasSeenWelcome) {
       // Small delay to let the page load
       setTimeout(() => {
         setShowPopup(true);
       }, 500);
     }
-  }, [data]);
+  }, [data, error]);
 
   const closePopup = () => {
     setShowPopup(false);
@@ -40,16 +46,24 @@ export default function WelcomePopup() {
             onClick={closePopup}
             className="absolute top-4 right-4 text-text-muted hover:text-text-main transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
 
           {/* Party animation */}
           <div className="text-center mb-6">
-            <div className="text-6xl mb-4 animate-bounce">
-              🎉
-            </div>
+            <div className="text-6xl mb-4 animate-bounce">🎉</div>
             <div className="flex justify-center space-x-2 text-3xl mb-4">
               <span className="animate-pulse">🎊</span>
               <span className="animate-pulse delay-100">✨</span>
@@ -64,7 +78,7 @@ export default function WelcomePopup() {
             <h2 className="text-title-1 font-semibold text-text-main mb-3 tracking-tight">
               Welcome to Rivo Labs!
             </h2>
-            
+
             <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-6 mb-6 border border-primary/20">
               <div className="text-4xl font-bold text-primary mb-2">
                 ${data.balanceUsd}
@@ -85,9 +99,7 @@ export default function WelcomePopup() {
                 <div className="text-text-muted">Imagen 4 AI</div>
               </div>
               <div className="bg-accent/10 rounded-xl p-3 border border-accent/20">
-                <div className="font-semibold text-accent">
-                  2 Videos (5s)
-                </div>
+                <div className="font-semibold text-accent">2 Videos (5s)</div>
                 <div className="text-text-muted">or 1 Video (10s)</div>
               </div>
             </div>
@@ -112,13 +124,13 @@ export default function WelcomePopup() {
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
               animationDelay: `${Math.random() * 2}s`,
-              animationDuration: `${2 + Math.random() * 2}s`
+              animationDuration: `${2 + Math.random() * 2}s`,
             }}
           >
-            {['🎉', '✨', '🎊', '🎈', '⭐', '💫'][i]}
+            {["🎉", "✨", "🎊", "🎈", "⭐", "💫"][i]}
           </div>
         ))}
       </div>
     </>
   );
-} 
+}

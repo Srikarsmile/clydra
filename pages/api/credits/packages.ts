@@ -40,9 +40,7 @@ export default async function handler(
           total_amount: value.totalDollars,
           effective_cost_per_dollar: value.effectiveCostPerDollar,
           savings: value.savings,
-          savings_percentage: Math.round(
-            (value.savings / pkg.amount) * 100
-          ),
+          savings_percentage: Math.round((value.savings / pkg.amount) * 100),
         };
       });
 

@@ -31,14 +31,18 @@ export default async function handler(
     const userId = userResult.user.id;
 
     // Get query parameters
-    const { limit = '20', offset = '0' } = req.query;
+    const { limit = "20", offset = "0" } = req.query;
     const limitNum = Math.min(parseInt(limit as string, 10) || 20, 100); // Max 100
     const offsetNum = parseInt(offset as string, 10) || 0;
 
     // Fetch user's generations from database
-    const { data: generations, error, count } = await supabaseAdmin
+    const {
+      data: generations,
+      error,
+      count,
+    } = await supabaseAdmin
       .from("user_generations")
-      .select("*", { count: 'exact' })
+      .select("*", { count: "exact" })
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .range(offsetNum, offsetNum + limitNum - 1);
@@ -77,11 +81,11 @@ export default async function handler(
         total: count,
         limit: limitNum,
         offset: offsetNum,
-        hasMore: (offsetNum + limitNum) < (count || 0),
+        hasMore: offsetNum + limitNum < (count || 0),
       },
     });
   } catch (error) {
     console.error("List generations API error:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
-} 
+}

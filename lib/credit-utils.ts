@@ -76,7 +76,7 @@ export async function initializeUserCredits(
   try {
     // Store as cents to avoid floating point issues
     const initialCents = Math.round(initialDollars * 100);
-    
+
     const { error } = await supabaseAdmin.rpc("initialize_user_credits", {
       user_uuid: userId,
       initial_credits: initialCents,
@@ -105,7 +105,7 @@ export async function addUserCredits(
   try {
     // Convert to cents to avoid floating point issues
     const centsToAdd = Math.round(dollarsToAdd * 100);
-    
+
     const { data: newBalanceCents, error } = await supabaseAdmin.rpc(
       "add_user_credits",
       {
@@ -141,7 +141,7 @@ export async function deductUserCredits(
   try {
     // Convert to cents to avoid floating point issues
     const centsToDeduct = Math.round(dollarsToDeduct * 100);
-    
+
     const { data: newBalanceCents, error } = await supabaseAdmin.rpc(
       "deduct_user_credits",
       {
@@ -223,12 +223,14 @@ export async function getUserCreditTransactions(
       .limit(limit);
 
     // Convert amounts from cents to dollars
-    const convertedData = data ? data.map(transaction => ({
-      ...transaction,
-      amount: transaction.amount / 100,
-      balance_before: transaction.balance_before / 100,
-      balance_after: transaction.balance_after / 100,
-    })) : null;
+    const convertedData = data
+      ? data.map((transaction) => ({
+          ...transaction,
+          amount: transaction.amount / 100,
+          balance_before: transaction.balance_before / 100,
+          balance_after: transaction.balance_after / 100,
+        }))
+      : null;
 
     return { data: convertedData, error };
   } catch (error) {

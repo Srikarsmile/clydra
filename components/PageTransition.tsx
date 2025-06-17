@@ -4,8 +4,6 @@ interface PageTransitionProps {
 
 export default function PageTransition({ children }: PageTransitionProps) {
   return (
-    <div className="transition-opacity duration-200 ease-out">
-      {children}
-    </div>
+    <div className="transition-opacity duration-200 ease-out">{children}</div>
   );
-} 
+}

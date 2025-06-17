@@ -64,7 +64,6 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* User Menu */}
             <div className="flex items-center space-x-4">
-
               {isSignedIn ? (
                 <div className="flex items-center space-x-3">
                   <div className="hidden md:block text-right">
@@ -78,7 +77,8 @@ export default function Layout({ children }: LayoutProps) {
                   <UserButton
                     appearance={{
                       elements: {
-                        avatarBox: "w-10 h-10 shadow-primary-glow hover:shadow-primary-glow-lg transition-all duration-200",
+                        avatarBox:
+                          "w-10 h-10 shadow-primary-glow hover:shadow-primary-glow-lg transition-all duration-200",
                       },
                     }}
                   />
@@ -91,10 +91,7 @@ export default function Layout({ children }: LayoutProps) {
                   >
                     Sign In
                   </Link>
-                  <Link
-                    href="/sign-up"
-                    className="btn btn-primary"
-                  >
+                  <Link href="/sign-up" className="btn btn-primary">
                     Get Started
                   </Link>
                 </div>
@@ -135,9 +132,7 @@ export default function Layout({ children }: LayoutProps) {
         {/* Background Pattern */}
         <div className="fixed inset-0 bg-wave-pattern opacity-30 pointer-events-none" />
         <div className="relative z-10">
-          <PageTransition>
-            {children}
-          </PageTransition>
+          <PageTransition>{children}</PageTransition>
         </div>
       </main>
 
@@ -151,18 +146,29 @@ export default function Layout({ children }: LayoutProps) {
               </div>
               <div className="flex flex-col">
                 <span className="text-title-3 text-text-main">Rivo Labs</span>
-                <span className="text-caption-1 text-text-muted -mt-1">Neo-Wave Tech</span>
+                <span className="text-caption-1 text-text-muted -mt-1">
+                  Neo-Wave Tech
+                </span>
               </div>
             </div>
 
             <div className="flex items-center space-x-6 text-callout text-text-muted">
-              <Link href="/privacy" className="hover:text-primary transition-colors duration-200">
+              <Link
+                href="/privacy"
+                className="hover:text-primary transition-colors duration-200"
+              >
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="hover:text-primary transition-colors duration-200">
+              <Link
+                href="/terms"
+                className="hover:text-primary transition-colors duration-200"
+              >
                 Terms of Service
               </Link>
-              <Link href="/support" className="hover:text-primary transition-colors duration-200">
+              <Link
+                href="/support"
+                className="hover:text-primary transition-colors duration-200"
+              >
                 Support
               </Link>
             </div>

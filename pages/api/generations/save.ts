@@ -31,22 +31,22 @@ export default async function handler(
     const userId = userResult.user.id;
 
     // Validate request body
-    const { 
-      model, 
-      prompt, 
-      settings = {}, 
-      resultData, 
-      resultUrl, 
-      cost = 0, 
-      latency = 0, 
+    const {
+      model,
+      prompt,
+      settings = {},
+      resultData,
+      resultUrl,
+      cost = 0,
+      latency = 0,
       requestId,
-      status = 'success',
-      errorMessage = null
+      status = "success",
+      errorMessage = null,
     } = req.body;
 
     if (!model || !prompt || !resultData) {
-      return res.status(400).json({ 
-        error: "Missing required fields: model, prompt, resultData" 
+      return res.status(400).json({
+        error: "Missing required fields: model, prompt, resultData",
       });
     }
 
@@ -82,4 +82,4 @@ export default async function handler(
     console.error("Save generation API error:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
-} 
+}
