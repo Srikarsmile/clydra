@@ -24,21 +24,17 @@ export default function SidebarNav({
 
   const navItems: NavItem[] = [
     {
+      id: "chat",
+      name: "Chat",
+      icon: "💬",
+      enabled: true,
+    },
+    {
       id: "image",
-      name: "Image Generation",
+      name: "Images",
       icon: "🎨",
       enabled: true,
     },
-    ...(isChatEnabled
-      ? [
-          {
-            id: "chat",
-            name: "AI Chat",
-            icon: "💬",
-            enabled: true,
-          },
-        ]
-      : []),
     {
       id: "analytics",
       name: "Analytics",
@@ -119,8 +115,8 @@ export default function SidebarNav({
                     item.enabled ? "text-text-muted" : "text-text-muted/60"
                   }`}
                 >
-                  {item.id === "image" && "Create stunning images from text"}
                   {item.id === "chat" && "Multi-model AI conversations"}
+                  {item.id === "image" && "Create stunning images from text"}
                   {item.id === "analytics" && "Usage insights and metrics"}
                   {item.id === "settings" && "Account and preferences"}
                 </p>

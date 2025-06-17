@@ -1,71 +1,158 @@
-import { useState, useRef, useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
+import React, { useState, useRef, useEffect } from "react";
 
-type ChatModel = "gpt-4o" | "claude-sonnet" | "gemini-pro";
+// @or Simple utility for classnames (inline replacement for cn)
+const cn = (...classes: (string | undefined | null | false)[]): string => {
+  return classes.filter(Boolean).join(' ');
+};
 
-interface ChatMessage {
+interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
-  model?: ChatModel;
   timestamp: Date;
-  streaming?: boolean;
 }
 
-interface ModelConfig {
-  id: ChatModel;
+interface ChatModel {
+  id: string;
   name: string;
   description: string;
-  icon: string;
-  color: string;
-  enabled: boolean;
-  quota?: string;
+  isPro: boolean;
+  features: string[];
+  category: "basic" | "advanced" | "specialized";
+  contextWindow?: number;
+  pricePerToken?: string;
 }
 
-export default function ChatPanel() {
-  const { user } = useUser();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+interface ChatPanelProps {
+  onUpgradeClick: () => void;
+  userPlan: "free" | "pro";
+}
+
+const CHAT_MODELS: ChatModel[] = [
+  {
+    id: "openai/gpt-3.5-turbo",
+    name: "GPT-3.5 Turbo",
+    description: "Fast and reliable for everyday tasks",
+    isPro: false,
+    category: "basic",
+    features: ["Quick responses", "General knowledge", "Basic coding"],
+    contextWindow: 16385,
+    pricePerToken: "$0.0015/1K"
+  },
+  {
+    id: "anthropic/claude-3-sonnet-20240229",
+    name: "Claude 3 Sonnet",
+    description: "Balanced intelligence and speed",
+    isPro: true,
+    category: "advanced",
+    features: ["Complex reasoning", "Code generation", "Technical writing"],
+    contextWindow: 200000,
+    pricePerToken: "$0.015/1K"
+  },
+  {
+    id: "anthropic/claude-3-opus-20240229",
+    name: "Claude 3 Opus",
+    description: "Anthropic's most capable model",
+    isPro: true,
+    category: "specialized",
+    features: ["Expert analysis", "Complex tasks", "Research assistance"],
+    contextWindow: 200000,
+    pricePerToken: "$0.025/1K"
+  },
+  {
+    id: "google/gemini-1.0-pro",
+    name: "Gemini Pro",
+    description: "Google's latest model with advanced reasoning",
+    isPro: true,
+    category: "advanced",
+    features: ["Strong math", "Multilingual", "Creative writing"],
+    contextWindow: 128000,
+    pricePerToken: "$0.0015/1K"
+  },
+  {
+    id: "mistral/mistral-large-2024-01",
+    name: "Mistral Large",
+    description: "High-performance model with strong reasoning",
+    isPro: true,
+    category: "advanced",
+    features: ["Efficient processing", "Accurate responses", "Multilingual"],
+    contextWindow: 32768,
+    pricePerToken: "$0.008/1K"
+  },
+  {
+    id: "openai/gpt-4-turbo",
+    name: "GPT-4 Turbo",
+    description: "Latest GPT-4 with enhanced capabilities",
+    isPro: true,
+    category: "specialized",
+    features: ["Advanced reasoning", "Expert coding", "Complex analysis"],
+    contextWindow: 128000,
+    pricePerToken: "$0.01/1K"
+  }
+];
+
+interface ModelOptionProps {
+  model: ChatModel;
+  isSelected: boolean;
+  isLocked: boolean;
+  onSelect: () => void;
+}
+
+const ModelOption = ({ model, isSelected, isLocked, onSelect }: ModelOptionProps) => (
+  <button
+    onClick={onSelect}
+    className={cn(
+      "w-full p-3 text-left rounded-xl transition-all",
+      isSelected ? "bg-[#F0F9FF]" : "hover:bg-[#F0F9FF]"
+    )}
+  >
+    <div className="flex items-start justify-between">
+      <div>
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-[#0369A1]">{model.name}</span>
+          {isLocked && <span className="text-sm">🔒</span>}
+        </div>
+        <p className="text-sm text-[#0369A1]/60 mt-1">{model.description}</p>
+        <div className="flex items-center gap-2 mt-1 text-xs text-[#0369A1]/70">
+          <span>Context: {(model.contextWindow! / 1000).toFixed(0)}K</span>
+          <span>•</span>
+          <span>{model.pricePerToken}</span>
+        </div>
+      </div>
+    </div>
+    <div className="flex flex-wrap gap-2 mt-2">
+      {model.features.map((feature, i) => (
+        <span
+          key={i}
+          className="px-2 py-0.5 text-xs rounded-full bg-[#E0F2FE] text-[#0369A1]"
+        >
+          {feature}
+        </span>
+      ))}
+    </div>
+  </button>
+);
+
+export default function ChatPanel({ onUpgradeClick, userPlan = "pro" }: ChatPanelProps) {
+  const [selectedModel, setSelectedModel] = useState<ChatModel["id"]>("gpt-3.5-turbo");
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [selectedModel, setSelectedModel] = useState<ChatModel>("gemini-pro");
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(
-    null
-  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [showModelSelect, setShowModelSelect] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const modelSelectRef = useRef<HTMLDivElement>(null);
 
-  // Feature flag check
-  const isChatEnabled = process.env.NEXT_PUBLIC_CHAT_ENABLED === "true";
-
-  const models: ModelConfig[] = [
-    {
-      id: "gpt-4o",
-      name: "GPT-4o",
-      description: "Most capable OpenAI model",
-      icon: "🤖",
-      color: "bg-green-500",
-      enabled: true,
-      quota: "0/0", // Updated from API
-    },
-    {
-      id: "claude-sonnet",
-      name: "Claude Sonnet 3.5",
-      description: "Anthropic's reasoning model",
-      icon: "🎭",
-      color: "bg-purple-500",
-      enabled: true,
-      quota: "0/0",
-    },
-    {
-      id: "gemini-pro",
-      name: "Gemini Pro",
-      description: "Google's latest model",
-      icon: "✨",
-      color: "bg-blue-500",
-      enabled: true,
-      quota: "0/10M",
-    },
-  ];
+  // Close model select on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (modelSelectRef.current && !modelSelectRef.current.contains(event.target as Node)) {
+        setShowModelSelect(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -75,326 +162,294 @@ export default function ChatPanel() {
     scrollToBottom();
   }, [messages]);
 
-  const generateMessageId = () =>
-    `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const handleModelSelect = (modelId: ChatModel["id"]) => {
+    const model = CHAT_MODELS.find(m => m.id === modelId);
+    if (model?.isPro && userPlan === "free") {
+      onUpgradeClick();
+      return;
+    }
+    setSelectedModel(modelId);
+  };
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isStreaming) return;
+    if (!inputValue.trim() || isLoading) return;
 
-    const userMessage: ChatMessage = {
-      id: generateMessageId(),
+    const userMessage: Message = {
+      id: Date.now().toString(),
       role: "user",
-      content: inputValue,
+      content: inputValue.trim(),
       timestamp: new Date(),
     };
 
-    const assistantMessageId = generateMessageId();
-    const assistantMessage: ChatMessage = {
-      id: assistantMessageId,
-      role: "assistant",
-      content: "",
-      model: selectedModel,
-      timestamp: new Date(),
-      streaming: true,
-    };
-
-    setMessages((prev) => [...prev, userMessage, assistantMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInputValue("");
-    setIsStreaming(true);
-    setStreamingMessageId(assistantMessageId);
+    setIsLoading(true);
 
-    // Create abort controller for this request
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
+    // @or Debug logging
+    console.log('Sending chat request:', { model: selectedModel, messageCount: messages.length + 1 });
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
+      // @or Call real OpenRouter API with credentials
+      const response = await fetch('/api/chat', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
+        credentials: 'include', // @or Include cookies for Clerk auth
         body: JSON.stringify({
-          messages: [
-            ...messages.map((m) => ({ role: m.role, content: m.content })),
-            { role: "user", content: inputValue },
-          ],
           model: selectedModel,
-          stream: true,
+          messages: [...messages, userMessage].map(m => ({ 
+            role: m.role, 
+            content: m.content 
+          }))
         }),
-        signal: abortController.signal,
       });
 
+      // @or Check if response is HTML (redirect/error page)
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response:', text.substring(0, 200));
+        throw new Error('Authentication required. Please sign in again.');
+      }
+
+      const result = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || `HTTP ${response.status}`);
+        throw new Error(result.error || `HTTP ${response.status}`);
       }
 
-      if (!response.body) {
-        throw new Error("No response body");
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let accumulatedContent = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
-
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6);
-            if (data === "[DONE]") continue;
-
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.content) {
-                accumulatedContent += parsed.content;
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.id === assistantMessageId
-                      ? { ...m, content: accumulatedContent }
-                      : m
-                  )
-                );
-              }
-            } catch (e) {
-              // Skip invalid JSON
-            }
-          }
-        }
-      }
-
-      // Mark streaming as complete
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantMessageId ? { ...m, streaming: false } : m
-        )
-      );
-    } catch (error: any) {
-      if (error.name === "AbortError") {
-        // Request was cancelled
-        setMessages((prev) => prev.filter((m) => m.id !== assistantMessageId));
-      } else {
-        // Show error message
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantMessageId
-              ? {
-                  ...m,
-                  content: `Error: ${error.message}`,
-                  streaming: false,
-                }
-              : m
-          )
-        );
-      }
-    } finally {
-      setIsStreaming(false);
-      setStreamingMessageId(null);
-      abortControllerRef.current = null;
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant", 
+        content: result.message.content,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Chat error:", error);
+      
+      // Show error message in chat
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant", 
+        content: `Error: ${error instanceof Error ? error.message : 'Failed to get response'}. Please try again.`,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      setIsLoading(false);
     }
   };
 
-  const handleStopGeneration = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
-
-  const clearChat = () => {
-    setMessages([]);
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-  };
-
-  if (!isChatEnabled) {
-    return (
-      <div className="bg-surface/80 backdrop-blur-xl rounded-3xl p-8 border border-border/50 shadow-lg">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl">💬</span>
-          </div>
-          <h3 className="text-title-3 font-semibold text-text-main mb-2">
-            Chat Feature Disabled
-          </h3>
-          <p className="text-body text-text-muted">
-            The multi-model chat feature is currently disabled. Please contact
-            support to enable this feature.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="bg-surface/80 backdrop-blur-xl rounded-3xl border border-border/50 shadow-lg overflow-hidden h-[700px] flex flex-col">
-      {/* Header */}
-      <div className="p-6 border-b border-border/30">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-title-3 font-semibold text-text-main tracking-tight">
-            AI Chat
-          </h3>
-          {messages.length > 0 && (
-            <button
-              onClick={clearChat}
-              className="text-text-muted hover:text-text-main text-caption-1 font-medium transition-colors"
-            >
-              Clear Chat
-            </button>
+    <div className="flex flex-col h-full bg-[#F0F9FF]">
+      <div className="flex-1 overflow-y-auto">
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full p-6">
+            <h1 className="text-4xl font-bold text-[#0369A1] mb-6">
+              How can I help you?
+            </h1>
+            <div className="flex flex-wrap gap-4 justify-center max-w-2xl">
+              <button onClick={() => setInputValue("How does AI work?")} 
+                className="px-4 py-2 rounded-full bg-white text-[#0369A1] hover:bg-[#E0F2FE] transition-all">
+                How does AI work?
+              </button>
+              <button onClick={() => setInputValue("Are black holes real?")}
+                className="px-4 py-2 rounded-full bg-white text-[#0369A1] hover:bg-[#E0F2FE] transition-all">
+                Are black holes real?
+              </button>
+              <button onClick={() => setInputValue('How many Rs are in the word "strawberry"?')}
+                className="px-4 py-2 rounded-full bg-white text-[#0369A1] hover:bg-[#E0F2FE] transition-all">
+                Count Rs in "strawberry"
+              </button>
+              <button onClick={() => setInputValue("What is the meaning of life?")}
+                className="px-4 py-2 rounded-full bg-white text-[#0369A1] hover:bg-[#E0F2FE] transition-all">
+                What is the meaning of life?
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="p-6 space-y-6">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={cn(
+                  "flex gap-3",
+                  message.role === "user" ? "justify-end" : "justify-start"
+                )}
+              >
+                <div
+                                      className={cn(
+                      "max-w-[70%] p-4 rounded-2xl",
+                      message.role === "user"
+                        ? "bg-[#0369A1] text-white"
+                        : "bg-white shadow-sm"
+                    )}
+                  >
+                    <p className="text-[15px] whitespace-pre-wrap">{message.content}</p>
+                    <p className="text-xs opacity-70 mt-2">
+                      {message.timestamp.toLocaleTimeString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              
+              {isLoading && (
+                <div className="flex gap-3 justify-start">
+                  <div className="max-w-[70%] p-4 rounded-2xl bg-white shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-[#0369A1] border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-[#0369A1]">Thinking...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div ref={messagesEndRef} />
+            </div>
           )}
         </div>
 
-        {/* Model Selection Pills */}
-        <div className="flex flex-wrap gap-2">
-          {models.map((model) => (
-            <button
-              key={model.id}
-              onClick={() => !isStreaming && setSelectedModel(model.id)}
-              disabled={!model.enabled || isStreaming}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-full border text-caption-1 font-medium transition-all duration-200 ${
-                selectedModel === model.id
-                  ? "border-primary bg-primary/10 text-primary shadow-primary-glow"
-                  : model.enabled
-                    ? "border-border/30 bg-surface/60 text-text-muted hover:border-primary/30 hover:text-text-main"
-                    : "border-border/20 bg-surface/30 text-text-muted/50 cursor-not-allowed"
-              }`}
-            >
-              <span>{model.icon}</span>
-              <span>{model.name}</span>
-              {model.quota && (
-                <span className="text-xs opacity-60">({model.quota})</span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {messages.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">💬</span>
-            </div>
-            <h4 className="text-title-3 font-semibold text-text-main mb-2">
-              Start a conversation
-            </h4>
-            <p className="text-body text-text-muted max-w-md mx-auto">
-              Choose a model above and ask me anything. I can help with writing,
-              analysis, coding, and more.
-            </p>
-          </div>
-        ) : (
-          messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex space-x-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              {message.role === "assistant" && (
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    message.model === "gpt-4o"
-                      ? "bg-green-500/20"
-                      : message.model === "claude-sonnet"
-                        ? "bg-purple-500/20"
-                        : "bg-blue-500/20"
-                  }`}
+        {/* Input Area with Model Selection */}
+        <div className="border-t border-[#BAE6FD] p-4 bg-white">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex gap-2 mb-3">
+              <div className="relative flex-1">
+                <button
+                  onClick={() => setShowModelSelect(!showModelSelect)}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-full bg-[#F0F9FF] text-[#0369A1] hover:bg-[#E0F2FE] transition-all"
                 >
-                  <span className="text-sm">
-                    {message.model === "gpt-4o"
-                      ? "🤖"
-                      : message.model === "claude-sonnet"
-                        ? "🎭"
-                        : "✨"}
-                  </span>
-                </div>
-              )}
+                  {CHAT_MODELS.find(m => m.id === selectedModel)?.name}
+                  <span className="opacity-60">▼</span>
+                </button>
+                
+                {showModelSelect && (
+                  <div ref={modelSelectRef} className="absolute bottom-full left-0 w-96 mb-2 p-2 bg-white rounded-2xl shadow-xl border border-[#BAE6FD]">
+                    <div className="mb-3 px-3">
+                      <h3 className="text-lg font-semibold text-[#0369A1]">
+                        {userPlan === "free" ? "Unlock all models" : "Available Models"}
+                      </h3>
+                      {userPlan === "free" && (
+                        <div className="mt-2 flex justify-between items-center">
+                          <span className="text-2xl font-bold text-[#0369A1]">$8<span className="text-sm font-normal">/month</span></span>
+                          <button
+                            onClick={onUpgradeClick}
+                            className="px-4 py-1.5 rounded-full bg-[#0369A1] text-white text-sm hover:bg-[#0284C7] transition-all"
+                          >
+                            Upgrade now
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Basic Models */}
+                    <div className="mb-4">
+                      <div className="px-3 mb-2">
+                        <h4 className="text-sm font-medium text-[#0369A1]/70">Basic</h4>
+                      </div>
+                      {CHAT_MODELS.filter(m => m.category === "basic").map((model) => (
+                        <ModelOption
+                          key={model.id}
+                          model={model}
+                          isSelected={selectedModel === model.id}
+                          isLocked={model.isPro && userPlan === "free"}
+                          onSelect={() => {
+                            if (model.isPro && userPlan === "free") {
+                              onUpgradeClick();
+                            } else {
+                              handleModelSelect(model.id);
+                              setShowModelSelect(false);
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
 
-              <div
-                className={`max-w-[80%] p-4 rounded-2xl ${
-                  message.role === "user"
-                    ? "bg-primary text-white ml-auto"
-                    : "bg-surface border border-border/30"
-                }`}
-              >
-                <div
-                  className={`text-callout ${
-                    message.role === "user" ? "text-white" : "text-text-main"
-                  }`}
-                >
-                  {message.content}
-                  {message.streaming && (
-                    <span className="inline-block w-2 h-4 bg-current ml-1 animate-pulse" />
-                  )}
-                </div>
+                    {/* Advanced Models */}
+                    <div className="mb-4">
+                      <div className="px-3 mb-2">
+                        <h4 className="text-sm font-medium text-[#0369A1]/70">Advanced</h4>
+                      </div>
+                      {CHAT_MODELS.filter(m => m.category === "advanced").map((model) => (
+                        <ModelOption
+                          key={model.id}
+                          model={model}
+                          isSelected={selectedModel === model.id}
+                          isLocked={model.isPro && userPlan === "free"}
+                          onSelect={() => {
+                            if (model.isPro && userPlan === "free") {
+                              onUpgradeClick();
+                            } else {
+                              handleModelSelect(model.id);
+                              setShowModelSelect(false);
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
 
-                {message.role === "assistant" && (
-                  <div className="text-caption-2 text-text-muted mt-2 flex items-center space-x-2">
-                    <span>
-                      {models.find((m) => m.id === message.model)?.name}
-                    </span>
-                    <span>•</span>
-                    <span>{message.timestamp.toLocaleTimeString()}</span>
+                    {/* Specialized Models */}
+                    <div>
+                      <div className="px-3 mb-2">
+                        <h4 className="text-sm font-medium text-[#0369A1]/70">Specialized</h4>
+                      </div>
+                      {CHAT_MODELS.filter(m => m.category === "specialized").map((model) => (
+                        <ModelOption
+                          key={model.id}
+                          model={model}
+                          isSelected={selectedModel === model.id}
+                          isLocked={model.isPro && userPlan === "free"}
+                          onSelect={() => {
+                            if (model.isPro && userPlan === "free") {
+                              onUpgradeClick();
+                            } else {
+                              handleModelSelect(model.id);
+                              setShowModelSelect(false);
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
-
-              {message.role === "user" && (
-                <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-sm">👤</span>
-                </div>
-              )}
             </div>
-          ))
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input */}
-      <div className="p-6 border-t border-border/30">
-        <div className="flex space-x-3">
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={(e) =>
-                e.key === "Enter" && !e.shiftKey && handleSendMessage()
-              }
-              placeholder={`Message ${models.find((m) => m.id === selectedModel)?.name}...`}
-              disabled={isStreaming}
-              className="w-full p-4 bg-surface border border-border/30 rounded-2xl text-callout text-text-main placeholder-text-muted focus:outline-none focus:border-primary transition-colors resize-none"
-            />
+            
+            <div className="flex gap-3 items-end">
+              <div className="flex-1 relative">
+                <textarea
+                  ref={textareaRef}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Message Gemini..."
+                  disabled={isLoading}
+                  className="w-full p-4 pr-12 rounded-2xl bg-[#F0F9FF] resize-none focus:outline-none focus:ring-2 focus:ring-[#0369A1] transition-all text-[15px] text-[#0369A1] placeholder-[#0369A1]/40"
+                  rows={1}
+                  style={{ minHeight: "60px", maxHeight: "120px" }}
+                />
+              </div>
+              <button
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim() || isLoading}
+                className="p-4 rounded-2xl bg-[#0369A1] text-white hover:bg-[#0284C7] disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
+              >
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <span className="text-lg">↑</span>
+                )}
+              </button>
           </div>
-
-          {isStreaming ? (
-            <button
-              onClick={handleStopGeneration}
-              className="px-6 py-4 bg-accent text-white rounded-2xl font-medium text-callout hover:bg-accent/90 transition-colors flex items-center space-x-2"
-            >
-              <span>⏹️</span>
-              <span>Stop</span>
-            </button>
-          ) : (
-            <button
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim()}
-              className="px-6 py-4 bg-primary text-white rounded-2xl font-medium text-callout hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-            >
-              <span>📤</span>
-              <span>Send</span>
-            </button>
-          )}
-        </div>
-
-        <div className="mt-3 text-caption-2 text-text-muted text-center">
-          Press Enter to send • Model:{" "}
-          {models.find((m) => m.id === selectedModel)?.name}
         </div>
       </div>
     </div>

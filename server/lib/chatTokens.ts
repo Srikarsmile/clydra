@@ -5,19 +5,23 @@
  * to implement metered quotas.
  */
 
-// Token estimation functions
+// @or Token estimation functions for OpenRouter models
 export function estimateTokens(text: string, model: string): number {
   // Basic fallback estimation (roughly 4 characters per token)
   const fallbackEstimation = Math.ceil(text.length / 4);
 
   try {
     switch (model) {
-      case "gpt-4o":
-        return estimateOpenAITokens(text, "gpt-4");
-      case "claude-sonnet":
+      case "openai/gpt-3.5-turbo":
+      case "openai/gpt-4-turbo":
+        return estimateOpenAITokens(text);
+      case "anthropic/claude-3-sonnet-20240229":
+      case "anthropic/claude-3-opus-20240229":
         return estimateAnthropicTokens(text);
-      case "gemini-pro":
+      case "google/gemini-1.0-pro":
         return estimateGeminiTokens(text);
+      case "mistral/mistral-large-2024-01":
+        return estimateMistralTokens(text);
       default:
         return fallbackEstimation;
     }
@@ -52,6 +56,11 @@ function estimateGeminiTokens(text: string): number {
   return Math.ceil(text.length / 4.5);
 }
 
+function estimateMistralTokens(text: string): number {
+  // Assuming a simple estimation based on the length of the text
+  return Math.ceil(text.length / 4);
+}
+
 export function estimateConversationTokens(
   messages: Array<{ role: string; content: string }>,
   model: string
@@ -66,23 +75,38 @@ export function estimateConversationTokens(
   return contentTokens + overhead;
 }
 
-// Model-specific token limits and costs
+// @or Model-specific token limits and costs for OpenRouter models
 export const MODEL_CONFIGS = {
-  "gpt-4o": {
-    maxTokens: 128000,
-    inputCostPer1kTokens: 0.0025, // $2.50 per 1M input tokens
-    outputCostPer1kTokens: 0.01, // $10 per 1M output tokens
+  "openai/gpt-3.5-turbo": {
+    maxTokens: 16385,
+    inputCostPer1kTokens: 0.0005, // $0.50 per 1M input tokens
+    outputCostPer1kTokens: 0.0015, // $1.50 per 1M output tokens
   },
-  "claude-sonnet": {
+  "anthropic/claude-3-sonnet-20240229": {
     maxTokens: 200000,
     inputCostPer1kTokens: 0.003, // $3 per 1M input tokens
     outputCostPer1kTokens: 0.015, // $15 per 1M output tokens
   },
-  "gemini-pro": {
+  "anthropic/claude-3-opus-20240229": {
+    maxTokens: 200000,
+    inputCostPer1kTokens: 0.006, // $6 per 1M input tokens
+    outputCostPer1kTokens: 0.025, // $25 per 1M output tokens
+  },
+  "google/gemini-1.0-pro": {
     maxTokens: 128000,
-    inputCostPer1kTokens: 0.0005, // $0.50 per 1M input tokens (much cheaper)
+    inputCostPer1kTokens: 0.0005, // $0.50 per 1M input tokens
     outputCostPer1kTokens: 0.0015, // $1.50 per 1M output tokens
   },
+  "mistral/mistral-large-2024-01": {
+    maxTokens: 32768,
+    inputCostPer1kTokens: 0.002, // $2 per 1M input tokens
+    outputCostPer1kTokens: 0.008, // $8 per 1M output tokens
+  },
+  "openai/gpt-4-turbo": {
+    maxTokens: 128000,
+    inputCostPer1kTokens: 0.003, // $3 per 1M input tokens
+    outputCostPer1kTokens: 0.01, // $10 per 1M output tokens
+  }
 } as const;
 
 export function calculateCost(
@@ -99,14 +123,21 @@ export function calculateCost(
   return inputCost + outputCost;
 }
 
+// @or Get display name for OpenRouter models
 export function getModelDisplayName(model: string): string {
   switch (model) {
-    case "gpt-4o":
-      return "GPT-4o";
-    case "claude-sonnet":
-      return "Claude Sonnet 3.5";
-    case "gemini-pro":
+    case "openai/gpt-3.5-turbo":
+      return "GPT-3.5 Turbo";
+    case "anthropic/claude-3-sonnet-20240229":
+      return "Claude 3 Sonnet";
+    case "anthropic/claude-3-opus-20240229":
+      return "Claude 3 Opus";
+    case "google/gemini-1.0-pro":
       return "Gemini Pro";
+    case "mistral/mistral-large-2024-01":
+      return "Mistral Large";
+    case "openai/gpt-4-turbo":
+      return "GPT-4 Turbo";
     default:
       return model;
   }
