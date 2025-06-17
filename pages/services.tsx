@@ -18,7 +18,6 @@ export default function Services() {
       description: "Perfect for getting started",
       features: [
         "30 images",
-        "20 seconds video",
         "Standard quality",
         "Basic support",
       ],
@@ -34,7 +33,6 @@ export default function Services() {
       description: "For content creators",
       features: [
         "500 images",
-        "250 seconds video",
         "HD quality",
         "Priority support",
         "Custom styles",
@@ -52,7 +50,6 @@ export default function Services() {
       description: "For professional teams",
       features: [
         "5,000 images",
-        "2,500 seconds video",
         "Ultra HD quality",
         "24/7 support",
         "Advanced features",

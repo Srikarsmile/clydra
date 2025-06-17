@@ -16,7 +16,7 @@ interface Message {
 
 interface GenerationItem {
   id: string;
-  type: "chat" | "image" | "video";
+  type: "chat" | "image";
   prompt: string;
   result?: string;
   model: string;
@@ -40,13 +40,8 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
   const [generations, setGenerations] = useState<GenerationItem[]>([]);
   const [currentImageGeneration, setCurrentImageGeneration] =
     useState<GenerationItem | null>(null);
-  const [currentVideoGeneration, setCurrentVideoGeneration] =
-    useState<GenerationItem | null>(null);
   const selectedImageModel = "fal-ai/imagen4/preview";
-  const selectedVideoModel = "fal-ai/kling-video/v2/master/text-to-video";
-  const [selectedVideoDuration, setSelectedVideoDuration] = useState("5");
   const [imagePrompt, setImagePrompt] = useState("");
-  const [videoPrompt, setVideoPrompt] = useState("");
 
   // Mock chat usage - in real app, this would come from API
   const chatUsage = { used: 420, total: 500 };
@@ -255,177 +250,6 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
       };
 
       setCurrentImageGeneration(failedGeneration);
-      setGenerations((prev) =>
-        prev.map((gen) => (gen.id === generation.id ? failedGeneration : gen))
-      );
-    }
-  };
-
-  const handleVideoGeneration = async () => {
-    if (!videoPrompt.trim()) return;
-
-    // Check daily limit first
-    const today = new Date().toDateString();
-    const todayVideoGenerations = generations.filter(
-      (g) =>
-        g.type === "video" &&
-        g.status === "completed" &&
-        new Date(g.timestamp).toDateString() === today
-    ).length;
-
-    console.log('Today\'s video generations:', todayVideoGenerations);
-
-    if (todayVideoGenerations >= 1) {
-      // Show upgrade prompt for videos (1 per day)
-      const failedGeneration: GenerationItem = {
-        id: Date.now().toString(),
-        type: "video",
-        prompt: videoPrompt,
-        model: selectedVideoModel,
-        timestamp: new Date(),
-        status: "failed",
-        metadata: {
-          duration: `${selectedVideoDuration}s`,
-          cost: "Free",
-          error: "Daily limit reached. Upgrade to generate unlimited videos.",
-        },
-      };
-
-      setCurrentVideoGeneration(failedGeneration);
-      setGenerations((prev) => [failedGeneration, ...prev]);
-      return;
-    }
-
-    const generation: GenerationItem = {
-      id: Date.now().toString(),
-      type: "video",
-      prompt: videoPrompt,
-      model: selectedVideoModel,
-      timestamp: new Date(),
-      status: "generating",
-      metadata: {
-        duration: `${selectedVideoDuration}s`,
-        cost: "Free",
-      },
-    };
-
-    setCurrentVideoGeneration(generation);
-    setGenerations((prev) => [generation, ...prev]);
-
-    try {
-      console.log('Starting video generation with fal.ai API...');
-      
-      // Call the real fal.ai API for free tier
-      const response = await fetch('/api/v1/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: selectedVideoModel,
-          prompt: videoPrompt,
-          settings: {
-            duration: parseInt(selectedVideoDuration),
-            aspect_ratio: "16:9",
-            cfg_scale: 0.5,
-            negative_prompt: "blur, distort, and low quality",
-          },
-          skipCreditCheck: true, // Skip credit validation for free tier
-        }),
-      });
-
-      console.log('Video API response status:', response.status);
-      console.log('Video API response headers:', Object.fromEntries(response.headers.entries()));
-      
-      const result = await response.json();
-      console.log('Video API response:', result);
-      
-      if (!response.ok) {
-        console.error('HTTP Error:', response.status, response.statusText);
-        console.error('Full API Error Response:', result);
-        throw new Error(result.error || result.details || `HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      if (result.success && result.data) {
-        console.log('✅ Video generation successful, extracting video URL...');
-        console.log('Video result data structure:', result.data);
-        
-        // Extract video URL from fal.ai response
-        // The fal.ai response structure is: result.data.video.url
-        let videoUrl: string | undefined;
-        
-        // Try different possible paths for video URL based on actual API response
-        if (result.data?.video?.url) {
-          videoUrl = result.data.video.url;
-        } else if (result.data?.url) {
-          videoUrl = result.data.url;
-        } else if (result.data?.data?.video?.url) {
-          videoUrl = result.data.data.video.url;
-        } else if (result.data?.data?.url) {
-          videoUrl = result.data.data.url;
-        }
-        
-        console.log('Extracted video URL:', videoUrl);
-        
-        if (!videoUrl) {
-          console.error('❌ No video URL found in response data:', result.data);
-          throw new Error('No video URL found in API response');
-        }
-        
-        const completedGeneration = {
-          ...generation,
-          status: "completed" as const,
-          result: videoUrl,
-          metadata: {
-            ...generation.metadata,
-            cost: "Free",
-          },
-        };
-        
-        console.log('✅ Setting completed video generation:', completedGeneration);
-        
-        setCurrentVideoGeneration(completedGeneration);
-        setGenerations((prev) =>
-          prev.map((gen) =>
-            gen.id === generation.id ? completedGeneration : gen
-          )
-        );
-      } else {
-        // Log the full API response for debugging
-        console.error('Video API Error Response:', result);
-        throw new Error(result.error || result.details || 'Generation failed');
-      }
-    } catch (error) {
-      console.error("Video generation failed:", error);
-
-      let errorMessage = "Generation failed";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-      }
-
-      // Check for specific error types
-      if (errorMessage.includes("safety checks")) {
-        errorMessage = "Video filtered by safety checks. Try a different prompt.";
-      } else if (errorMessage.includes("Unauthorized")) {
-        errorMessage = "Please sign in to generate videos.";
-      } else if (errorMessage.includes("rate limit")) {
-        errorMessage = "Rate limit exceeded. Please wait a moment.";
-      } else if (errorMessage.includes("FAL_KEY")) {
-        errorMessage = "Video generation service is not configured. Please check configuration.";
-      }
-
-      const failedGeneration = {
-        ...generation,
-        status: "failed" as const,
-        metadata: {
-          ...generation.metadata,
-          error: errorMessage,
-        },
-      };
-
-      setCurrentVideoGeneration(failedGeneration);
       setGenerations((prev) =>
         prev.map((gen) => (gen.id === generation.id ? failedGeneration : gen))
       );
@@ -722,286 +546,6 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
             </div>
           </div>
         );
-      case "video":
-        return (
-          <div className="flex flex-col h-full bg-bg-base">
-            <div className="p-6 border-b border-border/30 bg-surface/50 backdrop-blur-sm">
-              <h2 className="text-title-2 font-semibold text-text-main">
-                AI Video Creation
-              </h2>
-              <p className="text-body text-text-muted mt-2">
-                Generate professional videos from text prompts
-              </p>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="max-w-4xl mx-auto space-y-6">
-                {/* Generated Video Display */}
-                {currentVideoGeneration && (
-                  <div className="bg-surface/80 backdrop-blur-xl rounded-2xl p-6 border border-border/50">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-title-3 font-semibold text-text-main">
-                        Generated Video
-                      </h3>
-                      <div className="flex items-center space-x-2">
-                        <span
-                          className={`px-3 py-1 rounded-full text-caption-1 font-medium ${
-                            currentVideoGeneration.status === "generating"
-                              ? "bg-yellow-500/20 text-yellow-600"
-                              : currentVideoGeneration.status === "completed"
-                                ? "bg-green-500/20 text-green-600"
-                                : "bg-red-500/20 text-red-600"
-                          }`}
-                        >
-                          {currentVideoGeneration.status === "generating"
-                            ? "Generating..."
-                            : currentVideoGeneration.status === "completed"
-                              ? "Completed"
-                              : "Failed"}
-                        </span>
-                        <span className="text-caption-1 text-text-muted">
-                          {currentVideoGeneration.metadata?.cost}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="bg-surface/60 rounded-xl p-4 mb-4">
-                      <p className="text-body text-text-main italic">
-                        "{currentVideoGeneration.prompt}"
-                      </p>
-                      <div className="flex items-center space-x-4 mt-2 text-caption-1 text-text-muted">
-                        <span>Model: Kling Video 2.0</span>
-                        <span>•</span>
-                        <span>
-                          Duration: {currentVideoGeneration.metadata?.duration}
-                        </span>
-                      </div>
-                    </div>
-
-                    {currentVideoGeneration.status === "generating" ? (
-                      <div className="aspect-video bg-surface/60 rounded-xl flex items-center justify-center">
-                        <div className="text-center space-y-4">
-                          <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto"></div>
-                          <p className="text-body text-text-muted">
-                            Generating your video...
-                          </p>
-                          <p className="text-caption-1 text-text-muted">
-                            This may take 2-5 minutes
-                          </p>
-                        </div>
-                      </div>
-                    ) : currentVideoGeneration.status === "completed" &&
-                      currentVideoGeneration.result ? (
-                      <div className="space-y-4">
-                        <video
-                          src={currentVideoGeneration.result}
-                          controls
-                          className="w-full aspect-video rounded-xl border border-border/30"
-                          poster="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDgwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjMUYyOTM3Ii8+Cjx0ZXh0IHg9IjQwMCIgeT0iMjI1IiBmaWxsPSIjNjM2NjcxIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkdlbmVyYXRlZCBWaWRlbzwvdGV4dD4KPC9zdmc+"
-                        />
-                        <div className="flex space-x-3">
-                          <a
-                            href={currentVideoGeneration.result}
-                            download="generated-video.mp4"
-                            className="flex-1 bg-accent text-white py-3 px-4 rounded-xl font-medium hover:shadow-accent-glow transition-all text-center"
-                          >
-                            Download
-                          </a>
-                          <button
-                            onClick={() => {
-                              setCurrentVideoGeneration(null);
-                              handleVideoGeneration();
-                            }}
-                            className="flex-1 bg-surface text-text-main py-3 px-4 rounded-xl font-medium border border-border/50 hover:bg-surface/80 transition-all"
-                          >
-                            Regenerate
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="aspect-video bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-xl flex items-center justify-center border border-orange-500/20">
-                        <div className="text-center">
-                          <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span className="text-2xl">⚡</span>
-                          </div>
-                          <h3 className="text-title-3 font-semibold text-text-main mb-2">
-                            {currentVideoGeneration.metadata?.error?.includes(
-                              "Daily limit"
-                            )
-                              ? "Daily Limit Reached"
-                              : "Generation Failed"}
-                          </h3>
-                          <p className="text-caption-1 text-text-muted mb-4">
-                            {currentVideoGeneration.metadata?.error ||
-                              "Please try again"}
-                          </p>
-                          {currentVideoGeneration.metadata?.error?.includes(
-                            "Daily limit"
-                          ) ? (
-                            <button className="bg-gradient-neo-wave text-white px-6 py-3 rounded-xl font-medium hover:shadow-primary-glow transition-all duration-300 hover:scale-[1.02]">
-                              Upgrade to Pro
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                setCurrentVideoGeneration(null);
-                                handleVideoGeneration();
-                              }}
-                              className="bg-red-500 text-white px-4 py-2 rounded-lg text-caption-1 hover:bg-red-600 transition-all"
-                            >
-                              Try Again
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Free Tier Info */}
-                <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 backdrop-blur-xl rounded-2xl p-6 border border-purple-500/20">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                      <span className="text-xl">🎁</span>
-                    </div>
-                    <div>
-                      <h3 className="text-title-3 font-semibold text-text-main">
-                        Free Daily Video
-                      </h3>
-                      <p className="text-caption-1 text-purple-600">
-                        {1 -
-                          generations.filter(
-                            (g) =>
-                              g.type === "video" &&
-                              g.status === "completed" &&
-                              new Date(g.timestamp).toDateString() ===
-                                new Date().toDateString()
-                          ).length}{" "}
-                        of 1 remaining today
-                      </p>
-                    </div>
-                  </div>
-                  <div className="w-full bg-surface/60 rounded-full h-2 mb-3">
-                    <div
-                      className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
-                      style={{
-                        width: `${
-                          (generations.filter(
-                            (g) =>
-                              g.type === "video" &&
-                              g.status === "completed" &&
-                              new Date(g.timestamp).toDateString() ===
-                                new Date().toDateString()
-                          ).length /
-                            1) *
-                          100
-                        }%`,
-                      }}
-                    ></div>
-                  </div>
-                  <p className="text-caption-1 text-text-muted">
-                    Resets daily at midnight • Upgrade for unlimited generations
-                  </p>
-                </div>
-
-                {/* Model Selection */}
-                <div className="bg-surface/80 backdrop-blur-xl rounded-2xl p-6 border border-border/50">
-                  <h3 className="text-title-3 font-semibold text-text-main mb-4">
-                    AI Model
-                  </h3>
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="flex items-center space-x-4 p-4 bg-accent/10 border-2 border-accent/30 rounded-xl">
-                      <div className="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center">
-                        <span className="text-2xl">🎬</span>
-                      </div>
-                      <div className="text-left">
-                        <h4 className="text-callout font-semibold text-text-main">
-                          Kling Video 2.0 Master
-                        </h4>
-                        <p className="text-caption-1 text-text-muted">
-                          Free tier • High quality • Cinematic
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Duration Selection */}
-                <div className="bg-surface/80 backdrop-blur-xl rounded-2xl p-6 border border-border/50">
-                  <h3 className="text-title-3 font-semibold text-text-main mb-4">
-                    Video Duration
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      onClick={() => setSelectedVideoDuration("5")}
-                      className={`p-4 rounded-xl transition-all text-left ${
-                        selectedVideoDuration === "5"
-                          ? "bg-primary/10 border-2 border-primary/30"
-                          : "bg-surface/60 border border-border/30 hover:bg-surface/80"
-                      }`}
-                    >
-                      <div className="text-callout font-semibold text-text-main">
-                        5 seconds
-                      </div>
-                      <div className="text-caption-1 text-text-muted mt-1">
-                        Free
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => setSelectedVideoDuration("10")}
-                      className={`p-4 rounded-xl transition-all text-left ${
-                        selectedVideoDuration === "10"
-                          ? "bg-primary/10 border-2 border-primary/30"
-                          : "bg-surface/60 border border-border/30 hover:bg-surface/80"
-                      }`}
-                    >
-                      <div className="text-callout font-semibold text-text-main">
-                        10 seconds
-                      </div>
-                      <div className="text-caption-1 text-text-muted mt-1">
-                        Free
-                      </div>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Prompt Input */}
-                <div className="bg-surface/80 backdrop-blur-xl rounded-2xl p-6 border border-border/50">
-                  <h3 className="text-title-3 font-semibold text-text-main mb-4">
-                    Describe Your Video
-                  </h3>
-                  <textarea
-                    value={videoPrompt}
-                    onChange={(e) => setVideoPrompt(e.target.value)}
-                    placeholder="A dynamic product showcase rotating against a minimalist background, professional lighting, modern aesthetic..."
-                    rows={4}
-                    className="w-full bg-surface border border-border/50 rounded-xl px-4 py-3 text-body text-text-main placeholder-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-200 resize-none"
-                  />
-                  <button
-                    onClick={handleVideoGeneration}
-                    disabled={
-                      !videoPrompt.trim() ||
-                      currentVideoGeneration?.status === "generating"
-                    }
-                    className="mt-4 bg-accent text-white px-6 py-3 rounded-xl font-medium hover:shadow-accent-glow transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                  >
-                    {currentVideoGeneration?.status === "generating"
-                      ? "Generating..."
-                      : generations.filter(
-                            (g) =>
-                              g.type === "video" &&
-                              g.status === "completed" &&
-                              new Date(g.timestamp).toDateString() ===
-                                new Date().toDateString()
-                          ).length >= 1
-                        ? "Upgrade for More"
-                        : `Generate Video (Free)`}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
       case "history":
         return (
           <div className="flex flex-col h-full bg-bg-base">
@@ -1100,9 +644,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
                               <span>
                                 {item.type === "image"
                                   ? "Google Imagen4"
-                                  : item.type === "video"
-                                    ? "Kling Video 2.0"
-                                    : item.model}
+                                  : item.model}
                               </span>
                               {item.metadata?.cost && (
                                 <>
@@ -1169,7 +711,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
                 </div>
 
                 {/* Usage Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-surface/80 backdrop-blur-xl rounded-2xl p-6 border border-border/50">
                     <h4 className="text-callout font-semibold text-text-main mb-2">
                       Chat Messages
@@ -1197,26 +739,6 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
                       {30 -
                         generations.filter(
                           (g) => g.type === "image" && g.status === "completed"
-                        ).length}{" "}
-                      remaining
-                    </div>
-                  </div>
-                  <div className="bg-surface/80 backdrop-blur-xl rounded-2xl p-6 border border-border/50">
-                    <h4 className="text-callout font-semibold text-text-main mb-2">
-                      Videos Created
-                    </h4>
-                    <div className="text-title-2 font-bold text-accent">
-                      {
-                        generations.filter(
-                          (g) => g.type === "video" && g.status === "completed"
-                        ).length
-                      }{" "}
-                      / 5
-                    </div>
-                    <div className="text-caption-1 text-text-muted">
-                      {5 -
-                        generations.filter(
-                          (g) => g.type === "video" && g.status === "completed"
                         ).length}{" "}
                       remaining
                     </div>

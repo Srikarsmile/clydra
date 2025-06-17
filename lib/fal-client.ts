@@ -22,24 +22,6 @@ export const AVAILABLE_MODELS = {
       num_images: 1,
     },
   },
-  "fal-ai/kling-video/v2/master/text-to-video": {
-    name: "Kling Video 2.0 Master",
-    type: "video",
-    description:
-      "Advanced text-to-video generation with enhanced motion quality, complex scene understanding, and cinematic output",
-    pricing: 0.3, // per second ($1.50 for 5s, $3.00 for 10s)
-    pricingModel: "per-second",
-    category: "Video Generation",
-    maxPromptLength: 2000,
-    supportedDurations: [5, 10],
-    supportedAspectRatios: ["16:9", "9:16", "1:1"],
-    defaultSettings: {
-      duration: 5,
-      aspect_ratio: "16:9",
-      cfg_scale: 0.5,
-      negative_prompt: "blur, distort, and low quality",
-    },
-  },
 } as const;
 
 export type ModelId = keyof typeof AVAILABLE_MODELS;
@@ -84,34 +66,17 @@ export async function executeModelRequest(
     // Prepare the input based on model type and API requirements
     let input: Record<string, unknown>;
 
-    if (request.model === "fal-ai/kling-video/v2/master/text-to-video") {
-      // Kling Video 2.0 Master specific settings
-      const videoDefaults =
-        AVAILABLE_MODELS["fal-ai/kling-video/v2/master/text-to-video"]
-          .defaultSettings;
-      input = {
-        prompt: request.prompt,
-        duration: request.settings?.duration || videoDefaults.duration,
-        aspect_ratio:
-          request.settings?.aspect_ratio || videoDefaults.aspect_ratio,
-        cfg_scale: request.settings?.cfg_scale || videoDefaults.cfg_scale,
-        negative_prompt:
-          request.settings?.negative_prompt || videoDefaults.negative_prompt,
-        ...request.settings,
-      };
-    } else {
-      // Google Imagen4 and other models
-      input = {
-        prompt: request.prompt,
-        ...request.settings,
-      };
-    }
+    // Google Imagen4 and other image models
+    input = {
+      prompt: request.prompt,
+      ...request.settings,
+    };
 
     // Execute the model
     console.log('Calling fal.subscribe with model:', request.model);
     
-    // Set longer timeout for video generation
-    const timeoutMs = request.model.includes('video') ? 600000 : 120000; // 10 minutes for video, 2 minutes for image
+    // Set timeout for image generation
+    const timeoutMs = 120000; // 2 minutes for image
     
     const result = await Promise.race([
       fal.subscribe(request.model, {
@@ -134,12 +99,7 @@ export async function executeModelRequest(
     const latency = Date.now() - startTime;
 
     // Calculate cost based on pricing model
-    let cost = modelConfig.pricing;
-    if (request.model === "fal-ai/kling-video/v2/master/text-to-video") {
-      // Per-second pricing for Kling Video
-      const duration = (request.settings?.duration as number) || 5;
-      cost = modelConfig.pricing * duration;
-    }
+    const cost = modelConfig.pricing;
 
     return {
       success: true,

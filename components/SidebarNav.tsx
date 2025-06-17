@@ -29,12 +29,6 @@ export default function SidebarNav({
       icon: "🎨",
       enabled: true,
     },
-    {
-      id: "video",
-      name: "Video Creation",
-      icon: "🎬",
-      enabled: true,
-    },
     ...(isChatEnabled
       ? [
           {
@@ -126,7 +120,6 @@ export default function SidebarNav({
                   }`}
                 >
                   {item.id === "image" && "Create stunning images from text"}
-                  {item.id === "video" && "Generate professional videos"}
                   {item.id === "chat" && "Multi-model AI conversations"}
                   {item.id === "analytics" && "Usage insights and metrics"}
                   {item.id === "settings" && "Account and preferences"}

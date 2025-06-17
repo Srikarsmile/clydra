@@ -83,7 +83,6 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
 // Model-specific dollar costs
 export const MODEL_DOLLAR_COSTS = {
   "fal-ai/imagen4/preview": 0.1, // $0.10 per image
-  "fal-ai/kling-video/v2/master/text-to-video": 1.4, // $1.40 for 5s video
 } as const;
 
 /**
@@ -95,14 +94,6 @@ export function calculateDollarsNeeded(
 ): number {
   const baseCost =
     MODEL_DOLLAR_COSTS[modelId as keyof typeof MODEL_DOLLAR_COSTS] || 0.1;
-
-  // Special handling for video generation with duration
-  if (
-    modelId === "fal-ai/kling-video/v2/master/text-to-video" &&
-    settings?.duration
-  ) {
-    return settings.duration === 5 ? 1.5 : 3.0; // 5s = $1.50, 10s = $3.00
-  }
 
   return baseCost;
 }

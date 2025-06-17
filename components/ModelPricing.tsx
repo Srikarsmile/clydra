@@ -1,49 +1,35 @@
-import { formatPrice } from "../lib/credit-system";
-import { calculateDollarsNeeded } from "../lib/credit-system";
+import { AVAILABLE_MODELS } from "../lib/fal-client";
 
 interface ModelPricingProps {
   modelId: string;
   className?: string;
 }
 
-export default function ModelPricing({
-  modelId,
-  className = "",
-}: ModelPricingProps) {
-  const dollarCost = calculateDollarsNeeded(modelId);
+export function ModelPricing({ modelId, className }: ModelPricingProps) {
+  const model = AVAILABLE_MODELS[modelId as keyof typeof AVAILABLE_MODELS];
+  
+  if (!model) return null;
 
-  const getModelType = (modelId: string) => {
-    if (modelId.includes("imagen4")) return "image";
-    if (modelId.includes("kling")) return "video";
-    return "generation";
+  const getModelType = (id: string) => {
+    if (id.includes("imagen")) return "image";
+    return "unknown";
   };
 
   const modelType = getModelType(modelId);
+  const pricing = model.pricing;
 
   return (
-    <div className={`inline-flex items-center space-x-2 ${className}`}>
-      <span className="text-sm font-semibold text-green-600">
-        {formatPrice(dollarCost)} per {modelType}
-      </span>
-    </div>
+    <span className={`text-xs font-medium ${className || "text-gray-600"}`}>
+      ${pricing.toFixed(2)}/{modelType === "image" ? "image" : "generation"}
+    </span>
   );
 }
 
-// Usage examples for different models
 export function ImagePricing() {
   return (
     <ModelPricing
       modelId="fal-ai/imagen4/preview"
-      className="bg-blue-50 px-3 py-1 rounded-full"
-    />
-  );
-}
-
-export function VideoPricing() {
-  return (
-    <ModelPricing
-      modelId="fal-ai/kling-video/v2/master/text-to-video"
-      className="bg-purple-50 px-3 py-1 rounded-full"
+      className="bg-blue-50 px-2 py-1 rounded-full"
     />
   );
 }

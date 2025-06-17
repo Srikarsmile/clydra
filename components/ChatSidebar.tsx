@@ -17,12 +17,9 @@ export default function ChatSidebar({
 }: ChatSidebarProps) {
   const router = useRouter();
 
-  const navItems = [
+  const tabs = [
     { id: "chat", name: "Chat", icon: "💬" },
     { id: "images", name: "Images", icon: "🎨" },
-    { id: "video", name: "Video", icon: "🎬" },
-    { id: "history", name: "History", icon: "📚" },
-    { id: "billing", name: "Billing", icon: "💳" },
   ];
 
   // Removed unused variables for free tier implementation
@@ -55,7 +52,7 @@ export default function ChatSidebar({
       {/* Navigation */}
       <div className="flex-1 p-4">
         <nav className="space-y-1">
-          {navItems.map((item) => (
+          {tabs.map((item) => (
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
@@ -86,10 +83,6 @@ export default function ChatSidebar({
             <div className="flex justify-between text-caption-1">
               <span className="text-text-muted">Images today:</span>
               <span className="text-green-600 font-medium">3 remaining</span>
-            </div>
-            <div className="flex justify-between text-caption-1">
-              <span className="text-text-muted">Videos today:</span>
-              <span className="text-purple-600 font-medium">1 remaining</span>
             </div>
           </div>
           <div className="w-full bg-surface/60 rounded-full h-2 mt-3">

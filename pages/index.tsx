@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { useState } from "react";
+import Layout from "../components/Layout";
 
-type ServiceKey = "image" | "video";
+type ServiceKey = "image";
 
 interface Service {
   title: string;
@@ -11,44 +12,28 @@ interface Service {
   examples: string[];
 }
 
+type Services = Record<ServiceKey, Service>;
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<ServiceKey>("image");
 
-  const services: Record<ServiceKey, Service> = {
+  const services: Services = {
     image: {
       title: "AI Image Generation",
       description:
-        "Create stunning visuals from text descriptions with advanced AI models",
+        "Create stunning, photorealistic images from simple text descriptions using state-of-the-art AI models",
       features: [
-        "Ultra-high resolution outputs",
-        "Multiple artistic styles",
-        "Commercial usage rights",
-        "Lightning-fast generation",
+        "4K image quality",
+        "Style customization",
+        "Batch processing",
+        "Commercial usage",
       ],
-      pricing: "Starting at $0.10/image",
+      pricing: "Starting at $0.05/image",
       examples: [
         "Product photography",
         "Marketing visuals",
         "Concept art",
         "Social media content",
-      ],
-    },
-    video: {
-      title: "AI Video Creation",
-      description:
-        "Generate professional videos from simple prompts with cutting-edge technology",
-      features: [
-        "4K video quality",
-        "Custom durations",
-        "Multiple formats",
-        "Cinematic effects",
-      ],
-      pricing: "Starting at $1.40/video",
-      examples: [
-        "Marketing videos",
-        "Social content",
-        "Product animations",
-        "Explainer videos",
       ],
     },
   };
@@ -457,14 +442,6 @@ export default function Home() {
                     className="text-callout text-text-muted hover:text-primary transition-colors font-normal"
                   >
                     Image Generation
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#services"
-                    className="text-callout text-text-muted hover:text-primary transition-colors font-normal"
-                  >
-                    Video Creation
                   </Link>
                 </li>
               </ul>
