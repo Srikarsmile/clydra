@@ -342,6 +342,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
       
       if (!response.ok) {
         console.error('HTTP Error:', response.status, response.statusText);
+        console.error('Full API Error Response:', result);
         throw new Error(result.error || result.details || `HTTP ${response.status}: ${response.statusText}`);
       }
 

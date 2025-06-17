@@ -75,6 +75,7 @@ export async function executeModelRequest(
 
     // Check if FAL_KEY is configured
     if (!process.env.FAL_KEY) {
+      console.error('FAL_KEY environment variable is not configured');
       throw new Error("FAL_KEY environment variable is not configured");
     }
 
@@ -98,8 +99,6 @@ export async function executeModelRequest(
           request.settings?.negative_prompt || videoDefaults.negative_prompt,
         ...request.settings,
       };
-      
-      console.log('Video generation settings:', input);
     } else {
       // Google Imagen4 and other models
       input = {
@@ -119,10 +118,9 @@ export async function executeModelRequest(
         input,
         logs: false,
         onQueueUpdate: (update) => {
-          console.log('Queue update:', update.status);
-          // Production: minimal logging only
-          if (update.status === "IN_PROGRESS") {
-            // Silent processing
+          // Only log status changes for debugging
+          if (update.status === "IN_PROGRESS" || update.status === "COMPLETED") {
+            console.log('Generation status:', update.status);
           }
         },
       }),
@@ -131,7 +129,7 @@ export async function executeModelRequest(
       )
     ]);
 
-    console.log('FAL API returned result:', result);
+    console.log('FAL API completed successfully');
 
     const latency = Date.now() - startTime;
 

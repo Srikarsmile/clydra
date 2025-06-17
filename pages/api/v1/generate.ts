@@ -139,13 +139,18 @@ export default async function handler(
     }
 
     // Execute model request
+    console.log('About to execute model request:', { model, prompt: prompt.substring(0, 50) + '...', settings });
     const result = await executeModelRequest({
       model: model as ModelId,
       prompt,
       settings,
     });
 
+    console.log('Model execution result:', { success: result.success, error: result.error, hasData: !!result.data });
+
     if (!result.success) {
+      console.error('Model execution failed:', result.error);
+      
       // Generation failed - refund the amount we deducted (only if we charged)
       let refundResult = null;
       if (!skipCreditCheck && creditCheck) {
