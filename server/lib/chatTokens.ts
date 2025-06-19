@@ -106,7 +106,7 @@ export const MODEL_CONFIGS = {
     maxTokens: 128000,
     inputCostPer1kTokens: 0.003, // $3 per 1M input tokens
     outputCostPer1kTokens: 0.01, // $10 per 1M output tokens
-  }
+  },
 } as const;
 
 export function calculateCost(

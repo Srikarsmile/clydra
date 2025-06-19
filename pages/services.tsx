@@ -16,11 +16,7 @@ export default function Services() {
       price: "$0",
       period: "",
       description: "Perfect for getting started",
-      features: [
-        "30 images",
-        "Standard quality",
-        "Basic support",
-      ],
+      features: ["30 images", "Standard quality", "Basic support"],
       cta: "Current Plan",
       ctaClass: "btn btn-ghost",
       ctaAction: () => {},

@@ -12,9 +12,11 @@ interface ChatSidebarProps {
 export default function ChatSidebar({
   activeTab,
   onTabChange,
-  chatUsage = { used: 420, total: 500 },
+  chatUsage,
   planType = "Free",
 }: ChatSidebarProps) {
+  // Unused parameter - kept for interface compatibility
+  void chatUsage;
   const router = useRouter();
 
   const tabs = [
@@ -25,7 +27,7 @@ export default function ChatSidebar({
   // Removed unused variables for free tier implementation
 
   return (
-    <div className="h-full flex flex-col bg-surface/80 backdrop-blur-xl border-r border-border/50">
+    <div className="h-full flex flex-col bg-[linear-gradient(180deg,#fafbff,#f6f8fe)] rounded-tr-3xl border-r border-border/50">
       {/* Logo and Plan Badge */}
       <div className="p-6 border-b border-border/30">
         <Link href="/" className="flex items-center space-x-3 group mb-4">

@@ -1,10 +1,10 @@
 import { useRouter } from "next/router";
-import Link from "next/link";
+import { MessageCircle, Image, BarChart3, Settings } from "lucide-react";
 
 interface NavItem {
   id: string;
   name: string;
-  icon: string;
+  icon: React.ReactNode;
   href?: string;
   onClick?: () => void;
   enabled?: boolean;
@@ -20,32 +20,33 @@ export default function SidebarNav({
   onRouteChange,
 }: SidebarNavProps) {
   const router = useRouter();
-  const isChatEnabled = process.env.NEXT_PUBLIC_CHAT_ENABLED === "true";
+  // Chat is enabled by default, can be toggled via env var
+  // const isChatEnabled = process.env.NEXT_PUBLIC_CHAT_ENABLED === "true";
 
   const navItems: NavItem[] = [
     {
       id: "chat",
       name: "Chat",
-      icon: "💬",
+      icon: <MessageCircle className="w-5 h-5" />,
       enabled: true,
     },
     {
       id: "image",
       name: "Images",
-      icon: "🎨",
+      icon: <Image className="w-5 h-5" />,
       enabled: true,
     },
     {
       id: "analytics",
       name: "Analytics",
-      icon: "📊",
+      icon: <BarChart3 className="w-5 h-5" />,
       href: "/analytics",
       enabled: false, // Coming soon
     },
     {
       id: "settings",
       name: "Settings",
-      icon: "⚙️",
+      icon: <Settings className="w-5 h-5" />,
       href: "/settings",
       enabled: false, // Coming soon
     },
@@ -65,7 +66,7 @@ export default function SidebarNav({
   };
 
   return (
-    <div className="bg-surface/80 backdrop-blur-xl rounded-3xl p-6 border border-border/50 shadow-lg">
+    <div className="bg-[linear-gradient(180deg,#faf7fc,#f4f0fb)]/85 backdrop-blur-md rounded-3xl p-6 border border-border/50 shadow-lg max-lg:hidden">
       <h3 className="text-title-3 font-semibold text-text-main mb-6 tracking-tight">
         AI Services
       </h3>

@@ -6,6 +6,9 @@ module.exports = {
   ],
   darkMode: "class",
   theme: {
+    fontFamily: {
+      sans: ['var(--font-sf)', 'ui-sans-serif', '-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'Segoe UI', 'Roboto', 'Inter', 'sans-serif']
+    },
     extend: {
       colors: {
         // Neo-Wave Tech Color System
@@ -180,37 +183,23 @@ module.exports = {
           matrix: "#00ff41",
           plasma: "#ff6b35",
         },
+        teal: '#0BA5EC',
+        // @fluid-ui - T3.chat brand colors and animation
+        brand: {
+          DEFAULT: '#0BA5EC',
+          50: '#E6F7FE',
+        },
       },
-      fontFamily: {
-        // Apple System Font Stack
-        sans: [
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Inter",
-          "SF Pro",
-          "system-ui",
-          "Roboto",
-          "Helvetica Neue",
-          "Arial",
-          "sans-serif",
-        ],
-        mono: [
-          "SF Mono",
-          "Monaco",
-          "JetBrains Mono",
-          "Inconsolata",
-          "Roboto Mono",
-          "Consolas",
-          "monospace",
-        ],
-        display: [
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Inter",
-          "SF Pro Display",
-          "system-ui",
-          "sans-serif",
-        ],
+      keyframes: {
+        // @fluid-ui - T3.chat fade-in animation
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        // @fluid-ui - T3.chat animation classes
+        fadeInUp: 'fadeInUp 0.3s ease-out',
       },
       fontSize: {
         // Apple HIG Typography Scale
@@ -305,6 +294,8 @@ module.exports = {
         "wave-ripple": "wave-ripple 2s ease-out infinite",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite alternate",
         float: "float 6s ease-in-out infinite",
+        /* clydra-design */ fadeMove: 'fadeMove 0.6s ease-out',
+        /* clydra-design */ wiggle: 'wiggle 0.4s ease-in-out',
       },
       keyframes: {
         "fade-in-up": {
@@ -335,6 +326,14 @@ module.exports = {
         float: {
           "0%, 100%": { transform: "translateY(0px)" },
           "50%": { transform: "translateY(-10px)" },
+        },
+        /* clydra-design */ fadeMove: {
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' }
+        },
+        /* clydra-design */ wiggle: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '50%': { transform: 'translateX(4px)' }
         },
       },
       backgroundImage: {

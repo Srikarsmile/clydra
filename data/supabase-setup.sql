@@ -153,6 +153,7 @@ GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
 CREATE TABLE IF NOT EXISTS usage_meter (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  chat_tokens BIGINT DEFAULT 0,
   gpt4o_tokens BIGINT DEFAULT 0,
   claude_tokens BIGINT DEFAULT 0,
   gemini_tokens BIGINT DEFAULT 0,
@@ -186,11 +187,119 @@ RETURNS void AS $$
 BEGIN
   UPDATE usage_meter 
   SET 
+    chat_tokens = 0,
     gpt4o_tokens = 0,
     claude_tokens = 0,
     gemini_tokens = 0,
     reset_date = DATE_TRUNC('month', NOW()) + INTERVAL '1 month',
     updated_at = NOW()
   WHERE reset_date <= NOW();
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Chat History table for storing user conversations
+CREATE TABLE IF NOT EXISTS chat_history (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  model TEXT NOT NULL,
+  messages JSONB NOT NULL DEFAULT '[]',
+  last_message_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for chat_history
+CREATE INDEX IF NOT EXISTS idx_chat_history_user_id ON chat_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_history_last_message_at ON chat_history(last_message_at DESC);
+
+-- Enable RLS for chat_history
+ALTER TABLE chat_history ENABLE ROW LEVEL SECURITY;
+
+-- Chat history policies
+CREATE POLICY "Users can view own chat history" ON chat_history
+  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+
+CREATE POLICY "Users can create own chat history" ON chat_history
+  FOR INSERT WITH CHECK (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+
+CREATE POLICY "Users can update own chat history" ON chat_history
+  FOR UPDATE USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+
+CREATE POLICY "Users can delete own chat history" ON chat_history
+  FOR DELETE USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+
+-- Add trigger for chat_history updated_at
+CREATE TRIGGER update_chat_history_updated_at BEFORE UPDATE ON chat_history
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Grant necessary permissions
+GRANT ALL ON chat_history TO anon, authenticated;
+
+-- @threads - Thread management tables for chat system
+CREATE TABLE IF NOT EXISTS threads (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT DEFAULT 'New Chat',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  thread_id UUID NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
+  role TEXT CHECK (role IN ('user','assistant','system')) NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- @threads - Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_threads_user_id ON threads(user_id);
+CREATE INDEX IF NOT EXISTS idx_threads_created_at ON threads(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_thread_id ON messages(thread_id);
+CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
+
+-- @threads - Enable RLS for new tables
+ALTER TABLE threads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+-- @threads - Thread policies
+CREATE POLICY "Users can view own threads" ON threads
+  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+
+CREATE POLICY "Users can create own threads" ON threads
+  FOR INSERT WITH CHECK (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+
+CREATE POLICY "Users can update own threads" ON threads
+  FOR UPDATE USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+
+CREATE POLICY "Users can delete own threads" ON threads
+  FOR DELETE USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+
+-- @threads - Message policies
+CREATE POLICY "Users can view own messages" ON messages
+  FOR SELECT USING (thread_id IN (SELECT id FROM threads WHERE user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub')));
+
+CREATE POLICY "Users can create own messages" ON messages
+  FOR INSERT WITH CHECK (thread_id IN (SELECT id FROM threads WHERE user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub')));
+
+CREATE POLICY "Users can update own messages" ON messages
+  FOR UPDATE USING (thread_id IN (SELECT id FROM threads WHERE user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub')));
+
+CREATE POLICY "Users can delete own messages" ON messages
+  FOR DELETE USING (thread_id IN (SELECT id FROM threads WHERE user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub')));
+
+-- @threads - Grant permissions for new tables
+GRANT ALL ON threads TO anon, authenticated;
+GRANT ALL ON messages TO anon, authenticated;
+
+-- @threads - Function to update thread title if it's still "New Chat"
+CREATE OR REPLACE FUNCTION update_thread_title_if_new(
+  p_thread_id UUID,
+  p_new_title TEXT
+) RETURNS void AS $$
+BEGIN
+  UPDATE threads 
+  SET title = LEFT(p_new_title, 50)
+  WHERE id = p_thread_id AND title = 'New Chat';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER; 

@@ -48,4 +48,18 @@ CREATE POLICY "Users can delete own generations" ON user_generations
   FOR DELETE USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
 
 -- Grant permissions
-GRANT ALL ON user_generations TO anon, authenticated; 
+GRANT ALL ON user_generations TO anon, authenticated;
+
+-- @clydra-core Migration to add chat_tokens column to usage_meter if it doesn't exist
+-- This is safe to run multiple times
+
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'usage_meter' 
+        AND column_name = 'chat_tokens'
+    ) THEN
+        ALTER TABLE usage_meter ADD COLUMN chat_tokens BIGINT DEFAULT 0;
+    END IF;
+END $$; 

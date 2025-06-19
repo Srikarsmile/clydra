@@ -7,7 +7,7 @@ interface ModelPricingProps {
 
 export function ModelPricing({ modelId, className }: ModelPricingProps) {
   const model = AVAILABLE_MODELS[modelId as keyof typeof AVAILABLE_MODELS];
-  
+
   if (!model) return null;
 
   const getModelType = (id: string) => {

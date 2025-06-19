@@ -11,8 +11,10 @@ export default function SignUpPage() {
               card: "bg-surface/80 backdrop-blur-xl border border-border/50 shadow-xl",
               headerTitle: "text-text-main",
               headerSubtitle: "text-text-muted",
-              socialButtonsBlockButton: "bg-surface border border-border/50 text-text-main hover:bg-surface/80",
-              formFieldInput: "bg-surface border border-border/50 text-text-main",
+              socialButtonsBlockButton:
+                "bg-surface border border-border/50 text-text-main hover:bg-surface/80",
+              formFieldInput:
+                "bg-surface border border-border/50 text-text-main",
               formButtonPrimary: "bg-accent hover:bg-accent/90",
               footerActionLink: "text-accent hover:text-accent/80",
             },

@@ -57,11 +57,13 @@ export async function executeModelRequest(
 
     // Check if FAL_KEY is configured
     if (!process.env.FAL_KEY) {
-      console.error('FAL_KEY environment variable is not configured');
+      console.error("FAL_KEY environment variable is not configured");
       throw new Error("FAL_KEY environment variable is not configured");
     }
 
-    console.log(`Starting ${modelConfig.type} generation with model: ${request.model}`);
+    console.log(
+      `Starting ${modelConfig.type} generation with model: ${request.model}`
+    );
 
     // Prepare the input based on model type and API requirements
     let input: Record<string, unknown>;
@@ -73,28 +75,37 @@ export async function executeModelRequest(
     };
 
     // Execute the model
-    console.log('Calling fal.subscribe with model:', request.model);
-    
+    console.log("Calling fal.subscribe with model:", request.model);
+
     // Set timeout for image generation
     const timeoutMs = 120000; // 2 minutes for image
-    
+
     const result = await Promise.race([
       fal.subscribe(request.model, {
         input,
         logs: false,
         onQueueUpdate: (update) => {
           // Only log status changes for debugging
-          if (update.status === "IN_PROGRESS" || update.status === "COMPLETED") {
-            console.log('Generation status:', update.status);
+          if (
+            update.status === "IN_PROGRESS" ||
+            update.status === "COMPLETED"
+          ) {
+            console.log("Generation status:", update.status);
           }
         },
       }),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error(`Request timeout after ${timeoutMs/1000} seconds`)), timeoutMs)
-      )
+      new Promise((_, reject) =>
+        setTimeout(
+          () =>
+            reject(
+              new Error(`Request timeout after ${timeoutMs / 1000} seconds`)
+            ),
+          timeoutMs
+        )
+      ),
     ]);
 
-    console.log('FAL API completed successfully');
+    console.log("FAL API completed successfully");
 
     const latency = Date.now() - startTime;
 
@@ -154,11 +165,12 @@ export async function executeModelRequest(
     }
 
     // Check if error has a body property (common with API errors)
-    if (typeof error === 'object' && error !== null && 'body' in error) {
+    if (typeof error === "object" && error !== null && "body" in error) {
       const body = (error as any).body;
       if (body && body.detail) {
         if (body.detail.includes("safety checks")) {
-          errorMessage = "Content filtered by safety checks - try a different prompt";
+          errorMessage =
+            "Content filtered by safety checks - try a different prompt";
         } else {
           errorMessage = body.detail;
         }
@@ -166,10 +178,10 @@ export async function executeModelRequest(
     }
 
     // Log the full error for debugging
-    console.error('Full error details:', {
+    console.error("Full error details:", {
       message: errorMessage,
       originalError: error,
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
     return {

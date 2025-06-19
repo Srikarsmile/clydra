@@ -139,18 +139,26 @@ export default async function handler(
     }
 
     // Execute model request
-    console.log('About to execute model request:', { model, prompt: prompt.substring(0, 50) + '...', settings });
+    console.log("About to execute model request:", {
+      model,
+      prompt: prompt.substring(0, 50) + "...",
+      settings,
+    });
     const result = await executeModelRequest({
       model: model as ModelId,
       prompt,
       settings,
     });
 
-    console.log('Model execution result:', { success: result.success, error: result.error, hasData: !!result.data });
+    console.log("Model execution result:", {
+      success: result.success,
+      error: result.error,
+      hasData: !!result.data,
+    });
 
     if (!result.success) {
-      console.error('Model execution failed:', result.error);
-      
+      console.error("Model execution failed:", result.error);
+
       // Generation failed - refund the amount we deducted (only if we charged)
       let refundResult = null;
       if (!skipCreditCheck && creditCheck) {
@@ -161,7 +169,8 @@ export default async function handler(
           `Refund for failed ${model} generation`,
           {
             model,
-            prompt: prompt.substring(0, 100) + (prompt.length > 100 ? "..." : ""),
+            prompt:
+              prompt.substring(0, 100) + (prompt.length > 100 ? "..." : ""),
             original_request_id: `${Date.now()}`,
             reason: "generation_failed",
           }
@@ -182,7 +191,7 @@ export default async function handler(
         model,
         prompt,
         response_data: null,
-        cost: skipCreditCheck ? 0 : (creditCheck?.creditsNeeded || 0),
+        cost: skipCreditCheck ? 0 : creditCheck?.creditsNeeded || 0,
         latency: result.latency,
         status: "error",
         error_message: result.error || null,
@@ -203,7 +212,7 @@ export default async function handler(
       model,
       prompt,
       response_data: result.data,
-      cost: skipCreditCheck ? 0 : (creditCheck?.creditsNeeded || 0),
+      cost: skipCreditCheck ? 0 : creditCheck?.creditsNeeded || 0,
       latency: result.latency,
       status: "success",
     });
@@ -215,9 +224,9 @@ export default async function handler(
       requestId: `${Date.now()}-${userId.substring(0, 8)}`,
       metadata: {
         model,
-        cost: skipCreditCheck ? 0 : (creditCheck?.creditsNeeded || 0),
+        cost: skipCreditCheck ? 0 : creditCheck?.creditsNeeded || 0,
         latency: result.latency,
-        amount_used: skipCreditCheck ? 0 : (creditCheck?.creditsNeeded || 0),
+        amount_used: skipCreditCheck ? 0 : creditCheck?.creditsNeeded || 0,
         balance_remaining: skipCreditCheck ? null : deductResult?.newBalance,
       },
     });

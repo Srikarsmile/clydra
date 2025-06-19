@@ -18,6 +18,23 @@ interface ChatInterfaceProps {
   messages?: Message[];
   onSendMessage?: (message: string, model: string) => void;
   isLoading?: boolean;
+  chatId?: string;
+}
+
+interface ChatHistory {
+  id: string;
+  title: string;
+  model: string;
+  messages: Message[];
+  last_message_at: string;
+}
+
+interface StreamReader {
+  read(): Promise<{ done: boolean; value: Uint8Array }>;
+}
+
+interface StreamResponse extends Response {
+  body: ReadableStream<Uint8Array>;
 }
 
 const models: Model[] = [
@@ -45,10 +62,29 @@ export default function ChatInterface({
   messages = [],
   onSendMessage,
   isLoading = false,
+  chatId,
 }: ChatInterfaceProps) {
   const [selectedModel, setSelectedModel] = useState(models[0].id);
   const [inputMessage, setInputMessage] = useState("");
+  const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [streamingMessage, setStreamingMessage] = useState("");
+
+  // Load chat history when component mounts
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      try {
+        const response = await fetch("/api/chat/history");
+        if (!response.ok) throw new Error("Failed to load chat history");
+        const data = await response.json();
+        setChatHistory(data);
+      } catch (error) {
+        console.error("Error loading chat history:", error);
+      }
+    };
+
+    loadChatHistory();
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -56,19 +92,69 @@ export default function ChatInterface({
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, streamingMessage]);
 
-  const handleSendMessage = () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!inputMessage.trim() || isLoading) return;
 
-    onSendMessage?.(inputMessage, selectedModel);
+    const userMessage = inputMessage.trim();
     setInputMessage("");
-  };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+    try {
+      const response = (await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: selectedModel,
+          messages: [...messages, { role: "user", content: userMessage }],
+          stream: true,
+        }),
+      })) as StreamResponse;
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      if (!response.body) {
+        throw new Error("Response body is null");
+      }
+
+      const reader = response.body.getReader() as StreamReader;
+      let partialMessage = "";
+      setStreamingMessage("");
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        // Convert the chunk to text
+        const chunk = new TextDecoder().decode(value);
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.choices?.[0]?.delta?.content) {
+                partialMessage += data.choices[0].delta.content;
+                setStreamingMessage(partialMessage);
+              }
+            } catch (e) {
+              console.error("Error parsing SSE message:", e);
+            }
+          }
+        }
+      }
+
+      // After streaming is complete, call onSendMessage with the full message
+      onSendMessage?.(userMessage, selectedModel);
+      setStreamingMessage("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+      // Handle error appropriately
     }
   };
 
@@ -146,14 +232,12 @@ export default function ChatInterface({
               </div>
             ))}
 
-            {isLoading && (
+            {streamingMessage && (
               <div className="flex justify-start">
-                <div className="bg-surface border border-border/30 rounded-2xl px-4 py-3">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                    <div className="w-2 h-2 bg-primary rounded-full animate-pulse animation-delay-100"></div>
-                    <div className="w-2 h-2 bg-primary rounded-full animate-pulse animation-delay-200"></div>
-                  </div>
+                <div className="max-w-[80%] rounded-2xl p-4 bg-surface/60 backdrop-blur-sm">
+                  <p className="text-body whitespace-pre-wrap">
+                    {streamingMessage}
+                  </p>
                 </div>
               </div>
             )}
@@ -167,44 +251,41 @@ export default function ChatInterface({
       <div className="p-4 border-t border-border/30 bg-surface/50 backdrop-blur-sm">
         <div className="flex items-end space-x-3">
           <div className="flex-1">
-            <textarea
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
-              rows={1}
-              className="w-full bg-surface border border-border/50 rounded-xl px-4 py-3 text-body text-text-main placeholder-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-200 resize-none"
-              style={{
-                minHeight: "48px",
-                maxHeight: "120px",
-                height: "auto",
-              }}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = "auto";
-                target.style.height = Math.min(target.scrollHeight, 120) + "px";
-              }}
-            />
-          </div>
-          <button
-            onClick={handleSendMessage}
-            disabled={!inputMessage.trim() || isLoading}
-            className="bg-primary text-white p-3 rounded-xl hover:shadow-primary-glow-lg transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+            <form onSubmit={handleSubmit} className="flex space-x-4">
+              <select
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                className="px-4 py-2 rounded-xl bg-surface border border-border/50 text-text-main"
+              >
+                <option value="anthropic/claude-3-sonnet-20240229">
+                  Claude 3 Sonnet
+                </option>
+                <option value="anthropic/claude-3-opus-20240229">
+                  Claude 3 Opus
+                </option>
+                <option value="openai/gpt-4-turbo">GPT-4 Turbo</option>
+                <option value="google/gemini-1.0-pro">Gemini Pro</option>
+                <option value="mistral/mistral-large-2024-01">
+                  Mistral Large
+                </option>
+              </select>
+              <input
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                placeholder="Type your message..."
+                className="flex-1 px-4 py-2 rounded-xl bg-surface border border-border/50 text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
+                disabled={isLoading}
               />
-            </svg>
-          </button>
+              <button
+                type="submit"
+                disabled={isLoading || !inputMessage.trim()}
+                className="px-6 py-2 bg-primary text-white rounded-xl font-medium hover:shadow-primary-glow transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Send
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
