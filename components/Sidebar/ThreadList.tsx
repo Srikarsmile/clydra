@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { Trash2 } from 'lucide-react'; // @ux-refresh - Add delete icon
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
 
@@ -20,6 +21,7 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null); // @ux-refresh - Track deleting state
 
   // Fetch threads
   useEffect(() => {
@@ -62,6 +64,45 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
     }
   };
 
+  // @ux-refresh - Delete thread functionality
+  const deleteThread = async (threadId: string, event: React.MouseEvent) => {
+    event.preventDefault(); // Prevent navigation when clicking delete
+    event.stopPropagation();
+    
+    if (deletingId === threadId) return;
+    
+    if (!confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
+      return;
+    }
+    
+    setDeletingId(threadId);
+    try {
+      const response = await fetch('/api/threads', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ threadId }),
+      });
+      
+      if (response.ok) {
+        // Remove thread from local state
+        setThreads(prev => prev.filter(t => t.id !== threadId));
+        
+        // Redirect if deleting active thread
+        if (activeThread === threadId) {
+          router.push('/dashboard');
+        }
+      } else {
+        throw new Error('Failed to delete thread');
+      }
+    } catch (error) {
+      console.error('Failed to delete thread:', error);
+      alert('Failed to delete chat. Please try again.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+  // @ux-refresh - End delete thread functionality
+
   if (isLoading) {
     return (
       <aside className="w-64 px-2 py-4 space-y-2">
@@ -94,15 +135,39 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
       <ul className="space-y-1 overflow-y-auto max-h-[calc(100vh-12rem)]">
         {threads?.map(thread => (
           <li key={thread.id}>
-            <Link 
-              href={`/dashboard?thread=${thread.id}`}
-              className={cn(
-                "block truncate rounded-md px-2 py-1 text-sm transition-colors hover:bg-gray-100",
-                thread.id === activeThread && "bg-brand/10 text-brand font-medium"
-              )}
-            >
-              {thread.title}
-            </Link>
+            {/* @ux-refresh - Enhanced thread item with delete functionality */}
+            <div className={cn(
+              "group flex items-center justify-between rounded-md transition-colors hover:bg-gray-100",
+              thread.id === activeThread && "bg-brand/10"
+            )}>
+              <Link 
+                href={`/dashboard?thread=${thread.id}`}
+                className={cn(
+                  "flex-1 truncate px-2 py-1 text-sm transition-colors",
+                  thread.id === activeThread && "text-brand font-medium"
+                )}
+              >
+                {thread.title}
+              </Link>
+              
+              <button
+                onClick={(e) => deleteThread(thread.id, e)}
+                disabled={deletingId === thread.id}
+                className={cn(
+                  "opacity-0 group-hover:opacity-100 p-1 mr-1 rounded transition-all",
+                  "hover:bg-red-100 hover:text-red-600 text-gray-400",
+                  deletingId === thread.id && "opacity-100 cursor-not-allowed"
+                )}
+                title="Delete chat"
+              >
+                {deletingId === thread.id ? (
+                  <div className="w-3 h-3 border border-red-300 border-t-red-600 rounded-full animate-spin" />
+                ) : (
+                  <Trash2 size={12} />
+                )}
+              </button>
+            </div>
+            {/* @ux-refresh - End enhanced thread item */}
           </li>
         ))}
         {threads?.length === 0 && (
