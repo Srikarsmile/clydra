@@ -11,6 +11,28 @@ module.exports = {
     },
     extend: {
       colors: {
+        // @ux-refresh - Refined palette for cohesive UI/UX
+        brand: { 
+          50: '#E6F7FE', 
+          500: '#0BA5EC', 
+          600: '#0284C7' 
+        },
+        surface: '#FFFFFF',
+        bglight: '#F9FAFB',
+        bgdark: '#121212',
+        txt: { 
+          main: '#111827', 
+          muted: '#6B7280' 
+        },
+        // Legacy compatibility colors
+        basebg: {
+          light: '#F9FAFB',
+          dark: '#121212',
+        },
+        'surface-light': '#FFFFFF',
+        'surface-dark': '#26272C',
+        // @ux-refresh - End refined palette
+
         // Neo-Wave Tech Color System
         primary: {
           50: "#e6f4f8",
@@ -199,28 +221,32 @@ module.exports = {
           300: '#FF99C9',
           400: '#FD5EA8',
         },
-        surface: {
-          light: '#FFFFFF',
-          dark: '#1E1E1E',
-        },
-        basebg: {
-          light: '#F9FAFB',
-          dark: '#121212',
-        },
-        sidebar: {
-          light_from: '#FEF7FF',
-          light_to: '#F5F0FF',
-          dark_from: '#1B1B23',
-          dark_to: '#141418',
-        },
+      },
+      // @ux-refresh - Enhanced shadows and animations
+      boxShadow: {
+        'sm/5': '0 1px 2px rgb(0 0 0 / .05)',
+        'md/10': '0 4px 6px rgb(0 0 0 / .10)',
+        // Legacy shadows for compatibility
+        sm: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        md: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
+        lg: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)",
+        xl: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+        "2xl": "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+        // Neo-Wave shadows
+        "primary-glow":
+          "0 0 0 1px rgba(0, 62, 95, 0.15), 0 0 25px rgba(0, 62, 95, 0.1)",
+        "wave-glow":
+          "0 0 0 1px rgba(91, 231, 169, 0.15), 0 0 25px rgba(91, 231, 169, 0.1)",
+        "accent-glow":
+          "0 0 0 1px rgba(255, 107, 53, 0.15), 0 0 25px rgba(255, 107, 53, 0.1)",
       },
       keyframes: {
-        // @clydra-palette - Enhanced fade-in animation
-        fadeInUp: {
-          '0%': { opacity: '0', transform: 'translateY(8px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
+        fadeUp: {
+          '0%': { opacity: 0, transform: 'translateY(8px)' },
+          '100%': { opacity: 1, transform: 'translateY(0)' }
+        }
       },
+      // @ux-refresh - End enhanced shadows and animations
       animation: {
         // @fluid-ui - T3.chat animation classes
         fadeInUp: 'fadeInUp 0.3s ease-out',
@@ -289,24 +315,6 @@ module.exports = {
         "2xl": "1.25rem",
         "3xl": "1.5rem",
         full: "9999px",
-      },
-      boxShadow: {
-        sm: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-        md: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
-        lg: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)",
-        xl: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-        "2xl": "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-        // Neo-Wave shadows
-        "ocean-glow":
-          "0 0 0 1px rgba(0, 62, 95, 0.15), 0 0 25px rgba(0, 62, 95, 0.1)",
-        "wave-glow":
-          "0 0 0 1px rgba(91, 231, 169, 0.15), 0 0 25px rgba(91, 231, 169, 0.1)",
-        "accent-glow":
-          "0 0 0 1px rgba(255, 107, 53, 0.15), 0 0 25px rgba(255, 107, 53, 0.1)",
-        "primary-glow":
-          "0 0 0 1px rgba(0, 62, 95, 0.15), 0 0 25px rgba(0, 62, 95, 0.1)",
-        "primary-glow-lg":
-          "0 0 0 1px rgba(0, 62, 95, 0.2), 0 0 40px rgba(0, 62, 95, 0.15)",
       },
       animation: {
         "fade-in-up": "fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",

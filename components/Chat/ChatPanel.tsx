@@ -177,9 +177,12 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
         {messages.length === 0 && (
           // @fluid-ui - T3.chat welcome section with fade-in animation
           <div className="max-w-4xl mx-auto py-16 lg:py-24 animate-fadeInUp">
-            <h1 className="text-3xl lg:text-5xl font-semibold text-center mb-8">
+            {/* @ux-refresh - Updated headline with spacing and fade-in */}
+            <h1 className="text-3xl lg:text-5xl font-semibold text-center text-txt-main
+                           mt-24 lg:mt-32 mb-12 animate-[fadeUp_.6s_ease-out]">
               How can I help you, {user?.firstName}?
             </h1>
+            {/* @ux-refresh - End updated headline */}
             
             {/* @fluid-ui - Model selector */}
             <div className="flex justify-center mb-8">
@@ -250,7 +253,8 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
       {/* @fluid-ui - T3.chat input area */}
       <div className="border-t bg-white p-4">
         <div className="max-w-4xl mx-auto">
-          <form onSubmit={handleSubmit} className="flex space-x-3">
+          {/* @ux-refresh - Updated form styling with refined shadow and colors */}
+          <form onSubmit={handleSubmit} className="flex items-center gap-2 shadow-md/10 border border-gray-200 px-3 py-2 rounded-md bg-surface">
             <input
               type="text"
               value={input}
@@ -258,7 +262,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
               onKeyDown={handleKeyDown}
               placeholder="Message..."
               disabled={isMutating}
-              className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand/20 focus:border-brand/50 bg-white text-gray-900 placeholder-gray-500 transition-colors"
+              className="flex-1 px-1 py-1 bg-transparent text-gray-900 placeholder-gray-500 border-none outline-none"
             />
             <Button
               type="submit"
@@ -268,6 +272,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
               <Send className="w-4 h-4" />
             </Button>
           </form>
+          {/* @ux-refresh - End updated form styling */}
           <p className="text-xs text-gray-500 mt-2 text-center">
             Press ⌘/Ctrl + Enter to send
           </p>

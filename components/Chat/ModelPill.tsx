@@ -29,11 +29,13 @@ export default function ModelPill({
       onClick={locked ? undefined : onClick}
       disabled={locked}
       className={cn(
-        'rounded-full px-4 py-1 text-sm font-medium transition', // @clydra-palette
-        active && 'bg-brand-500 text-white shadow-sm', // @clydra-palette
-        !active && !locked && 'bg-brand-50 text-brand-600 hover:bg-brand-100', // @clydra-palette
-        locked && 'opacity-50 cursor-not-allowed', // @clydra-palette
+        // @ux-refresh - Updated styling with refined brand colors
+        'rounded-full px-4 py-1 text-sm shadow-sm/5 transition',
+        active && 'bg-brand-500 text-white hover:bg-brand-600',
+        !active && !locked && 'bg-brand-50 text-brand-600 hover:bg-brand-100',
+        locked && 'opacity-40 cursor-not-allowed',
         className
+        // @ux-refresh - End updated styling
       )}
     >
       {locked && <Lock className="w-3 h-3 mr-1" />}

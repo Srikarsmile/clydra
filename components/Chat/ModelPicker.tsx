@@ -19,13 +19,13 @@ const PLAN_RANK = { free: 0, pro: 0, max: 0 } as const;         // @unlock
 
 const MODELS: {key: ChatModel; minPlan: keyof typeof PLAN_RANK}[] = [
   { key:"openai/gpt-4o",                       minPlan:'free' },
-  { key:"google/gemini-2.5-flash",            minPlan:'free' },   // @fluid-ui - updated model name
+  { key:"google/gemini-2.5-flash-preview",    minPlan:'free' },   // @fluid-ui - updated model name
   { key:"google/gemini-2.5-pro",              minPlan:'free' },   // @unlock @gem25
   { key:"anthropic/claude-sonnet-4",          minPlan:'free' },   // @unlock @flagship
   { key:"anthropic/claude-opus-4",            minPlan:'free' },   // @unlock @flagship
   { key:"anthropic/claude-3-sonnet-20240229", minPlan:'free' },   // @unlock
   { key:"google/gemini-1.5-pro",              minPlan:'free' },   // @unlock
-  { key:"deepseek-ai/deepseek-r1",            minPlan:'free' },   // @fluid-ui - updated model name
+  { key:"deepseek/deepseek-r1",               minPlan:'free' },   // @fluid-ui - updated model name
   { key:"anthropic/claude-3-opus-20240229",   minPlan:'free' },   // @unlock
   { key:"meta-llama/llama-3-70b-instruct",    minPlan:'free' },   // @unlock
 ];

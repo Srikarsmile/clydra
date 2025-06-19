@@ -30,11 +30,12 @@ export default function Sidebar({
   return (
     <aside
       className={cn(
-        "flex flex-col border-r transition-width duration-300", // @clydra-palette
-        collapsed ? "w-16" : "w-60",
-        "bg-gradient-to-b from-sidebar-light_from to-sidebar-light_to", // @clydra-palette
-        "dark:from-sidebar-dark_from dark:to-sidebar-dark_to", // @clydra-palette
-        "rounded-tr-3xl" // @clydra-palette
+        // @ux-refresh - Updated gradient and styling
+        "flex flex-col rounded-tr-3xl border-r bg-gradient-to-b",
+        "from-brand-50/50 to-bglight",
+        "dark:from-[#1B1B23] dark:to-[#141418]",
+        collapsed ? "w-16" : "w-60"
+        // @ux-refresh - End updated styling
       )}
     >
       {/* @brandbar - top brand row */}
@@ -116,6 +117,12 @@ export default function Sidebar({
             );
           })}
         </nav>
+        
+        {/* @ux-refresh - Updated navigation spacing and text colors */}
+        <ul className="mt-4 space-y-1 text-sm text-txt-muted">
+          {/* Additional navigation items can go here */}
+        </ul>
+        {/* @ux-refresh - End updated navigation */}
       </div>
 
       {/* @fluid-ui - Bottom section with usage and upgrade */}

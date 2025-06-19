@@ -131,10 +131,10 @@ export default function FreeTierWidget() {
       {/* Free Tier Models Info */}
       <div className="mt-3 text-xs text-gray-600 dark:text-gray-400 space-y-1">
         <p>
-          Free plan models: {MODEL_ALIASES["openai/gpt-4o"]}, {MODEL_ALIASES["google/gemini-2.5-flash"]}
+          Free plan models: {MODEL_ALIASES["openai/gpt-4o"]}, {MODEL_ALIASES["google/gemini-2.5-flash-preview"]}
         </p>
         <p>
-          Pro unlocks: {MODEL_ALIASES["google/gemini-2.5-pro"]}, {MODEL_ALIASES["anthropic/claude-sonnet-4"]}, {MODEL_ALIASES["google/gemini-1.5-pro"]}, {MODEL_ALIASES["deepseek-ai/deepseek-r1"]}
+          Pro unlocks: {MODEL_ALIASES["google/gemini-2.5-pro"]}, {MODEL_ALIASES["anthropic/claude-sonnet-4"]}, {MODEL_ALIASES["google/gemini-1.5-pro"]}, {MODEL_ALIASES["deepseek/deepseek-r1"]}
         </p>
         <p>
           Max unlocks: {MODEL_ALIASES["anthropic/claude-opus-4"]}, {MODEL_ALIASES["meta-llama/llama-3-70b-instruct"]}

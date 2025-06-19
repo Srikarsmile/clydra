@@ -14,21 +14,23 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   role,
   timestamp = new Date(),
 }) => {
+  const isUser = role === "user";
+  
   return (
     <div
       className={cn(
         "flex gap-3",
-        role === "user" ? "justify-end" : "justify-start"
+        isUser ? "justify-end" : "justify-start"
       )}
     >
       <div
         className={cn(
-          "max-w-prose px-4 py-3 rounded-lg shadow-sm", // @clydra-palette
-          role === "user"
-            ? "bg-brand-50 text-brand-600 self-end" // @clydra-palette
-            : "bg-surface-light dark:bg-surface-dark" // @clydra-palette
+          "max-w-prose rounded-lg shadow-sm/5 px-4 py-3",
+          isUser
+            ? "bg-brand-50 text-brand-600 self-end"
+            : "bg-surface text-txt-main dark:bg-[#1E1E1E]"
         )}
-        style={{ fontSize: "clamp(0.875rem,0.8rem+0.3vw,1.125rem)" }} // @clydra-palette
+        style={{ fontSize: "clamp(0.875rem,0.8rem+0.3vw,1.125rem)" }}
       >
         <div className="prose dark:prose-invert max-w-none">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
