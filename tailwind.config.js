@@ -228,6 +228,8 @@ module.exports = {
         // Neo-Wave shadows
         "primary-glow":
           "0 0 0 1px rgba(0, 62, 95, 0.15), 0 0 25px rgba(0, 62, 95, 0.1)",
+        "primary-glow-lg":
+          "0 0 0 1px rgba(0, 62, 95, 0.2), 0 0 40px rgba(0, 62, 95, 0.15)",
         "wave-glow":
           "0 0 0 1px rgba(91, 231, 169, 0.15), 0 0 25px rgba(91, 231, 169, 0.1)",
         "accent-glow":
