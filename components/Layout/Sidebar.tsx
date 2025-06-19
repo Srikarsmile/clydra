@@ -30,10 +30,11 @@ export default function Sidebar({
   return (
     <aside
       className={cn(
-        "flex flex-col border-r transition-all duration-300 ease-in-out",
+        "flex flex-col border-r transition-width duration-300", // @clydra-palette
         collapsed ? "w-16" : "w-60",
-        // @fluid-ui - T3.chat soft pink gradient background
-        "bg-[linear-gradient(180deg,#faf7ff,#f6f0ff)] rounded-tr-3xl"
+        "bg-gradient-to-b from-sidebar-light_from to-sidebar-light_to", // @clydra-palette
+        "dark:from-sidebar-dark_from dark:to-sidebar-dark_to", // @clydra-palette
+        "rounded-tr-3xl" // @clydra-palette
       )}
     >
       {/* @brandbar - top brand row */}

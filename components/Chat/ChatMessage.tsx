@@ -23,14 +23,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     >
       <div
         className={cn(
-          // @fluid-ui - T3.chat message bubble styling
-          "rounded-lg shadow-sm max-w-prose px-4 py-3",
-          role === "user" 
-            ? "bg-brand/10 self-end text-brand" 
-            : "bg-white"
+          "max-w-prose px-4 py-3 rounded-lg shadow-sm", // @clydra-palette
+          role === "user"
+            ? "bg-brand-50 text-brand-600 self-end" // @clydra-palette
+            : "bg-surface-light dark:bg-surface-dark" // @clydra-palette
         )}
-        // @fluid-ui - T3.chat responsive font sizing  
-        style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.3vw, 1.125rem)" }}
+        style={{ fontSize: "clamp(0.875rem,0.8rem+0.3vw,1.125rem)" }} // @clydra-palette
       >
         <div className="prose dark:prose-invert max-w-none">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>

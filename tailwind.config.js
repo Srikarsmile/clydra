@@ -184,14 +184,38 @@ module.exports = {
           plasma: "#ff6b35",
         },
         teal: '#0BA5EC',
-        // @fluid-ui - T3.chat brand colors and animation
+        // @clydra-palette - Unified Clydra color system
         brand: {
-          DEFAULT: '#0BA5EC',
           50: '#E6F7FE',
+          100: '#C2ECFD',
+          200: '#7DD7FC',
+          300: '#38C2FA',
+          400: '#13ADF4',
+          500: '#0BA5EC',
+          600: '#0284C7',
+          DEFAULT: '#0BA5EC',
+        },
+        secondary: {
+          300: '#FF99C9',
+          400: '#FD5EA8',
+        },
+        surface: {
+          light: '#FFFFFF',
+          dark: '#1E1E1E',
+        },
+        basebg: {
+          light: '#F9FAFB',
+          dark: '#121212',
+        },
+        sidebar: {
+          light_from: '#FEF7FF',
+          light_to: '#F5F0FF',
+          dark_from: '#1B1B23',
+          dark_to: '#141418',
         },
       },
       keyframes: {
-        // @fluid-ui - T3.chat fade-in animation
+        // @clydra-palette - Enhanced fade-in animation
         fadeInUp: {
           '0%': { opacity: '0', transform: 'translateY(8px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },

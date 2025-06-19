@@ -5,6 +5,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* @clydra-palette - Unified body background system */
+body {
+  background: theme('colors.basebg.light');
+}
+.dark body {
+  background: theme('colors.basebg.dark');
+}
+
 /* Clydra Design System - Apple-like fluid typography and spacing */
 @import url('https://rsms.me/inter/inter.css');
 
@@ -428,7 +436,7 @@
   /* Ghost Button */
   .btn-ghost {
     @apply bg-transparent text-text-main border border-border;
-    @apply hover:bg-surface hover:scale-105;
+    @apply hover:bg-surface-light dark:hover:bg-surface-dark hover:scale-105; /* @clydra-palette */
   }
 
   /* Button Sizes */
@@ -450,7 +458,7 @@
 
   /* Neo-Wave Card System */
   .card {
-    @apply bg-surface rounded-xl border border-border shadow-md transition-all duration-300;
+    @apply bg-surface-light dark:bg-surface-dark rounded-xl border border-border shadow-md transition-all duration-300; /* @clydra-palette */
     @apply p-6;
     backdrop-filter: blur(10px);
     background: rgba(255, 255, 255, 0.8);
@@ -495,7 +503,7 @@
 
   /* Form Elements */
   .input-field {
-    @apply w-full px-4 py-3 rounded-lg border border-border bg-surface text-text-main;
+    @apply w-full px-4 py-3 rounded-lg border border-border bg-surface-light dark:bg-surface-dark text-text-main; /* @clydra-palette */
     @apply focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none;
     @apply transition-all duration-300;
   }
@@ -522,7 +530,7 @@
   }
 
   .badge-secondary {
-    @apply bg-secondary/10 text-secondary border border-secondary/20;
+    @apply bg-secondary-300/10 text-secondary-400 border border-secondary-300/20; /* @clydra-palette */
   }
 
   .badge-accent {
@@ -552,7 +560,7 @@
   }
 
   .status-online {
-    @apply bg-secondary;
+    @apply bg-secondary-400; /* @clydra-palette */
   }
   .status-offline {
     @apply bg-text-muted;
