@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { Menu, MessageCircle, Image } from "lucide-react";
+import { Menu, MessageCircle, Image, Power } from "lucide-react"; // @brandbar
+import { useClerk } from "@clerk/nextjs"; // @brandbar
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
@@ -19,6 +20,7 @@ export default function Sidebar({
 }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const router = useRouter();
+  const { signOut } = useClerk(); // @brandbar
 
   const tabs = [
     { id: "chat", name: "Chat", icon: MessageCircle },
@@ -34,6 +36,23 @@ export default function Sidebar({
         "bg-[linear-gradient(180deg,#faf7ff,#f6f0ff)] rounded-tr-3xl"
       )}
     >
+      {/* @brandbar - top brand row */}
+      <div className="flex items-center justify-between px-4 py-3">
+        <span className={cn(
+          "font-semibold text-lg tracking-tight",
+          collapsed && "hidden"
+        )}>
+          Clydra
+        </span>
+        <button
+          onClick={() => signOut()}
+          className="p-2 rounded-md hover:bg-brand/10"
+          title="Sign out"
+        >
+          <Power size={16} className="text-muted-foreground" />
+        </button>
+      </div>
+
       {/* @fluid-ui - Header with hamburger toggle */}
       <div className="p-4 border-b border-border/30">
         <div className="flex items-center justify-between">
