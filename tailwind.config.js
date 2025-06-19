@@ -14,8 +14,13 @@ module.exports = {
         // @ux-refresh - Refined palette for cohesive UI/UX
         brand: { 
           50: '#E6F7FE', 
+          100: '#C2ECFD',
+          200: '#7DD7FC',
+          300: '#38C2FA',
+          400: '#13ADF4',
           500: '#0BA5EC', 
-          600: '#0284C7' 
+          600: '#0284C7',
+          DEFAULT: '#0BA5EC'
         },
         surface: '#FFFFFF',
         bglight: '#F9FAFB',
@@ -139,47 +144,45 @@ module.exports = {
           DEFAULT: "#E2E8F0",
         },
 
-        // Legacy brand colors (backward compatibility)
-        brand: {
-          primary: {
-            50: "#e6f4f8",
-            100: "#b3dde8",
-            200: "#80c6d8",
-            300: "#4dafc8",
-            400: "#2d9fb8",
-            500: "#003E5F",
-            600: "#003550",
-            700: "#002d41",
-            800: "#002432",
-            900: "#001b23",
-            950: "#001014",
-          },
-          secondary: {
-            50: "#e8fef5",
-            100: "#c3fce3",
-            200: "#9dfad1",
-            300: "#77f8bf",
-            400: "#5BE7A9",
-            500: "#5BE7A9",
-            600: "#2dd4bf",
-            700: "#14b8a6",
-            800: "#0f766e",
-            900: "#134e4a",
-            950: "#042f2e",
-          },
-          accent: {
-            50: "#fff4ed",
-            100: "#ffe4cc",
-            200: "#ffc999",
-            300: "#ffad66",
-            400: "#ff9142",
-            500: "#FF6B35",
-            600: "#ea580c",
-            700: "#c2410c",
-            800: "#9a3412",
-            900: "#7c2d12",
-            950: "#431407",
-          },
+        // Legacy brand colors moved to separate keys for compatibility
+        brandPrimary: {
+          50: "#e6f4f8",
+          100: "#b3dde8",
+          200: "#80c6d8",
+          300: "#4dafc8",
+          400: "#2d9fb8",
+          500: "#003E5F",
+          600: "#003550",
+          700: "#002d41",
+          800: "#002432",
+          900: "#001b23",
+          950: "#001014",
+        },
+        brandSecondary: {
+          50: "#e8fef5",
+          100: "#c3fce3",
+          200: "#9dfad1",
+          300: "#77f8bf",
+          400: "#5BE7A9",
+          500: "#5BE7A9",
+          600: "#2dd4bf",
+          700: "#14b8a6",
+          800: "#0f766e",
+          900: "#134e4a",
+          950: "#042f2e",
+        },
+        brandAccent: {
+          50: "#fff4ed",
+          100: "#ffe4cc",
+          200: "#ffc999",
+          300: "#ffad66",
+          400: "#ff9142",
+          500: "#FF6B35",
+          600: "#ea580c",
+          700: "#c2410c",
+          800: "#9a3412",
+          900: "#7c2d12",
+          950: "#431407",
         },
         // Advanced Neutral Palette
         neutral: {
@@ -206,18 +209,8 @@ module.exports = {
           plasma: "#ff6b35",
         },
         teal: '#0BA5EC',
-        // @clydra-palette - Unified Clydra color system
-        brand: {
-          50: '#E6F7FE',
-          100: '#C2ECFD',
-          200: '#7DD7FC',
-          300: '#38C2FA',
-          400: '#13ADF4',
-          500: '#0BA5EC',
-          600: '#0284C7',
-          DEFAULT: '#0BA5EC',
-        },
-        secondary: {
+        // Legacy compatibility
+        legacySecondary: {
           300: '#FF99C9',
           400: '#FD5EA8',
         },
