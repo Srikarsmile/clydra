@@ -2,8 +2,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { Menu, MessageCircle, Image, Power } from "lucide-react"; // @brandbar
-import { useClerk } from "@clerk/nextjs"; // @brandbar
+import { Menu, MessageCircle, Image, ChevronRight } from "lucide-react"; // @brandbar @ui-polish
+// useClerk and Power removed - sign out moved to top bar @signout
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
@@ -20,7 +20,7 @@ export default function Sidebar({
 }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const router = useRouter();
-  const { signOut } = useClerk(); // @brandbar
+  // signOut moved to global top bar @signout
 
   const tabs = [
     { id: "chat", name: "Chat", icon: MessageCircle },
@@ -38,22 +38,34 @@ export default function Sidebar({
         // @ux-refresh - End updated styling
       )}
     >
-      {/* @brandbar - top brand row */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <span className={cn(
-          "font-semibold text-lg tracking-tight",
-          collapsed && "hidden"
-        )}>
-          Clydra
-        </span>
-        <button
-          onClick={() => signOut()}
-          className="p-2 rounded-md hover:bg-brand/10"
-          title="Sign out"
-        >
-          <Power size={16} className="text-muted-foreground" />
+      {/* @ui-polish - Header block with user info and collapse toggle */}
+      <div className="flex items-center justify-between px-3 py-4">
+        <button onClick={() => setCollapsed(!collapsed)}
+          className="p-1 rounded-md hover:bg-brand-50">
+          {collapsed ? <ChevronRight size={18} /> : <Menu size={18} />}
         </button>
+
+        {!collapsed && (
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-brand to-brand/70 rounded-lg flex items-center justify-center shadow-sm">
+              <span className="text-white font-bold text-sm">C</span>
+            </div>
+            <div>
+              <p className="text-sm font-semibold leading-none">Clydra</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide">
+                AI Chat
+              </p>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* @ui-polish - Plan badge */}
+      {!collapsed && (
+        <span className="mx-3 mb-2 inline-block rounded-full bg-brand-50 px-2 py-[2px] text-[10px] text-brand-600">
+          Free Plan
+        </span>
+      )}
 
       {/* @fluid-ui - Header with hamburger toggle */}
       <div className="p-4 border-b border-border/30">
@@ -149,6 +161,15 @@ export default function Sidebar({
               Resets daily at midnight
             </p>
           </div>
+
+          {/* @ui-polish - New Chat button style */}
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="w-full rounded-lg bg-brand-500 py-2 text-sm font-medium text-white
+                       hover:bg-brand-600 transition"
+          >
+            + New Chat
+          </button>
 
           {/* @fluid-ui - Upgrade Button */}
           <button

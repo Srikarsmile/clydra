@@ -253,8 +253,13 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
       {/* @fluid-ui - T3.chat input area */}
       <div className="border-t bg-white p-4">
         <div className="max-w-4xl mx-auto">
-          {/* @ux-refresh - Updated form styling with refined shadow and colors */}
-          <form onSubmit={handleSubmit} className="flex items-center gap-2 shadow-md/10 border border-gray-200 px-3 py-2 rounded-md bg-surface">
+          {/* @ui-polish - Updated form styling with refined shadow and colors */}
+          <form 
+            onSubmit={handleSubmit} 
+            className="flex items-center gap-2 rounded-full border
+                       border-gray-200 bg-surface shadow-sm/5 px-4 py-2
+                       focus-within:ring-2 focus-within:ring-brand-200"
+          >
             <input
               type="text"
               value={input}
@@ -272,7 +277,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
               <Send className="w-4 h-4" />
             </Button>
           </form>
-          {/* @ux-refresh - End updated form styling */}
+          {/* @ui-polish - End updated form styling */}
           <p className="text-xs text-gray-500 mt-2 text-center">
             Press ⌘/Ctrl + Enter to send
           </p>

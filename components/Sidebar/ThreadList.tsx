@@ -10,6 +10,7 @@ interface Thread {
   id: string;
   title: string;
   created_at: string;
+  msg_count?: number; // @ui-polish - Add message count
 }
 
 interface ThreadListProps {
@@ -121,7 +122,7 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
       <Button 
         onClick={createThread} 
         disabled={isCreating}
-        className="w-full"
+        className="w-full bg-orange-500 text-white hover:bg-orange-600 disabled:bg-orange-300"
         variant="default"
       >
         {isCreating ? 'Creating...' : '＋ New Chat'}
@@ -135,7 +136,7 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
       <ul className="space-y-1 overflow-y-auto max-h-[calc(100vh-12rem)]">
         {threads?.map(thread => (
           <li key={thread.id}>
-            {/* @ux-refresh - Enhanced thread item with delete functionality */}
+            {/* @ui-polish - Enhanced thread item with message count and delete functionality */}
             <div className={cn(
               "group flex items-center justify-between rounded-md transition-colors hover:bg-gray-100",
               thread.id === activeThread && "bg-brand/10"
@@ -143,11 +144,18 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
               <Link 
                 href={`/dashboard?thread=${thread.id}`}
                 className={cn(
-                  "flex-1 truncate px-2 py-1 text-sm transition-colors",
-                  thread.id === activeThread && "text-brand font-medium"
+                  "flex items-center justify-between flex-1 px-2 py-1 text-sm transition-colors",
+                  thread.id === activeThread
+                    ? "bg-brand-50 text-brand-600 font-medium"
+                    : "hover:bg-brand-50/50"
                 )}
               >
-                {thread.title}
+                <span className="truncate">{thread.title}</span>
+                {thread.msg_count && thread.msg_count > 0 && (
+                  <span className="ml-2 text-[10px] rounded bg-gray-200 px-1">
+                    {thread.msg_count}
+                  </span>
+                )}
               </Link>
               
               <button
@@ -167,7 +175,7 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
                 )}
               </button>
             </div>
-            {/* @ux-refresh - End enhanced thread item */}
+            {/* @ui-polish - End enhanced thread item */}
           </li>
         ))}
         {threads?.length === 0 && (

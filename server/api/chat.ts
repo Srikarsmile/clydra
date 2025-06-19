@@ -256,11 +256,14 @@ async function saveMessagesToThread(
       return;
     }
 
-    // Update thread title if this is the first message
-    await supabaseAdmin.rpc('update_thread_title_if_new', {
-      p_thread_id: threadId,
-      p_new_title: generateChatTitle(lastUserMessage.content),
-    });
+    // @ui-polish - Auto-title on first user message
+    await supabaseAdmin
+      .from('threads')
+      .update({ 
+        title: lastUserMessage.content.substring(0, 40) 
+      })
+      .eq('id', threadId)
+      .eq('title', 'New Chat');
 
   } catch (error) {
     console.error('Error saving messages to thread:', error);

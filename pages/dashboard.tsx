@@ -5,7 +5,7 @@ import { buildClerkProps } from "@clerk/nextjs/server";
 import { useRouter } from "next/router";
 import ChatLayout from "../components/ChatLayout";
 import { Container } from "../components/ui/Container";
-import Link from "next/link";
+import { Shell } from "../components/Layout/Shell";
 
 // Lazy load components
 const ChatPanel = lazy(() => import("../components/Chat/ChatPanel"));
@@ -52,13 +52,21 @@ function Dashboard() {
         if (response.ok) {
           const data = await response.json();
           setStats(data);
+        } else {
+          console.warn("Failed to fetch analytics:", response.status);
+          // Keep default stats if API fails
         }
       } catch (error) {
         console.error("Error fetching stats:", error);
+        // Gracefully handle network errors by keeping default stats
       }
     };
-    fetchStats();
-  }, []);
+    
+    // Only fetch stats if user is loaded, authenticated, and we're not on chat route
+    if (isLoaded && user && activeRoute !== "chat") {
+      fetchStats();
+    }
+  }, [isLoaded, user, activeRoute]);
 
   const handleRouteChange = (route: string) => {
     setActiveRoute(route);
@@ -97,75 +105,48 @@ function Dashboard() {
   // Render ChatPanel when chat route is active
   if (activeRoute === "chat") {
     return (
-      <div className="h-screen bg-bg-base flex">
-        <Suspense
-          fallback={
-            <div className="w-64 px-2 py-4 space-y-2">
-              <div className="w-full h-10 bg-gray-200 animate-pulse rounded"></div>
-              <div className="space-y-2">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="h-8 bg-gray-100 animate-pulse rounded"></div>
-                ))}
-              </div>
-            </div>
-          }
-        >
-          <ThreadList activeThread={threadId} />
-        </Suspense>
-        
-        <div className="flex-1">
+      <Shell>
+        <div className="h-full bg-bg-base flex">
           <Suspense
             fallback={
-              <div className="h-full flex items-center justify-center">
-                <div className="text-center space-y-4">
-                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  <p className="text-body text-text-muted">Loading chat...</p>
+              <div className="w-64 px-2 py-4 space-y-2">
+                <div className="w-full h-10 bg-gray-200 animate-pulse rounded"></div>
+                <div className="space-y-2">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="h-8 bg-gray-100 animate-pulse rounded"></div>
+                  ))}
                 </div>
               </div>
             }
           >
-            {threadId ? <ChatPanel threadId={threadId} /> : <EmptyState />}
+            <ThreadList activeThread={threadId} />
           </Suspense>
+          
+          <div className="flex-1">
+            <Suspense
+              fallback={
+                <div className="h-full flex items-center justify-center">
+                  <div className="text-center space-y-4">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    <p className="text-body text-text-muted">Loading chat...</p>
+                  </div>
+                </div>
+              }
+            >
+              {threadId ? <ChatPanel threadId={threadId} /> : <EmptyState />}
+            </Suspense>
+          </div>
         </div>
-      </div>
+      </Shell>
     );
   }
 
   // @or Keep existing ChatLayout for images (unchanged)
   return (
-    <div className="min-h-screen bg-bg-base">
-      {/* Top Navigation Bar */}
-      <nav className="bg-surface/80 backdrop-blur-xl border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <Link href="/" className="flex items-center">
-                <div className="w-8 h-8 bg-[#0BA5EC] rounded-xl flex items-center justify-center">
-                  <span className="text-white font-bold">C</span>
-                </div>
-                <span className="ml-2 text-lg font-medium text-text-main">
-                  Clydra
-                </span>
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <img
-                  src={user.imageUrl}
-                  alt={user.fullName || "User"}
-                  className="w-8 h-8 rounded-full"
-                />
-                <span className="text-sm font-medium text-text-main">
-                  {user.fullName}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <Container>
+    <Shell>
+      <div className="min-h-full bg-bg-base">
+        {/* Main Content */}
+        <Container>
         <div className="mx-auto max-w-[52rem] py-16 lg:py-24 flex flex-col space-y-8">
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -305,7 +286,8 @@ function Dashboard() {
           </div>
         </div>
       </Container>
-    </div>
+      </div>
+    </Shell>
   );
 }
 

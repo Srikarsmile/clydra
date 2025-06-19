@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  images: {
+    domains: [
+      'img.clerk.com',
+      'images.clerk.dev'
+    ],
+  },
 };
 
 export default nextConfig;

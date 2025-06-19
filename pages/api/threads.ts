@@ -23,9 +23,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'GET') {
     try {
+      // @ui-polish - Add message count via subquery
       const { data, error } = await supabaseAdmin
         .from('threads')
-        .select('*')
+        .select(`
+          *,
+          msg_count:messages(count)
+        `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
