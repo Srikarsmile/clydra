@@ -4,7 +4,6 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { Trash2 } from "lucide-react"; // @ux-refresh - Add delete icon
 import { cn } from "../../lib/utils";
-import ThreadSearch from "./ThreadSearch"; // @ux-fix
 
 interface Thread {
   id: string;
@@ -103,8 +102,6 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
 
   return (
     <div className="space-y-2">
-      <ThreadSearch /> {/* @ux-fix */}
-
       <ul className="space-y-1 overflow-y-auto max-h-[calc(100vh-16rem)]">
         {threads?.map((thread) => (
           <li key={thread.id}>
