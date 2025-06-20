@@ -251,9 +251,10 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
           </div>
         )}
 
-        {/* @layout-fix - message column */}
+        {/* @width-fix - message column – fluid width */}
         <div className={cn(
-          "flex flex-col mx-auto w-full max-w-3xl",
+          "flex flex-col mx-auto w-full",
+          "max-w-full sm:max-w-2xl 2xl:max-w-3xl", // @width-fix
           messages.length === 0 ? "mt-0" : "space-y-4"
         )}>
           {messages.map((message, index) => (
