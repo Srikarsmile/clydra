@@ -1,10 +1,10 @@
 // @threads - Thread list sidebar component
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import Link from 'next/link';
-import { Trash2 } from 'lucide-react'; // @ux-refresh - Add delete icon
-import { cn } from '../../lib/utils';
-import { Button } from '../ui/button';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import Link from "next/link";
+import { Trash2 } from "lucide-react"; // @ux-refresh - Add delete icon
+import { cn } from "../../lib/utils";
+import ThreadSearch from "./ThreadSearch"; // @ux-fix
 
 interface Thread {
   id: string;
@@ -21,20 +21,19 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
   const router = useRouter();
   const [threads, setThreads] = useState<Thread[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null); // @ux-refresh - Track deleting state
 
   // Fetch threads
   useEffect(() => {
     const fetchThreads = async () => {
       try {
-        const response = await fetch('/api/threads');
+        const response = await fetch("/api/threads");
         if (response.ok) {
           const data = await response.json();
           setThreads(data);
         }
       } catch (error) {
-        console.error('Failed to fetch threads:', error);
+        console.error("Failed to fetch threads:", error);
       } finally {
         setIsLoading(false);
       }
@@ -43,61 +42,43 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
     fetchThreads();
   }, []);
 
-  // Create new thread
-  const createThread = async () => {
-    if (isCreating) return;
-    
-    setIsCreating(true);
-    try {
-      const response = await fetch('/api/threads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      
-      if (response.ok) {
-        const { id } = await response.json();
-        router.push(`/dashboard?thread=${id}`);
-      }
-    } catch (error) {
-      console.error('Failed to create thread:', error);
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
   // @ux-refresh - Delete thread functionality
   const deleteThread = async (threadId: string, event: React.MouseEvent) => {
     event.preventDefault(); // Prevent navigation when clicking delete
     event.stopPropagation();
-    
+
     if (deletingId === threadId) return;
-    
-    if (!confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
+
+    if (
+      !confirm(
+        "Are you sure you want to delete this chat? This action cannot be undone."
+      )
+    ) {
       return;
     }
-    
+
     setDeletingId(threadId);
     try {
-      const response = await fetch('/api/threads', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/threads", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ threadId }),
       });
-      
+
       if (response.ok) {
         // Remove thread from local state
-        setThreads(prev => prev.filter(t => t.id !== threadId));
-        
+        setThreads((prev) => prev.filter((t) => t.id !== threadId));
+
         // Redirect if deleting active thread
         if (activeThread === threadId) {
-          router.push('/dashboard');
+          router.push("/dashboard");
         }
       } else {
-        throw new Error('Failed to delete thread');
+        throw new Error("Failed to delete thread");
       }
     } catch (error) {
-      console.error('Failed to delete thread:', error);
-      alert('Failed to delete chat. Please try again.');
+      console.error("Failed to delete thread:", error);
+      alert("Failed to delete chat. Please try again.");
     } finally {
       setDeletingId(null);
     }
@@ -106,42 +87,35 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
 
   if (isLoading) {
     return (
-      <aside className="w-64 px-2 py-4 space-y-2">
-        <div className="w-full h-10 bg-gray-200 animate-pulse rounded"></div>
+      <div className="space-y-2">
+        <div className="w-full h-8 bg-gray-200 animate-pulse rounded"></div>
         <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-8 bg-gray-100 animate-pulse rounded"></div>
+            <div
+              key={i}
+              className="h-8 bg-gray-100 animate-pulse rounded"
+            ></div>
           ))}
         </div>
-      </aside>
+      </div>
     );
   }
 
   return (
-    <aside className="w-64 px-2 py-4 space-y-2 border-r border-border/30">
-      <Button 
-        onClick={createThread} 
-        disabled={isCreating}
-        className="w-full bg-orange-500 text-white hover:bg-orange-600 disabled:bg-orange-300"
-        variant="default"
-      >
-        {isCreating ? 'Creating...' : '＋ New Chat'}
-      </Button>
-      
-      <input
-        placeholder="Search your threads…"
-        className="mt-3 w-full rounded-md bg-muted px-2 py-1 text-sm border border-border/30"
-      />
-      
-      <ul className="space-y-1 overflow-y-auto max-h-[calc(100vh-12rem)]">
-        {threads?.map(thread => (
+    <div className="space-y-2">
+      <ThreadSearch /> {/* @ux-fix */}
+
+      <ul className="space-y-1 overflow-y-auto max-h-[calc(100vh-16rem)]">
+        {threads?.map((thread) => (
           <li key={thread.id}>
             {/* @ui-polish - Enhanced thread item with message count and delete functionality */}
-            <div className={cn(
-              "group flex items-center justify-between rounded-md transition-colors hover:bg-gray-100",
-              thread.id === activeThread && "bg-brand/10"
-            )}>
-              <Link 
+            <div
+              className={cn(
+                "group flex items-center justify-between rounded-md transition-colors hover:bg-gray-100",
+                thread.id === activeThread && "bg-brand/10"
+              )}
+            >
+              <Link
                 href={`/dashboard?thread=${thread.id}`}
                 className={cn(
                   "flex items-center justify-between flex-1 px-2 py-1 text-sm transition-colors",
@@ -157,7 +131,7 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
                   </span>
                 )}
               </Link>
-              
+
               <button
                 onClick={(e) => deleteThread(thread.id, e)}
                 disabled={deletingId === thread.id}
@@ -184,6 +158,6 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
           </li>
         )}
       </ul>
-    </aside>
+    </div>
   );
-} 
+}

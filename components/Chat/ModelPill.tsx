@@ -30,10 +30,10 @@ export default function ModelPill({
       disabled={locked}
       className={cn(
         // @ux-refresh - Updated styling with refined brand colors
-        'rounded-full px-4 py-1 text-sm shadow-sm/5 transition',
-        active && 'bg-brand-500 text-white hover:bg-brand-600',
-        !active && !locked && 'bg-brand-50 text-brand-600 hover:bg-brand-100',
-        locked && 'opacity-40 cursor-not-allowed',
+        "rounded-full px-4 py-1 text-sm shadow-sm/5 transition",
+        active && "bg-brand-500 text-white hover:bg-brand-600",
+        !active && !locked && "bg-brand-50 text-brand-600 hover:bg-brand-100",
+        locked && "opacity-40 cursor-not-allowed",
         className
         // @ux-refresh - End updated styling
       )}

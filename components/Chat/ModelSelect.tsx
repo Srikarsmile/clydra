@@ -1,55 +1,61 @@
 // @fluid-ui - T3.chat model selector component - Modern redesign
+import { useState } from "react"; // @ux-fix
 import {
-  Popover, PopoverTrigger, PopoverContent
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
 } from "@/components/ui/popover";
 import {
-  Command, CommandInput, CommandGroup,
-  CommandItem, CommandList
+  Command,
+  CommandInput,
+  CommandGroup,
+  CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import { Check, ChevronDown, Sparkles, Zap, Crown } from "lucide-react";
 import { MODEL_ALIASES, ChatModel } from "@/types/chatModels";
 import { cn } from "@/lib/utils";
 
 // @picker-cleanup - Models array with plan requirements (matching server schema)
-const MODELS: {key: ChatModel; minPlan: 'free' | 'pro' | 'max'}[] = [
-  { key:"openai/gpt-4o",                       minPlan:'free' },
-  { key:"google/gemini-2.5-flash-preview",    minPlan:'free' },
-  { key:"google/gemini-2.5-pro",              minPlan:'pro' },
-  { key:"anthropic/claude-sonnet-4",          minPlan:'pro' },
-  { key:"anthropic/claude-opus-4",            minPlan:'max' },
-  { key:"deepseek/deepseek-r1",               minPlan:'pro' },
-  { key:"anthropic/claude-3-sonnet-20240229", minPlan:'pro' },
-  { key:"google/gemini-1.5-pro",              minPlan:'pro' },
-  { key:"anthropic/claude-3-opus-20240229",   minPlan:'max' },
-  { key:"meta-llama/llama-3-70b-instruct",    minPlan:'max' },
+const MODELS: { key: ChatModel; minPlan: "free" | "pro" | "max" }[] = [
+  { key: "openai/gpt-4o", minPlan: "free" },
+  { key: "google/gemini-2.5-flash-preview", minPlan: "free" },
+  { key: "google/gemini-2.5-pro", minPlan: "pro" },
+  { key: "anthropic/claude-sonnet-4", minPlan: "pro" },
+  { key: "anthropic/claude-opus-4", minPlan: "max" },
+  { key: "deepseek/deepseek-r1", minPlan: "pro" },
+  { key: "anthropic/claude-3-sonnet-20240229", minPlan: "pro" },
+  { key: "google/gemini-1.5-pro", minPlan: "pro" },
+  { key: "anthropic/claude-3-opus-20240229", minPlan: "max" },
+  { key: "meta-llama/llama-3-70b-instruct", minPlan: "max" },
 ];
 
 // @picker-cleanup - Enhanced plan configuration with icons and colors
 const PLAN_CONFIG = {
   free: {
-    label: 'FREE',
-    description: 'Basic Models',
+    label: "FREE",
+    description: "Basic Models",
     icon: Sparkles,
-    color: 'text-slate-500',
-    bgColor: 'bg-slate-50',
-    borderColor: 'border-slate-200'
+    color: "text-slate-500",
+    bgColor: "bg-slate-50",
+    borderColor: "border-slate-200",
   },
   pro: {
-    label: 'PRO',
-    description: 'Advanced Models',
+    label: "PRO",
+    description: "Advanced Models",
     icon: Zap,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200'
+    color: "text-blue-600",
+    bgColor: "bg-blue-50",
+    borderColor: "border-blue-200",
   },
   max: {
-    label: 'MAX',
-    description: 'Premium Models',
+    label: "MAX",
+    description: "Premium Models",
     icon: Crown,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50',
-    borderColor: 'border-purple-200'
-  }
+    color: "text-purple-600",
+    bgColor: "bg-purple-50",
+    borderColor: "border-purple-200",
+  },
 };
 
 interface ModelSelectProps {
@@ -58,15 +64,17 @@ interface ModelSelectProps {
 }
 
 export function ModelSelect({ model, setModel }: ModelSelectProps) {
+  const [open, setOpen] = useState(false); // @ux-fix - Popover state management
+  
   // Group models by plan
   const groups = {
-    free: MODELS.filter(m => m.minPlan === 'free'),
-    pro:  MODELS.filter(m => m.minPlan === 'pro'),
-    max:  MODELS.filter(m => m.minPlan === 'max'),
+    free: MODELS.filter((m) => m.minPlan === "free"),
+    pro: MODELS.filter((m) => m.minPlan === "pro"),
+    max: MODELS.filter((m) => m.minPlan === "max"),
   };
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}> {/* @ux-fix */}
       <PopoverTrigger asChild>
         <button className="group flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 hover:border-brand-300 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400">
           <div className="flex items-center gap-2 flex-1">
@@ -86,7 +94,9 @@ export function ModelSelect({ model, setModel }: ModelSelectProps) {
       >
         {/* Header with search */}
         <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white rounded-t-2xl">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Select AI Model</h3>
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">
+            Select AI Model
+          </h3>
           <Command>
             <CommandInput
               placeholder="Search models..."
@@ -99,22 +109,29 @@ export function ModelSelect({ model, setModel }: ModelSelectProps) {
         <div className="max-h-80 overflow-y-auto">
           <Command>
             <CommandList>
-              {(['free','pro','max'] as const).map(plan => {
+              {(["free", "pro", "max"] as const).map((plan) => {
                 const config = PLAN_CONFIG[plan];
                 const Icon = config.icon;
-                
+
                 return (
                   <CommandGroup key={plan}>
                     {/* Plan header */}
-                    <div className={cn(
-                      "flex items-center gap-2 px-4 py-3 mx-2 mt-3 mb-2 rounded-xl border",
-                      config.bgColor,
-                      config.borderColor
-                    )}>
+                    <div
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-3 mx-2 mt-3 mb-2 rounded-xl border",
+                        config.bgColor,
+                        config.borderColor
+                      )}
+                    >
                       <Icon className={cn("w-4 h-4", config.color)} />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className={cn("text-xs font-bold tracking-wide", config.color)}>
+                          <span
+                            className={cn(
+                              "text-xs font-bold tracking-wide",
+                              config.color
+                            )}
+                          >
                             {config.label}
                           </span>
                           <span className="text-xs text-gray-500">
@@ -129,14 +146,19 @@ export function ModelSelect({ model, setModel }: ModelSelectProps) {
 
                     {/* Models in this plan */}
                     <div className="px-2 pb-2">
-                      {groups[plan].map(m => (
+                      {groups[plan].map((m) => (
                         <CommandItem
                           key={m.key}
-                          onSelect={() => setModel(m.key)}
+                          onMouseDown={(e) => { // @ux-fix
+                            e.preventDefault(); // stop Command's default
+                            setModel(m.key as ChatModel); // update state
+                            setOpen(false); // close Popover immediately
+                          }}
                           className={cn(
                             "flex items-center gap-3 px-3 py-3 mx-1 my-1 rounded-xl cursor-pointer transition-all duration-200",
                             "hover:bg-gray-50 hover:shadow-sm",
-                            model === m.key && "bg-brand-50 border border-brand-200 shadow-sm"
+                            model === m.key &&
+                              "bg-brand-50 border border-brand-200 shadow-sm"
                           )}
                         >
                           {/* Selection indicator */}
@@ -158,11 +180,13 @@ export function ModelSelect({ model, setModel }: ModelSelectProps) {
                           </div>
 
                           {/* Plan badge */}
-                          <div className={cn(
-                            "px-2 py-1 rounded-full text-xs font-semibold tracking-wide",
-                            config.color,
-                            config.bgColor
-                          )}>
+                          <div
+                            className={cn(
+                              "px-2 py-1 rounded-full text-xs font-semibold tracking-wide",
+                              config.color,
+                              config.bgColor
+                            )}
+                          >
                             {config.label}
                           </div>
                         </CommandItem>
@@ -194,4 +218,4 @@ export function ModelSelect({ model, setModel }: ModelSelectProps) {
       </PopoverContent>
     </Popover>
   );
-} 
+}

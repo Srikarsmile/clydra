@@ -63,7 +63,9 @@ export default async function handler(
     }
 
     // validate incoming model
-    const validatedModel: ChatModel = MODEL_ALIASES[model] ? model : "openai/gpt-4o";
+    const validatedModel: ChatModel = MODEL_ALIASES[model]
+      ? model
+      : "openai/gpt-4o";
 
     // @or Estimate input tokens
     const inputTokens = estimateConversationTokens(messages, validatedModel);
@@ -166,7 +168,9 @@ export default async function handler(
       result.usage?.completion_tokens || Math.ceil(assistantMessage.length / 4);
     await logUsage(userId, validatedModel, inputTokens, outputTokens);
 
-    console.log(`@or OpenRouter request successful for model: ${validatedModel}`);
+    console.log(
+      `@or OpenRouter request successful for model: ${validatedModel}`
+    );
 
     return res.status(200).json({
       message: {

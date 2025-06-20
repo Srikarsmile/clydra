@@ -7,35 +7,45 @@ module.exports = {
   darkMode: "class",
   theme: {
     fontFamily: {
-      sans: ['var(--font-sf)', 'ui-sans-serif', '-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'Segoe UI', 'Roboto', 'Inter', 'sans-serif']
+      sans: [
+        "var(--font-sf)",
+        "ui-sans-serif",
+        "-apple-system",
+        "BlinkMacSystemFont",
+        "SF Pro Text",
+        "Segoe UI",
+        "Roboto",
+        "Inter",
+        "sans-serif",
+      ],
     },
     extend: {
       colors: {
         // @ux-refresh - Refined palette for cohesive UI/UX
-        brand: { 
-          50: '#E6F7FE', 
-          100: '#C2ECFD',
-          200: '#7DD7FC',
-          300: '#38C2FA',
-          400: '#13ADF4',
-          500: '#0BA5EC', 
-          600: '#0284C7',
-          DEFAULT: '#0BA5EC'
+        brand: {
+          50: "#E6F7FE",
+          100: "#C2ECFD",
+          200: "#7DD7FC",
+          300: "#38C2FA",
+          400: "#13ADF4",
+          500: "#0BA5EC",
+          600: "#0284C7",
+          DEFAULT: "#0BA5EC",
         },
-        surface: '#FFFFFF',
-        bglight: '#F9FAFB',
-        bgdark: '#121212',
-        txt: { 
-          main: '#111827', 
-          muted: '#6B7280' 
+        surface: "#FFFFFF",
+        bglight: "#F9FAFB",
+        bgdark: "#121212",
+        txt: {
+          main: "#111827",
+          muted: "#6B7280",
         },
         // Legacy compatibility colors
         basebg: {
-          light: '#F9FAFB',
-          dark: '#121212',
+          light: "#F9FAFB",
+          dark: "#121212",
         },
-        'surface-light': '#FFFFFF',
-        'surface-dark': '#26272C',
+        "surface-light": "#FFFFFF",
+        "surface-dark": "#26272C",
         // @ux-refresh - End refined palette
 
         // Neo-Wave Tech Color System
@@ -208,17 +218,17 @@ module.exports = {
           matrix: "#00ff41",
           plasma: "#ff6b35",
         },
-        teal: '#0BA5EC',
+        teal: "#0BA5EC",
         // Legacy compatibility
         legacySecondary: {
-          300: '#FF99C9',
-          400: '#FD5EA8',
+          300: "#FF99C9",
+          400: "#FD5EA8",
         },
       },
       // @ux-refresh - Enhanced shadows and animations
       boxShadow: {
-        'sm/5': '0 1px 2px rgb(0 0 0 / .05)',
-        'md/10': '0 4px 6px rgb(0 0 0 / .10)',
+        "sm/5": "0 1px 2px rgb(0 0 0 / .05)",
+        "md/10": "0 4px 6px rgb(0 0 0 / .10)",
         // Legacy shadows for compatibility
         sm: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
         md: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
@@ -237,14 +247,14 @@ module.exports = {
       },
       keyframes: {
         fadeUp: {
-          '0%': { opacity: 0, transform: 'translateY(8px)' },
-          '100%': { opacity: 1, transform: 'translateY(0)' }
-        }
+          "0%": { opacity: 0, transform: "translateY(8px)" },
+          "100%": { opacity: 1, transform: "translateY(0)" },
+        },
       },
       // @ux-refresh - End enhanced shadows and animations
       animation: {
         // @fluid-ui - T3.chat animation classes
-        fadeInUp: 'fadeInUp 0.3s ease-out',
+        fadeInUp: "fadeInUp 0.3s ease-out",
       },
       fontSize: {
         // Apple HIG Typography Scale
@@ -321,8 +331,8 @@ module.exports = {
         "wave-ripple": "wave-ripple 2s ease-out infinite",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite alternate",
         float: "float 6s ease-in-out infinite",
-        /* clydra-design */ fadeMove: 'fadeMove 0.6s ease-out',
-        /* clydra-design */ wiggle: 'wiggle 0.4s ease-in-out',
+        /* clydra-design */ fadeMove: "fadeMove 0.6s ease-out",
+        /* clydra-design */ wiggle: "wiggle 0.4s ease-in-out",
       },
       keyframes: {
         "fade-in-up": {
@@ -355,12 +365,12 @@ module.exports = {
           "50%": { transform: "translateY(-10px)" },
         },
         /* clydra-design */ fadeMove: {
-          '0%': { opacity: '0', transform: 'translateY(8px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' }
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
         /* clydra-design */ wiggle: {
-          '0%, 100%': { transform: 'translateX(0)' },
-          '50%': { transform: 'translateX(4px)' }
+          "0%, 100%": { transform: "translateX(0)" },
+          "50%": { transform: "translateX(4px)" },
         },
       },
       backgroundImage: {

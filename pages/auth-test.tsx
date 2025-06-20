@@ -27,8 +27,12 @@ export default function AuthTest() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg-base">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-text-main mb-4">Not Signed In</h1>
-          <p className="text-text-muted mb-4">You need to sign in to access this page.</p>
+          <h1 className="text-2xl font-bold text-text-main mb-4">
+            Not Signed In
+          </h1>
+          <p className="text-text-muted mb-4">
+            You need to sign in to access this page.
+          </p>
           <button
             onClick={() => router.push("/sign-in")}
             className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90"
@@ -43,7 +47,9 @@ export default function AuthTest() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg-base">
       <div className="bg-surface/80 backdrop-blur-xl border border-border/50 rounded-xl p-8 max-w-md w-full">
-        <h1 className="text-2xl font-bold text-text-main mb-4">Authentication Test</h1>
+        <h1 className="text-2xl font-bold text-text-main mb-4">
+          Authentication Test
+        </h1>
         <div className="space-y-4">
           <div>
             <strong className="text-text-main">Status:</strong>
@@ -55,11 +61,15 @@ export default function AuthTest() {
           </div>
           <div>
             <strong className="text-text-main">Email:</strong>
-            <span className="text-text-muted ml-2">{user.emailAddresses[0]?.emailAddress}</span>
+            <span className="text-text-muted ml-2">
+              {user.emailAddresses[0]?.emailAddress}
+            </span>
           </div>
           <div>
             <strong className="text-text-main">Name:</strong>
-            <span className="text-text-muted ml-2">{user.fullName || "Not set"}</span>
+            <span className="text-text-muted ml-2">
+              {user.fullName || "Not set"}
+            </span>
           </div>
           <div className="pt-4 space-y-2">
             <button
@@ -79,4 +89,4 @@ export default function AuthTest() {
       </div>
     </div>
   );
-} 
+}

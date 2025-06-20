@@ -15,14 +15,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   timestamp = new Date(),
 }) => {
   const isUser = role === "user";
-  
+
   return (
-    <div
-      className={cn(
-        "flex gap-3",
-        isUser ? "justify-end" : "justify-start"
-      )}
-    >
+    <div className={cn("flex gap-3", isUser ? "justify-end" : "justify-start")}>
       <div
         className={cn(
           "max-w-prose rounded-lg shadow-sm/5 px-4 py-3",

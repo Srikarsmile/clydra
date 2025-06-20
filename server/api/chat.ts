@@ -25,7 +25,7 @@ const chatInputSchema = z.object({
   model: z
     .enum([
       "openai/gpt-4o",
-      "google/gemini-2.5-pro",                 // @gem25
+      "google/gemini-2.5-pro", // @gem25
       "google/gemini-2.5-flash-preview",
       "anthropic/claude-sonnet-4",
       "anthropic/claude-opus-4",
@@ -76,8 +76,8 @@ export async function processChatRequest(
   const validatedInput = chatInputSchema.parse(input);
 
   // @clydra-core Validate incoming model against MODEL_ALIASES
-  const model: ChatModel = MODEL_ALIASES[validatedInput.model as ChatModel] 
-    ? (validatedInput.model as ChatModel) 
+  const model: ChatModel = MODEL_ALIASES[validatedInput.model as ChatModel]
+    ? (validatedInput.model as ChatModel)
     : "openai/gpt-4o";
 
   // @clydra-core Guard behind feature flag
@@ -125,9 +125,7 @@ export async function processChatRequest(
   });
 
   try {
-    console.log(
-      `@clydra-core Making OpenRouter request for model: ${model}`
-    );
+    console.log(`@clydra-core Making OpenRouter request for model: ${model}`);
 
     // @clydra-core Make request to OpenRouter
     const completion = await openai.chat.completions.create({
@@ -220,53 +218,50 @@ async function saveMessagesToThread(
   try {
     // Get user info
     const { data: user } = await supabaseAdmin
-      .from('users')
-      .select('*')
-      .eq('clerk_id', userId)
+      .from("users")
+      .select("*")
+      .eq("clerk_id", userId)
       .single();
 
     if (!user) {
-      throw new Error('User not found');
+      throw new Error("User not found");
     }
 
     // Get the last user message
     const lastUserMessage = userMessages[userMessages.length - 1];
-    if (!lastUserMessage || lastUserMessage.role !== 'user') {
-      throw new Error('Invalid message format');
+    if (!lastUserMessage || lastUserMessage.role !== "user") {
+      throw new Error("Invalid message format");
     }
 
     // Insert both user and assistant messages
-    const { error } = await supabaseAdmin
-      .from('messages')
-      .insert([
-        {
-          thread_id: threadId,
-          role: 'user',
-          content: lastUserMessage.content,
-        },
-        {
-          thread_id: threadId,
-          role: 'assistant',
-          content: assistantResponse,
-        },
-      ]);
+    const { error } = await supabaseAdmin.from("messages").insert([
+      {
+        thread_id: threadId,
+        role: "user",
+        content: lastUserMessage.content,
+      },
+      {
+        thread_id: threadId,
+        role: "assistant",
+        content: assistantResponse,
+      },
+    ]);
 
     if (error) {
-      console.error('Error saving messages to thread:', error);
+      console.error("Error saving messages to thread:", error);
       return;
     }
 
     // @ui-polish - Auto-title on first user message
     await supabaseAdmin
-      .from('threads')
-      .update({ 
-        title: lastUserMessage.content.substring(0, 40) 
+      .from("threads")
+      .update({
+        title: lastUserMessage.content.substring(0, 40),
       })
-      .eq('id', threadId)
-      .eq('title', 'New Chat');
-
+      .eq("id", threadId)
+      .eq("title", "New Chat");
   } catch (error) {
-    console.error('Error saving messages to thread:', error);
+    console.error("Error saving messages to thread:", error);
   }
 }
 

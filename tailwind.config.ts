@@ -1,4 +1,4 @@
-import type { Config } from 'tailwindcss'
+import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: [
@@ -8,22 +8,32 @@ const config: Config = {
   darkMode: "class",
   theme: {
     fontFamily: {
-      sans: ['var(--font-sf)', 'ui-sans-serif', '-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'Segoe UI', 'Roboto', 'Inter', 'sans-serif']
+      sans: [
+        "var(--font-sf)",
+        "ui-sans-serif",
+        "-apple-system",
+        "BlinkMacSystemFont",
+        "SF Pro Text",
+        "Segoe UI",
+        "Roboto",
+        "Inter",
+        "sans-serif",
+      ],
     },
     extend: {
       colors: {
         teal: {
-          DEFAULT: '#0BA5EC',
-          50: '#f0fafe',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0BA5EC',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+          DEFAULT: "#0BA5EC",
+          50: "#f0fafe",
+          100: "#e0f2fe",
+          200: "#bae6fd",
+          300: "#7dd3fc",
+          400: "#38bdf8",
+          500: "#0ea5e9",
+          600: "#0BA5EC",
+          700: "#0369a1",
+          800: "#075985",
+          900: "#0c4a6e",
         },
         // Neo-Wave Tech Color System
         primary: {
@@ -74,21 +84,21 @@ const config: Config = {
       },
       keyframes: {
         /* clydra-design */ fadeMove: {
-          '0%': { opacity: '0', transform: 'translateY(8px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' }
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
         /* clydra-design */ wiggle: {
-          '0%, 100%': { transform: 'translateX(0)' },
-          '50%': { transform: 'translateX(4px)' }
+          "0%, 100%": { transform: "translateX(0)" },
+          "50%": { transform: "translateX(4px)" },
         },
       },
       animation: {
-        /* clydra-design */ fadeMove: 'fadeMove 0.6s ease-out',
-        /* clydra-design */ wiggle: 'wiggle 0.4s ease-in-out',
-      }
-    }
+        /* clydra-design */ fadeMove: "fadeMove 0.6s ease-out",
+        /* clydra-design */ wiggle: "wiggle 0.4s ease-in-out",
+      },
+    },
   },
   plugins: [],
-}
+};
 
-export default config 
+export default config;
