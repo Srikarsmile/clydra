@@ -187,26 +187,14 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
         {messages.length === 0 && (
           // @fluid-ui - T3.chat welcome section with fade-in animation
           <div className="max-w-4xl mx-auto py-16 lg:py-24 animate-fadeInUp">
-            {/* @ux-refresh - Updated headline with spacing and fade-in */}
+            {/* @dedupe - Updated headline with spacing and fade-in */}
             <h1
               className="text-3xl lg:text-5xl font-semibold text-center text-txt-main
-                           mt-24 lg:mt-28 mb-4 animate-[fadeUp_.6s_ease-out]"
+                           mt-24 lg:mt-28 mb-8 animate-[fadeUp_.6s_ease-out]" // @dedupe
             >
-              How can I help you, {user?.firstName}?
+              How can I help you,&nbsp;{user?.firstName}? {/* @dedupe */}
             </h1>
-            {/* @ux-refresh - End updated headline */}
-
-            {/* @model-badge - Active model badge */}
-            <div className="flex justify-center mb-10">
-              <span
-                className="inline-flex items-center gap-1 rounded-full
-                               bg-brand-50 text-brand-600 px-3 py-1 text-xs
-                               shadow-sm/5 select-none"
-              >
-                <span className="w-2 h-2 rounded-full bg-brand-500" />
-                Using&nbsp;{MODEL_ALIASES[model]}
-              </span>
-            </div>
+            {/* @dedupe - End updated headline */}
 
             {/* @fluid-ui - Model selector */}
             <div className="flex justify-center mb-8">
