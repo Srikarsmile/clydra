@@ -111,40 +111,18 @@ function Dashboard() {
   if (activeRoute === "chat") {
     return (
       <Shell>
-        <div className="h-full bg-bg-base flex">
-          <Suspense
-            fallback={
-              <div className="w-64 px-2 py-4 space-y-2">
-                <div className="w-full h-10 bg-gray-200 animate-pulse rounded"></div>
-                <div className="space-y-2">
-                  {[...Array(5)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-8 bg-gray-100 animate-pulse rounded"
-                    ></div>
-                  ))}
-                </div>
+        <Suspense
+          fallback={
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center space-y-4">
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <p className="text-body text-text-muted">Loading chat...</p>
               </div>
-            }
-          >
-            <ThreadList activeThread={threadId} />
-          </Suspense>
-
-          <div className="flex-1">
-            <Suspense
-              fallback={
-                <div className="h-full flex items-center justify-center">
-                  <div className="text-center space-y-4">
-                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-                    <p className="text-body text-text-muted">Loading chat...</p>
-                  </div>
-                </div>
-              }
-            >
-              {threadId ? <ChatPanel threadId={threadId} /> : <EmptyState />}
-            </Suspense>
-          </div>
-        </div>
+            </div>
+          }
+        >
+          {threadId ? <ChatPanel threadId={threadId} /> : <EmptyState />}
+        </Suspense>
       </Shell>
     );
   }
