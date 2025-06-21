@@ -65,6 +65,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   const [model, setModel] = useState<ChatModel>("openai/gpt-4o"); // @fluid-ui
   const [showUpgrade, setShowUpgrade] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null); // @focus-fix
 
   // @threads - Load messages for thread
   useEffect(() => {
@@ -108,6 +109,18 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // @focus-fix - Auto-focus input on mount and after sending
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  // @focus-fix - Focus input after message is sent
+  useEffect(() => {
+    if (!isMutating) {
+      inputRef.current?.focus();
+    }
+  }, [isMutating]);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -289,16 +302,21 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                    border-t border-gray-200 dark:border-[#2A2A2E]" // @fix-overlap
       >
         <div className="w-full px-4 py-3"> {/* @expand-chat */}
-          <div className="flex items-center gap-2 rounded-full bg-surface
+          <div 
+            className="flex items-center gap-2 rounded-full bg-surface
                           border border-gray-200 shadow-sm/5 px-4 py-2
-                          focus-within:ring-2 focus-within:ring-brand-200">
+                          focus-within:ring-2 focus-within:ring-brand-200"
+            onClick={() => inputRef.current?.focus()} // @focus-fix
+          >
             <input
+              ref={inputRef} // @focus-fix
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Message..."
               disabled={isMutating}
+              autoFocus // @focus-fix
               className="flex-1 px-1 py-1 bg-transparent text-gray-900 placeholder-gray-500 border-none outline-none"
             />
             <Button
