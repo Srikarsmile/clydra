@@ -281,12 +281,12 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
         </div>
       </div>
 
-      {/* @expand-chat - T3.chat input area - full width */}
+      {/* @fix-overlap - T3.chat input area - avoid sidebar overlap */}
       <form
         onSubmit={handleSubmit}
-        className="fixed bottom-0 inset-x-0 z-20
+        className="fixed bottom-0 right-0 left-64 z-20
                    bg-surface/95 backdrop-blur
-                   border-t border-gray-200 dark:border-[#2A2A2E]" // @expand-chat
+                   border-t border-gray-200 dark:border-[#2A2A2E]" // @fix-overlap
       >
         <div className="w-full px-4 py-3"> {/* @expand-chat */}
           <div className="flex items-center gap-2 rounded-full bg-surface
