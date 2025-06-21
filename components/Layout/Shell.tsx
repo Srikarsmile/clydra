@@ -6,8 +6,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       {/* main scroll container */}
       <div className="flex-1 flex flex-col">
-        <main className="flex-1 overflow-y-auto flex justify-center">
-          <div className="w-full max-w-3xl px-4 lg:px-6">
+        <main className="flex-1 overflow-y-auto">
+          <div className="w-full h-full px-4 lg:px-6">
             {children}  {/* ChatPanel renders here */}
           </div>
         </main>

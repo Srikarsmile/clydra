@@ -239,10 +239,9 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
           </div>
         )}
 
-        {/* @width-fix - message column – fluid width */}
+        {/* @expand-chat - message column – full width */}
         <div className={cn(
-          "flex flex-col mx-auto w-full",
-          "max-w-full sm:max-w-2xl 2xl:max-w-3xl", // @width-fix
+          "flex flex-col w-full px-4", // @expand-chat
           messages.length === 0 ? "mt-0" : "space-y-4"
         )}>
           {messages.map((message, index) => (
@@ -282,14 +281,14 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
         </div>
       </div>
 
-      {/* @fluid-ui - T3.chat input area */}
+      {/* @expand-chat - T3.chat input area - full width */}
       <form
         onSubmit={handleSubmit}
         className="fixed bottom-0 inset-x-0 z-20
-                   flex justify-center bg-surface/95 backdrop-blur
-                   border-t border-gray-200 dark:border-[#2A2A2E]"
+                   bg-surface/95 backdrop-blur
+                   border-t border-gray-200 dark:border-[#2A2A2E]" // @expand-chat
       >
-        <div className="w-full max-w-4xl p-3">
+        <div className="w-full px-4 py-3"> {/* @expand-chat */}
           <div className="flex items-center gap-2 rounded-full bg-surface
                           border border-gray-200 shadow-sm/5 px-4 py-2
                           focus-within:ring-2 focus-within:ring-brand-200">
