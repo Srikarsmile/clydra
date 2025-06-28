@@ -14,7 +14,6 @@ body {
 }
 
 /* Clydra Design System - Apple-like fluid typography and spacing */
-@import url("https://rsms.me/inter/inter.css");
 
 :root {
   /* Clydra Core Design Tokens */
