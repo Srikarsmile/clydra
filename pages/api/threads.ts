@@ -65,13 +65,39 @@ export default async function handler(
       res.status(500).json({ error: "Failed to create thread" });
     }
   } else if (req.method === "DELETE") {
-    // @ux-refresh - Add thread deletion functionality
+    // Improved thread deletion functionality with better error handling
     try {
       const { threadId } = req.body;
 
+      console.log("DELETE request received:", { threadId, userId, userDbId: user.id });
+
       if (!threadId) {
+        console.error("No threadId provided in request body");
         return res.status(400).json({ error: "Thread ID is required" });
       }
+
+      // Verify thread exists and belongs to user before deletion
+      const { data: existingThread, error: verifyError } = await supabaseAdmin
+        .from("threads")
+        .select("id, user_id")
+        .eq("id", threadId)
+        .eq("user_id", user.id)
+        .single();
+
+      if (verifyError) {
+        console.error("Error verifying thread ownership:", verifyError);
+        if (verifyError.code === 'PGRST116') { // No rows returned
+          return res.status(404).json({ error: "Thread not found or access denied" });
+        }
+        throw verifyError;
+      }
+
+      if (!existingThread) {
+        console.error("Thread not found or user doesn't have access:", { threadId, userId: user.id });
+        return res.status(404).json({ error: "Thread not found or access denied" });
+      }
+
+      console.log("Thread verified, proceeding with deletion:", existingThread);
 
       // First delete all messages in the thread
       const { error: messagesError } = await supabaseAdmin
@@ -81,25 +107,31 @@ export default async function handler(
 
       if (messagesError) {
         console.error("Failed to delete messages:", messagesError);
+        // Don't fail the whole operation if message deletion fails
+        // Messages will be cleaned up by cascade delete
       }
 
       // Then delete the thread
-      const { error } = await supabaseAdmin
+      const { error: deleteError } = await supabaseAdmin
         .from("threads")
         .delete()
         .eq("id", threadId)
-        .eq("user_id", user.id); // Ensure user can only delete their own threads
+        .eq("user_id", user.id);
 
-      if (error) {
-        throw error;
+      if (deleteError) {
+        console.error("Failed to delete thread:", deleteError);
+        throw deleteError;
       }
 
+      console.log("Thread deleted successfully:", threadId);
       res.status(200).json({ success: true });
     } catch (error) {
-      console.error("Failed to delete thread:", error);
-      res.status(500).json({ error: "Failed to delete thread" });
+      console.error("Failed to delete thread - full error:", error);
+      res.status(500).json({ 
+        error: "Failed to delete thread", 
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
     }
-    // @ux-refresh - End thread deletion functionality
   } else {
     res.setHeader("Allow", ["GET", "POST", "DELETE"]);
     res.status(405).json({ error: "Method not allowed" });

@@ -1,22 +1,15 @@
-// @fluid-ui - T3.chat model selector component - Modern redesign
-import { useState } from "react"; // @ux-fix
+// @fluid-ui - T3.chat model selector component - Optimized for performance
+import { useState, useCallback, useMemo } from "react";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import {
-  Command,
-  CommandInput,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { Check, ChevronDown, Sparkles, Zap, Crown } from "lucide-react";
 import { MODEL_ALIASES, ChatModel } from "@/types/chatModels";
 import { cn } from "@/lib/utils";
 
-// @picker-cleanup - Models array with plan requirements (matching server schema)
+// Models array with plan requirements - memoized outside component
 const MODELS: { key: ChatModel; minPlan: "free" | "pro" | "max" }[] = [
   { key: "openai/gpt-4o", minPlan: "free" },
   { key: "google/gemini-2.5-flash-preview", minPlan: "free" },
@@ -30,7 +23,7 @@ const MODELS: { key: ChatModel; minPlan: "free" | "pro" | "max" }[] = [
   { key: "meta-llama/llama-3-70b-instruct", minPlan: "max" },
 ];
 
-// @picker-cleanup - Enhanced plan configuration with icons and colors
+// Plan configuration - memoized outside component
 const PLAN_CONFIG = {
   free: {
     label: "FREE",
@@ -56,7 +49,7 @@ const PLAN_CONFIG = {
     bgColor: "bg-purple-50",
     borderColor: "border-purple-200",
   },
-};
+} as const;
 
 interface ModelSelectProps {
   model: ChatModel;
@@ -64,21 +57,56 @@ interface ModelSelectProps {
 }
 
 export function ModelSelect({ model, setModel }: ModelSelectProps) {
-  const [open, setOpen] = useState(false); // @ux-fix - Popover state management
+  const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   
-  // Group models by plan
-  const groups = {
+  // Memoized grouped models
+  const groups = useMemo(() => ({
     free: MODELS.filter((m) => m.minPlan === "free"),
     pro: MODELS.filter((m) => m.minPlan === "pro"),
     max: MODELS.filter((m) => m.minPlan === "max"),
-  };
+  }), []);
+
+  // Memoized filtered models based on search
+  const filteredGroups = useMemo(() => {
+    if (!searchTerm.trim()) return groups;
+    
+    const filtered = { free: [] as typeof MODELS, pro: [] as typeof MODELS, max: [] as typeof MODELS };
+    const search = searchTerm.toLowerCase();
+    
+    for (const [planType, models] of Object.entries(groups)) {
+      filtered[planType as keyof typeof filtered] = models.filter(m =>
+        MODEL_ALIASES[m.key].toLowerCase().includes(search)
+      );
+    }
+    
+    return filtered;
+  }, [groups, searchTerm]);
+
+  // Optimized handlers
+  const handleModelSelect = useCallback((modelKey: ChatModel) => {
+    setModel(modelKey);
+    setOpen(false);
+    setSearchTerm(""); // Clear search when closing
+  }, [setModel]);
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  }, []);
+
+  const handleOpenChange = useCallback((newOpen: boolean) => {
+    setOpen(newOpen);
+    if (!newOpen) {
+      setSearchTerm(""); // Clear search when closing
+    }
+  }, []);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}> {/* @ux-fix */}
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <button className="group flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 hover:border-brand-300 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400">
           <div className="flex items-center gap-2 flex-1">
-            <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></div>
+            <div className="w-2 h-2 rounded-full bg-brand-500"></div>
             <span className="font-medium text-gray-900 text-sm">
               {MODEL_ALIASES[model]}
             </span>
@@ -88,119 +116,122 @@ export function ModelSelect({ model, setModel }: ModelSelectProps) {
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-96 p-0 rounded-2xl shadow-xl border-0 bg-white/95 backdrop-blur-sm"
+        className="w-96 p-0 rounded-2xl shadow-xl border-0 bg-white"
         align="end"
         sideOffset={8}
       >
-        {/* Header with search */}
-        <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white rounded-t-2xl">
+        {/* Simplified header with search */}
+        <div className="p-4 border-b border-gray-100 bg-gray-50 rounded-t-2xl">
           <h3 className="text-sm font-semibold text-gray-900 mb-3">
             Select AI Model
           </h3>
-          <Command>
-            <CommandInput
-              placeholder="Search models..."
-              className="h-9 bg-white border border-gray-200 rounded-lg shadow-sm placeholder:text-gray-400 focus:border-brand-300 focus:ring-2 focus:ring-brand-500/10"
-            />
-          </Command>
+          <input
+            type="text"
+            placeholder="Search models..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            className="w-full h-9 bg-white border border-gray-200 rounded-lg px-3 text-sm placeholder:text-gray-400 focus:border-brand-300 focus:ring-2 focus:ring-brand-500/10 focus:outline-none"
+          />
         </div>
 
-        {/* Models list */}
+        {/* Simplified models list */}
         <div className="max-h-80 overflow-y-auto">
-          <Command>
-            <CommandList>
-              {(["free", "pro", "max"] as const).map((plan) => {
-                const config = PLAN_CONFIG[plan];
-                const Icon = config.icon;
+          {(["free", "pro", "max"] as const).map((plan) => {
+            const config = PLAN_CONFIG[plan];
+            const Icon = config.icon;
+            const planModels = filteredGroups[plan];
 
-                return (
-                  <CommandGroup key={plan}>
-                    {/* Plan header */}
-                    <div
-                      className={cn(
-                        "flex items-center gap-2 px-4 py-3 mx-2 mt-3 mb-2 rounded-xl border",
-                        config.bgColor,
-                        config.borderColor
-                      )}
-                    >
-                      <Icon className={cn("w-4 h-4", config.color)} />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={cn(
-                              "text-xs font-bold tracking-wide",
-                              config.color
-                            )}
-                          >
-                            {config.label}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {config.description}
-                          </span>
-                        </div>
-                      </div>
-                      <span className="text-xs text-gray-400 font-medium">
-                        {groups[plan].length} models
+            if (planModels.length === 0) return null;
+
+            return (
+              <div key={plan}>
+                {/* Plan header */}
+                <div
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-3 mx-2 mt-3 mb-2 rounded-xl border",
+                    config.bgColor,
+                    config.borderColor
+                  )}
+                >
+                  <Icon className={cn("w-4 h-4", config.color)} />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "text-xs font-bold tracking-wide",
+                          config.color
+                        )}
+                      >
+                        {config.label}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {config.description}
                       </span>
                     </div>
+                  </div>
+                  <span className="text-xs text-gray-400 font-medium">
+                    {planModels.length} models
+                  </span>
+                </div>
 
-                    {/* Models in this plan */}
-                    <div className="px-2 pb-2">
-                      {groups[plan].map((m) => (
-                        <CommandItem
-                          key={m.key}
-                          onMouseDown={(e) => { // @ux-fix
-                            e.preventDefault(); // stop Command's default
-                            setModel(m.key as ChatModel); // update state
-                            setOpen(false); // close Popover immediately
-                          }}
-                          className={cn(
-                            "flex items-center gap-3 px-3 py-3 mx-1 my-1 rounded-xl cursor-pointer transition-all duration-200",
-                            "hover:bg-gray-50 hover:shadow-sm",
-                            model === m.key &&
-                              "bg-brand-50 border border-brand-200 shadow-sm"
-                          )}
-                        >
-                          {/* Selection indicator */}
-                          <div className="flex items-center justify-center w-5 h-5">
-                            {model === m.key ? (
-                              <div className="w-4 h-4 rounded-full bg-brand-500 flex items-center justify-center">
-                                <Check className="w-2.5 h-2.5 text-white" />
-                              </div>
-                            ) : (
-                              <div className="w-4 h-4 rounded-full border-2 border-gray-300"></div>
-                            )}
+                {/* Models in this plan */}
+                <div className="px-2 pb-2">
+                  {planModels.map((m) => (
+                    <button
+                      key={m.key}
+                      onClick={() => handleModelSelect(m.key)}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-3 mx-1 my-1 rounded-xl cursor-pointer transition-all duration-200 text-left",
+                        "hover:bg-gray-50 hover:shadow-sm",
+                        model === m.key &&
+                          "bg-brand-50 border border-brand-200 shadow-sm"
+                      )}
+                    >
+                      {/* Selection indicator */}
+                      <div className="flex items-center justify-center w-5 h-5">
+                        {model === m.key ? (
+                          <div className="w-4 h-4 rounded-full bg-brand-500 flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 text-white" />
                           </div>
+                        ) : (
+                          <div className="w-4 h-4 rounded-full border-2 border-gray-300"></div>
+                        )}
+                      </div>
 
-                          {/* Model info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-gray-900 text-sm truncate">
-                              {MODEL_ALIASES[m.key]}
-                            </div>
-                          </div>
+                      {/* Model info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-gray-900 text-sm truncate">
+                          {MODEL_ALIASES[m.key]}
+                        </div>
+                      </div>
 
-                          {/* Plan badge */}
-                          <div
-                            className={cn(
-                              "px-2 py-1 rounded-full text-xs font-semibold tracking-wide",
-                              config.color,
-                              config.bgColor
-                            )}
-                          >
-                            {config.label}
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </div>
-                  </CommandGroup>
-                );
-              })}
-            </CommandList>
-          </Command>
+                      {/* Plan badge */}
+                      <div
+                        className={cn(
+                          "px-2 py-1 rounded-full text-xs font-semibold tracking-wide",
+                          config.color,
+                          config.bgColor
+                        )}
+                      >
+                        {config.label}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* No results message */}
+          {searchTerm && Object.values(filteredGroups).every(group => group.length === 0) && (
+            <div className="p-6 text-center text-gray-500">
+                             <p className="text-sm">No models found matching &quot;{searchTerm}&quot;</p>
+            </div>
+          )}
         </div>
 
-        {/* Upgrade CTA */}
-        <div className="p-4 border-t border-gray-100 bg-gradient-to-r from-purple-50 via-blue-50 to-cyan-50 rounded-b-2xl">
+        {/* Simplified upgrade CTA */}
+        <div className="p-4 border-t border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50 rounded-b-2xl">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-sm font-semibold text-gray-900 mb-1">

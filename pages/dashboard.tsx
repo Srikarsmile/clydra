@@ -1,7 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { useUser } from "@clerk/nextjs";
 import { GetServerSideProps } from "next";
-import { buildClerkProps } from "@clerk/nextjs/server";
+// Remove server-only import for client component
 import { useRouter } from "next/router";
 import ChatLayout from "../components/ChatLayout";
 import { Container } from "../components/ui/Container";
@@ -282,7 +282,8 @@ function Dashboard() {
 }
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  return { props: { ...buildClerkProps(ctx.req) } };
+  // Since we're using Clerk on client side, we don't need buildClerkProps
+  return { props: {} };
 };
 
 export default Dashboard;

@@ -1,5 +1,5 @@
 // @threads - Thread list sidebar component
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { Trash2 } from "lucide-react"; // @ux-refresh - Add delete icon
@@ -22,28 +22,41 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null); // @ux-refresh - Track deleting state
 
-  // Fetch threads
-  useEffect(() => {
-    const fetchThreads = async () => {
-      try {
-        const response = await fetch("/api/threads");
-        if (response.ok) {
-          const data = await response.json();
-          setThreads(data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch threads:", error);
-      } finally {
-        setIsLoading(false);
+  // Fetch threads - optimized with useCallback
+  const fetchThreads = useCallback(async () => {
+    try {
+      const response = await fetch("/api/threads");
+      if (response.ok) {
+        const data = await response.json();
+        setThreads(data || []);
+      } else {
+        console.error("Failed to fetch threads:", response.status, response.statusText);
       }
-    };
-
-    fetchThreads();
+    } catch (error) {
+      console.error("Failed to fetch threads:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  // @ux-refresh - Delete thread functionality
-  const deleteThread = async (threadId: string, event: React.MouseEvent) => {
-    event.preventDefault(); // Prevent navigation when clicking delete
+  useEffect(() => {
+    fetchThreads();
+  }, [fetchThreads]);
+
+  // Optimized navigation handler to prevent same URL navigation
+  const handleThreadClick = useCallback((threadId: string, event: React.MouseEvent) => {
+    // Don't navigate if this is already the active thread
+    if (activeThread === threadId) {
+      event.preventDefault();
+      return;
+    }
+    
+    // Let the Link component handle the navigation
+  }, [activeThread]);
+
+  // Improved delete thread functionality with better error handling
+  const deleteThread = useCallback(async (threadId: string, event: React.MouseEvent) => {
+    event.preventDefault();
     event.stopPropagation();
 
     if (deletingId === threadId) return;
@@ -57,6 +70,7 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
     }
 
     setDeletingId(threadId);
+    
     try {
       const response = await fetch("/api/threads", {
         method: "DELETE",
@@ -64,8 +78,9 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
         body: JSON.stringify({ threadId }),
       });
 
+      // Handle different response scenarios
       if (response.ok) {
-        // Remove thread from local state
+        // Successfully deleted
         setThreads((prev) => prev.filter((t) => t.id !== threadId));
 
         // Redirect if deleting active thread
@@ -73,16 +88,44 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
           router.push("/dashboard");
         }
       } else {
-        throw new Error("Failed to delete thread");
+        // Handle different error responses
+        let errorMessage = "Failed to delete chat";
+        
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          // If we can't parse JSON, use status text
+          errorMessage = `${errorMessage} (${response.status}: ${response.statusText})`;
+        }
+
+        console.error("Delete thread API error:", {
+          status: response.status,
+          statusText: response.statusText,
+          threadId
+        });
+
+        // Show user-friendly error message
+        if (response.status === 401) {
+          alert("Please sign in again to delete this chat.");
+          router.push("/sign-in");
+        } else if (response.status === 404) {
+          alert("This chat no longer exists or has already been deleted.");
+          // Remove from local state since it doesn't exist
+          setThreads((prev) => prev.filter((t) => t.id !== threadId));
+        } else if (response.status === 403) {
+          alert("You don't have permission to delete this chat.");
+        } else {
+          alert(`Failed to delete chat: ${errorMessage}`);
+        }
       }
-    } catch (error) {
-      console.error("Failed to delete thread:", error);
-      alert("Failed to delete chat. Please try again.");
+    } catch (networkError) {
+      console.error("Network error deleting thread:", networkError);
+      alert("Network error. Please check your connection and try again.");
     } finally {
       setDeletingId(null);
     }
-  };
-  // @ux-refresh - End delete thread functionality
+  }, [deletingId, activeThread, router]);
 
   if (isLoading) {
     return (
@@ -112,22 +155,38 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
                 thread.id === activeThread && "bg-brand/10"
               )}
             >
-              <Link
-                href={`/dashboard?thread=${thread.id}`}
-                className={cn(
-                  "flex items-center justify-between flex-1 px-2 py-1 text-sm transition-colors",
-                  thread.id === activeThread
-                    ? "bg-brand-50 text-brand-600 font-medium"
-                    : "hover:bg-brand-50/50"
-                )}
-              >
-                <span className="truncate">{thread.title}</span>
-                {thread.msg_count && thread.msg_count > 0 && (
-                  <span className="ml-2 text-[10px] rounded bg-gray-200 px-1">
-                    {thread.msg_count}
-                  </span>
-                )}
-              </Link>
+              {/* Conditional rendering: button for active thread, Link for others */}
+              {thread.id === activeThread ? (
+                <div
+                  className={cn(
+                    "flex items-center justify-between flex-1 px-2 py-1 text-sm cursor-default",
+                    "bg-brand-50 text-brand-600 font-medium"
+                  )}
+                >
+                  <span className="truncate">{thread.title}</span>
+                  {thread.msg_count && thread.msg_count > 0 && (
+                    <span className="ml-2 text-[10px] rounded bg-gray-200 px-1">
+                      {thread.msg_count}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  href={`/dashboard?thread=${thread.id}`}
+                  onClick={(e) => handleThreadClick(thread.id, e)}
+                  className={cn(
+                    "flex items-center justify-between flex-1 px-2 py-1 text-sm transition-colors",
+                    "hover:bg-brand-50/50"
+                  )}
+                >
+                  <span className="truncate">{thread.title}</span>
+                  {thread.msg_count && thread.msg_count > 0 && (
+                    <span className="ml-2 text-[10px] rounded bg-gray-200 px-1">
+                      {thread.msg_count}
+                    </span>
+                  )}
+                </Link>
+              )}
 
               <button
                 onClick={(e) => deleteThread(thread.id, e)}

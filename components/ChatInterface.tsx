@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 
 interface Message {
   id: string;
@@ -21,13 +21,7 @@ interface ChatInterfaceProps {
   chatId?: string;
 }
 
-interface ChatHistory {
-  id: string;
-  title: string;
-  model: string;
-  messages: Message[];
-  last_message_at: string;
-}
+// Removed unused ChatHistory interface
 
 interface StreamReader {
   read(): Promise<{ done: boolean; value: Uint8Array }>;
@@ -37,6 +31,7 @@ interface StreamResponse extends Response {
   body: ReadableStream<Uint8Array>;
 }
 
+// Memoized models array outside component
 const models: Model[] = [
   {
     id: "gpt-4o",
@@ -62,39 +57,36 @@ export default function ChatInterface({
   messages = [],
   onSendMessage,
   isLoading = false,
-  chatId,
 }: ChatInterfaceProps) {
   const [selectedModel, setSelectedModel] = useState(models[0].id);
   const [inputMessage, setInputMessage] = useState("");
-  const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
+  // Removed unused chatHistory state
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [streamingMessage, setStreamingMessage] = useState("");
 
-  // Load chat history when component mounts
-  useEffect(() => {
-    const loadChatHistory = async () => {
-      try {
-        const response = await fetch("/api/chat/history");
-        if (!response.ok) throw new Error("Failed to load chat history");
-        const data = await response.json();
-        setChatHistory(data);
-      } catch (error) {
-        console.error("Error loading chat history:", error);
-      }
-    };
+  // Removed unused chat history loading
 
-    loadChatHistory();
-  }, []);
-
-  const scrollToBottom = () => {
+  // Optimized scroll function
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, streamingMessage]);
+  }, [messages, streamingMessage, scrollToBottom]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Optimized input change handler
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputMessage(e.target.value);
+  }, []);
+
+  // Optimized model selection handler
+  const handleModelSelect = useCallback((modelId: string) => {
+    setSelectedModel(modelId);
+  }, []);
+
+  // Optimized submit handler
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim() || isLoading) return;
 
@@ -130,7 +122,6 @@ export default function ChatInterface({
         const { done, value } = await reader.read();
         if (done) break;
 
-        // Convert the chunk to text
         const chunk = new TextDecoder().decode(value);
         const lines = chunk.split("\n");
 
@@ -149,24 +140,42 @@ export default function ChatInterface({
         }
       }
 
-      // After streaming is complete, call onSendMessage with the full message
       onSendMessage?.(userMessage, selectedModel);
       setStreamingMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
-      // Handle error appropriately
     }
-  };
+  }, [inputMessage, isLoading, selectedModel, messages, onSendMessage]);
+
+  // Memoized empty state
+  const emptyState = useMemo(() => (
+    <div className="flex items-center justify-center h-full">
+      <div className="text-center space-y-4">
+        <div className="w-16 h-16 bg-gradient-neo-wave rounded-2xl flex items-center justify-center mx-auto shadow-primary-glow">
+          <span className="text-2xl">💬</span>
+        </div>
+        <div>
+          <h3 className="text-title-3 font-semibold text-text-main mb-2">
+            Start a conversation
+          </h3>
+          <p className="text-body text-text-muted max-w-md">
+            Choose a model above and ask anything. I&apos;m here to help with
+            your questions and tasks.
+          </p>
+        </div>
+      </div>
+    </div>
+  ), []);
 
   return (
     <div className="flex flex-col h-full bg-bg-base">
-      {/* Model Selection Pills */}
-      <div className="p-4 border-b border-border/30 bg-surface/50 backdrop-blur-sm">
+      {/* Simplified model selection pills */}
+      <div className="p-4 border-b border-border/30 bg-white/50">
         <div className="flex items-center space-x-2 overflow-x-auto pb-2">
           {models.map((model) => (
             <button
               key={model.id}
-              onClick={() => setSelectedModel(model.id)}
+              onClick={() => handleModelSelect(model.id)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-full whitespace-nowrap transition-all duration-200 ${
                 selectedModel === model.id
                   ? "bg-primary text-white shadow-primary-glow"
@@ -182,24 +191,7 @@ export default function ChatInterface({
 
       {/* Messages List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 bg-gradient-neo-wave rounded-2xl flex items-center justify-center mx-auto shadow-primary-glow">
-                <span className="text-2xl">💬</span>
-              </div>
-              <div>
-                <h3 className="text-title-3 font-semibold text-text-main mb-2">
-                  Start a conversation
-                </h3>
-                <p className="text-body text-text-muted max-w-md">
-                  Choose a model above and ask anything. I'm here to help with
-                  your questions and tasks.
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : (
+        {messages.length === 0 ? emptyState : (
           <>
             {messages.map((message) => (
               <div
@@ -234,7 +226,7 @@ export default function ChatInterface({
 
             {streamingMessage && (
               <div className="flex justify-start">
-                <div className="max-w-[80%] rounded-2xl p-4 bg-surface/60 backdrop-blur-sm">
+                <div className="max-w-[80%] rounded-2xl p-4 bg-surface/60">
                   <p className="text-body whitespace-pre-wrap">
                     {streamingMessage}
                   </p>
@@ -247,15 +239,15 @@ export default function ChatInterface({
         )}
       </div>
 
-      {/* Prompt Input */}
-      <div className="p-4 border-t border-border/30 bg-surface/50 backdrop-blur-sm">
+      {/* Optimized input */}
+      <div className="p-4 border-t border-border/30 bg-white/50">
         <div className="flex items-end space-x-3">
           <div className="flex-1">
             <form onSubmit={handleSubmit} className="flex space-x-4">
               <select
                 value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                className="px-4 py-2 rounded-xl bg-surface border border-border/50 text-text-main"
+                onChange={(e) => handleModelSelect(e.target.value)}
+                className="px-4 py-2 rounded-xl bg-surface border border-border/50 text-text-main focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
                 <option value="anthropic/claude-3-sonnet-20240229">
                   Claude 3 Sonnet
@@ -272,7 +264,7 @@ export default function ChatInterface({
               <input
                 type="text"
                 value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
+                onChange={handleInputChange}
                 placeholder="Type your message..."
                 className="flex-1 px-4 py-2 rounded-xl bg-surface border border-border/50 text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
                 disabled={isLoading}

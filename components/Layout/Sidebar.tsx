@@ -1,5 +1,5 @@
 // @fluid-ui - T3.chat sidebar component
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/router";
 import { Menu, ChevronLeft, User, LogOut } from "lucide-react";
 import { useClerk, useUser } from "@clerk/nextjs";
@@ -21,11 +21,13 @@ export default function Sidebar({
   const { signOut } = useClerk();
   const { user } = useUser();
 
-  // Get threadId from query params
-  const threadId = typeof router.query.thread === "string" ? router.query.thread : null;
+  // Get threadId from query params - memoized
+  const threadId = useMemo(() => {
+    return typeof router.query.thread === "string" ? router.query.thread : null;
+  }, [router.query.thread]);
 
-  // Create new thread
-  const createThread = async () => {
+  // Create new thread - optimized with useCallback and better error handling
+  const createThread = useCallback(async () => {
     try {
       const response = await fetch("/api/threads", {
         method: "POST",
@@ -34,15 +36,33 @@ export default function Sidebar({
 
       if (response.ok) {
         const { id } = await response.json();
-        router.push(`/dashboard?thread=${id}`);
+        // Use replace instead of push to avoid navigation history issues
+        await router.replace(`/dashboard?thread=${id}`);
+      } else {
+        console.error("Failed to create thread:", response.status, response.statusText);
       }
     } catch (error) {
       console.error("Failed to create thread:", error);
     }
-  };
+  }, [router]);
 
-  // UserChip component
-  const UserChip = () => (
+  // Toggle sidebar collapse - optimized with useCallback
+  const toggleCollapse = useCallback(() => {
+    setCollapsed(prev => !prev);
+  }, []);
+
+  // Sign out handler - optimized with useCallback
+  const handleSignOut = useCallback(() => {
+    signOut();
+  }, [signOut]);
+
+  // Navigation to services - optimized with useCallback
+  const navigateToServices = useCallback(() => {
+    router.push("/services");
+  }, [router]);
+
+  // UserChip component - memoized to prevent re-renders
+  const UserChip = useMemo(() => (
     <div className="flex items-center gap-2">
       {user?.imageUrl ? (
         <Image
@@ -66,7 +86,7 @@ export default function Sidebar({
       )}
       {!collapsed && (
         <button
-          onClick={() => signOut()}
+          onClick={handleSignOut}
           className="p-1 rounded-md hover:bg-gray-100 text-gray-500 hover:text-gray-700"
           title="Sign out"
         >
@@ -74,7 +94,7 @@ export default function Sidebar({
         </button>
       )}
     </div>
-  );
+  ), [user, collapsed, handleSignOut]);
 
   return (
     <aside
@@ -88,7 +108,7 @@ export default function Sidebar({
       {/* top controls */}
       <div className="flex items-center gap-2 px-3 py-4">
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggleCollapse}
           className="p-1 rounded-md hover:bg-brand-50"
         >
           {collapsed ? <Menu size={18} /> : <ChevronLeft size={18} />}
@@ -129,11 +149,11 @@ export default function Sidebar({
           <div className="mb-3">
             <PlanBadge 
               plan={planType as "free" | "pro" | "max"} 
-              onClick={() => router.push("/services")} 
+              onClick={navigateToServices} 
             />
           </div>
         )}
-        <UserChip />
+        {UserChip}
       </div>
     </aside>
   );
