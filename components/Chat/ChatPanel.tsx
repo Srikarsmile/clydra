@@ -13,7 +13,7 @@ import { Button } from "../ui/button";
 import { ModelSelect } from "./ModelSelect"; // @fluid-ui
 import { ChatModel, MODEL_ALIASES } from "@/types/chatModels"; // @fluid-ui
 import UpgradeCTA from "../UpgradeCTA";
-// Removed unused cn import
+import ChatMessage from "./ChatMessage"; // Import the proper ChatMessage component
 
 interface Message {
   role: "user" | "assistant" | "system";
@@ -33,7 +33,7 @@ interface ChatResponse {
   };
 }
 
-// SWR fetcher for chat API - moved outside component to prevent re-creation
+// SWR fetcher for sending messages
 const sendMessage = async (
   url: string,
   { arg }: { arg: { messages: Message[]; model: ChatModel; threadId?: string } }
@@ -46,10 +46,10 @@ const sendMessage = async (
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error || "Failed to send message");
+    throw new Error(error.message || "Failed to send message");
   }
 
-  return response.json() as Promise<ChatResponse>;
+  return response.json();
 };
 
 interface ChatPanelProps {
@@ -62,10 +62,11 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   const [input, setInput] = useState("");
   const [model, setModel] = useState<ChatModel>("openai/gpt-4o");
   const [showUpgrade, setShowUpgrade] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // @threads - Load messages for thread
+  // Load existing messages when threadId changes
   useEffect(() => {
     if (threadId) {
       const loadMessages = async () => {
@@ -73,7 +74,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
           const response = await fetch(`/api/messages/${threadId}`);
           if (response.ok) {
             const data = await response.json();
-            setMessages(data);
+            setMessages(data || []);
           }
         } catch (error) {
           console.error("Failed to load messages:", error);
@@ -84,6 +85,15 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
       setMessages([]);
     }
   }, [threadId]);
+
+  // Auto-scroll to bottom when messages change - optimized
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   // SWR mutation for sending messages - optimized callbacks
   const { trigger, isMutating } = useSWRMutation(
@@ -102,22 +112,6 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
       }, []),
     }
   );
-
-  // Auto-scroll to bottom when new messages arrive - optimized
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
-
-  // Auto-focus input - optimized
-  useEffect(() => {
-    if (!isMutating && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isMutating]);
 
   // Handle form submission - optimized with useCallback
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -247,25 +241,17 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
         </span>
       </div>
 
-      {/* Messages area - optimized */}
+      {/* Messages area - now using proper ChatMessage component */}
       <div className="flex-1 overflow-y-auto pb-24">
         {messages.length === 0 ? emptyState : (
           <div className="flex flex-col w-full px-4 space-y-4">
             {messages.map((message, index) => (
-              <div
+              <ChatMessage
                 key={message.id || index}
-                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-prose rounded-lg shadow-sm px-4 py-3 ${
-                    message.role === "user"
-                      ? "bg-brand/10 text-brand"
-                      : "bg-white border"
-                  }`}
-                >
-                  <p className="whitespace-pre-wrap">{message.content}</p>
-                </div>
-              </div>
+                content={message.content}
+                role={message.role as "user" | "assistant"}
+                timestamp={new Date()}
+              />
             ))}
 
             {isMutating && (

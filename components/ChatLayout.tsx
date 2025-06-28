@@ -174,7 +174,6 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
             messages={messages}
             onSendMessage={handleSendMessage}
             isLoading={isLoading}
-            chatId={selectedChatId || undefined}
           />
         );
       case "history":

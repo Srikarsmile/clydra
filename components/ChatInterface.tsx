@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import ChatMessage from "./Chat/ChatMessage";
 
 interface Message {
   id: string;
@@ -18,72 +19,77 @@ interface ChatInterfaceProps {
   messages?: Message[];
   onSendMessage?: (message: string, model: string) => void;
   isLoading?: boolean;
-  chatId?: string;
 }
-
-// Removed unused ChatHistory interface
 
 interface StreamReader {
   read(): Promise<{ done: boolean; value: Uint8Array }>;
 }
 
 interface StreamResponse extends Response {
-  body: ReadableStream<Uint8Array>;
+  body: ReadableStream<Uint8Array> | null;
 }
-
-// Memoized models array outside component
-const models: Model[] = [
-  {
-    id: "gpt-4o",
-    name: "GPT-4o",
-    description: "Latest OpenAI model",
-    color: "bg-green-500",
-  },
-  {
-    id: "sonnet",
-    name: "Sonnet",
-    description: "Claude 3.5 Sonnet",
-    color: "bg-purple-500",
-  },
-  {
-    id: "gemini",
-    name: "Gemini",
-    description: "Google Gemini Pro",
-    color: "bg-blue-500",
-  },
-];
 
 export default function ChatInterface({
   messages = [],
   onSendMessage,
   isLoading = false,
 }: ChatInterfaceProps) {
-  const [selectedModel, setSelectedModel] = useState(models[0].id);
   const [inputMessage, setInputMessage] = useState("");
-  // Removed unused chatHistory state
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [selectedModel, setSelectedModel] = useState("anthropic/claude-3-sonnet-20240229");
   const [streamingMessage, setStreamingMessage] = useState("");
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Removed unused chat history loading
 
-  // Optimized scroll function
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
-
+  // Auto-scroll to bottom
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, streamingMessage, scrollToBottom]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, streamingMessage]);
+
+  // Optimized model selection handler
+  const handleModelSelect = useCallback((modelId: string) => {
+    setSelectedModel(modelId);
+  }, []);
 
   // Optimized input change handler
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setInputMessage(e.target.value);
   }, []);
 
-  // Optimized model selection handler
-  const handleModelSelect = useCallback((modelId: string) => {
-    setSelectedModel(modelId);
-  }, []);
+  // Models array - memoized
+  const models = useMemo(() => [
+    {
+      id: "anthropic/claude-3-sonnet-20240229",
+      name: "Claude 3 Sonnet",
+      description: "Best for most tasks",
+      color: "bg-orange-400",
+    },
+    {
+      id: "anthropic/claude-3-opus-20240229", 
+      name: "Claude 3 Opus",
+      description: "Most capable",
+      color: "bg-purple-400",
+    },
+    {
+      id: "openai/gpt-4-turbo",
+      name: "GPT-4 Turbo", 
+      description: "Latest OpenAI model",
+      color: "bg-green-400",
+    },
+    {
+      id: "google/gemini-1.0-pro",
+      name: "Gemini Pro",
+      description: "Google's advanced model", 
+      color: "bg-blue-400",
+    },
+    {
+      id: "mistral/mistral-large-2024-01",
+      name: "Mistral Large",
+      description: "Powerful reasoning",
+      color: "bg-red-400", 
+    },
+  ], []);
 
   // Optimized submit handler
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -189,47 +195,27 @@ export default function ChatInterface({
         </div>
       </div>
 
-      {/* Messages List */}
+      {/* Messages List - now using proper ChatMessage component */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? emptyState : (
           <>
             {messages.map((message) => (
-              <div
+              <ChatMessage
                 key={message.id}
-                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                    message.role === "user"
-                      ? "bg-primary text-white shadow-primary-glow"
-                      : "bg-surface border border-border/30 text-text-main"
-                  }`}
-                >
-                  <div className="text-body whitespace-pre-wrap">
-                    {message.content}
-                  </div>
-                  <div
-                    className={`text-xs mt-2 ${
-                      message.role === "user"
-                        ? "text-white/70"
-                        : "text-text-muted"
-                    }`}
-                  >
-                    {new Date(message.timestamp).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </div>
-                </div>
-              </div>
+                content={message.content}
+                role={message.role as "user" | "assistant"}
+                timestamp={message.timestamp}
+              />
             ))}
 
             {streamingMessage && (
               <div className="flex justify-start">
                 <div className="max-w-[80%] rounded-2xl p-4 bg-surface/60">
-                  <p className="text-body whitespace-pre-wrap">
-                    {streamingMessage}
-                  </p>
+                  <ChatMessage
+                    content={streamingMessage}
+                    role="assistant"
+                    timestamp={new Date()}
+                  />
                 </div>
               </div>
             )}
