@@ -8,10 +8,10 @@
 
 /* @clydra-palette - Unified body background system */
 body {
-  background: theme("colors.basebg.light");
+  background: #f8f9fb;
 }
 .dark body {
-  background: theme("colors.basebg.dark");
+  background: #121212;
 }
 
 /* Modern transition system inspired by professional platforms */
@@ -456,8 +456,8 @@ html {
 
   /* Ghost Button */
   .btn-ghost {
-    @apply bg-transparent text-text-main border border-border;
-    @apply hover:bg-surface-light dark:hover:bg-surface-dark hover:scale-105; /* @clydra-palette */
+    @apply bg-transparent text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700;
+    @apply hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-105;
   }
 
   /* Button Sizes */
@@ -479,7 +479,7 @@ html {
 
   /* Neo-Wave Card System */
   .card {
-    @apply bg-surface-light dark:bg-surface-dark rounded-xl border border-border shadow-md transition-all duration-300; /* @clydra-palette */
+    @apply bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-md transition-all duration-300;
     @apply p-6;
     backdrop-filter: blur(10px);
     background: rgba(255, 255, 255, 0.8);
@@ -524,13 +524,13 @@ html {
 
   /* Form Elements */
   .input-field {
-    @apply w-full px-4 py-3 rounded-lg border border-border bg-surface-light dark:bg-surface-dark text-text-main; /* @clydra-palette */
+    @apply w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100;
     @apply focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none;
     @apply transition-all duration-300;
   }
 
   .input-field::placeholder {
-    @apply text-text-muted;
+    @apply text-gray-500 dark:text-gray-400;
   }
 
   .input-large {
@@ -551,7 +551,7 @@ html {
   }
 
   .badge-secondary {
-    @apply bg-secondary-300/10 text-secondary-400 border border-secondary-300/20; /* @clydra-palette */
+    @apply bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-700;
   }
 
   .badge-accent {
@@ -581,10 +581,10 @@ html {
   }
 
   .status-online {
-    @apply bg-secondary-400; /* @clydra-palette */
+    @apply bg-green-500;
   }
   .status-offline {
-    @apply bg-text-muted;
+    @apply bg-gray-400;
   }
   .status-busy {
     @apply bg-accent;
