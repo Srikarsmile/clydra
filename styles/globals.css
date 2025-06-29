@@ -628,6 +628,37 @@ html {
     display: none;
   }
 
+  /* Custom scrollbar for chat areas */
+  .chat-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .chat-scroll::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+  }
+
+  .chat-scroll::-webkit-scrollbar-thumb {
+    background: rgba(11, 165, 236, 0.3);
+    border-radius: 3px;
+  }
+
+  .chat-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(11, 165, 236, 0.5);
+  }
+
+  .dark .chat-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .dark .chat-scroll::-webkit-scrollbar-thumb {
+    background: rgba(11, 165, 236, 0.4);
+  }
+
+  .dark .chat-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(11, 165, 236, 0.6);
+  }
+
   /* Line Clamp Utilities */
   .line-clamp-2 {
     display: -webkit-box;

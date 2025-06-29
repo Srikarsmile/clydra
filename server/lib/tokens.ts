@@ -30,7 +30,8 @@ export async function addTokens(userId: string, tokens: number): Promise<void> {
 
       if (error) {
         console.error("Error updating tokens:", error);
-        throw new Error(`Failed to update tokens: ${error.message}`);
+        // Don't throw - just log and continue
+        return;
       }
     } else {
       // Insert new record
@@ -44,12 +45,14 @@ export async function addTokens(userId: string, tokens: number): Promise<void> {
 
       if (error) {
         console.error("Error inserting tokens:", error);
-        throw new Error(`Failed to insert tokens: ${error.message}`);
+        // Don't throw - just log and continue
+        return;
       }
     }
   } catch (error) {
     console.error("Error in addTokens:", error);
-    throw error;
+    // Don't throw - just log and continue to prevent chat failures
+    return;
   }
 }
 
@@ -65,15 +68,23 @@ export async function getUsage(userId: string): Promise<number> {
       .eq("month_start", monthStr)
       .single();
 
-    if (error && error.code !== "PGRST116") { // PGRST116 = no rows found
+    // Handle table not exists or no rows found gracefully
+    if (error && (error.code === "42P01" || error.code === "PGRST116")) {
+      // 42P01 = table doesn't exist, PGRST116 = no rows found
+      return 0;
+    }
+    
+    if (error) {
       console.error("Error getting usage:", error);
-      throw new Error(`Failed to get usage: ${error.message}`);
+      // Return 0 instead of throwing to prevent blocking the chat
+      return 0;
     }
 
     return data?.tokens_used ?? 0;
   } catch (error) {
     console.error("Error in getUsage:", error);
-    return 0; // Return 0 on error to be safe
+    // Return 0 to allow chat to continue even if token tracking fails
+    return 0;
   }
 }
 
@@ -82,22 +93,23 @@ export function getCap(plan: "free" | "pro"): number {
 }
 
 // @token-meter - Check if user has exceeded quota before making request
-export async function checkQuota(userId: string, requestTokens: number, plan: "free" | "pro" = "pro"): Promise<{ allowed: boolean; reason?: string }> {
+export async function checkQuota(userId: string, requestTokens: number, plan: "free" | "pro"): Promise<{allowed: boolean, reason?: string}> {
   try {
     const used = await getUsage(userId);
     const cap = getCap(plan);
     
     if (used + requestTokens > cap) {
-      return {
-        allowed: false,
-        reason: `Quota exceeded. Used: ${used.toLocaleString()}, Request: ${requestTokens.toLocaleString()}, Cap: ${cap.toLocaleString()}`
+      return { 
+        allowed: false, 
+        reason: `Quota exceeded. Used ${used.toLocaleString()} + ${requestTokens.toLocaleString()} would exceed ${cap.toLocaleString()} tokens.`
       };
     }
     
     return { allowed: true };
   } catch (error) {
-    console.error("Error checking quota:", error);
-    // On error, allow the request but log the issue
+    console.error("Error in checkQuota:", error);
+    // If we can't check quota, allow the request to proceed (fail open)
+    // This prevents the token system from blocking all chats if there's an issue
     return { allowed: true };
   }
 } 

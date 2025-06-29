@@ -231,15 +231,15 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   }
 
   return (
-    <section className="flex flex-col h-full bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30 relative overflow-hidden">
+    <section className="flex flex-col h-full bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30 relative">
       {/* Subtle background pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(11,165,236,0.05),transparent_50%)] pointer-events-none" />
       
       {/* @ui-clean - Chat container with max-w-screen-md centric */}
-      <div className="flex flex-col mx-auto w-full max-w-screen-md px-4 space-y-4">
+      <div className="flex flex-col h-full mx-auto w-full max-w-screen-md px-4">
         
         {/* @ui-clean - Sticky badge top-right */}
-        <div className="sticky top-2 self-end z-10">
+        <div className="sticky top-2 self-end z-10 mb-4">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/80 backdrop-blur-md border border-primary-500/20 text-primary-500 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
             <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" /> 
             Using&nbsp;{MODEL_ALIASES[model]}
@@ -247,113 +247,112 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
         </div>
         {/* @ui-clean - End sticky badge */}
 
-        {/* Messages area with proper spacing for input */}
-        <div className="flex-1 overflow-y-auto pb-32 scroll-smooth">
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center text-center space-y-6 py-16 lg:py-24">
-              <h1 className="text-4xl lg:text-6xl font-extrabold">
-                Hello,<span className="text-primary-500"> {user?.firstName}!</span>
-              </h1>
-              <p className="text-xl font-medium">
-                How can I assist you today?
-              </p>
+        {/* Messages area with proper height and scrolling */}
+        <div className="flex-1 overflow-y-auto min-h-0 pb-4 chat-scroll">
+          <div className="space-y-6">
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center text-center space-y-6 py-16 lg:py-24">
+                <h1 className="text-4xl lg:text-6xl font-extrabold">
+                  Hello,<span className="text-primary-500"> {user?.firstName}!</span>
+                </h1>
+                <p className="text-xl font-medium">
+                  How can I assist you today?
+                </p>
 
-              <div className="bg-white/80 backdrop-blur-md border border-gray-200/50 rounded-2xl p-2 shadow-lg">
-                <ModelSelect model={model} setModel={setModel} />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto text-center mt-10">
-                {suggestions.map((suggestion, index) => (
-                  <button 
-                    key={index}
-                    onClick={() => setInput(suggestion.description)}
-                    className="group p-6 bg-white/60 backdrop-blur-sm border border-gray-200/50 rounded-2xl hover:border-[#0BA5EC]/50 hover:bg-white/80 transition-all duration-300 text-left shadow-sm hover:shadow-lg hover:-translate-y-1 animate-in slide-in-from-bottom-4 duration-700"
-                    style={{ animationDelay: `${(index + 4) * 100}ms` }}
-                  >
-                    <div className="flex items-center space-x-3 mb-3">
-                      <div className="text-2xl bg-gradient-to-br from-[#0BA5EC]/20 to-[#0BA5EC]/10 rounded-xl p-2 group-hover:scale-110 transition-transform duration-300">
-                        {suggestion.icon}
-                      </div>
-                      <div className="text-lg font-semibold text-gray-800 group-hover:text-[#0BA5EC] transition-colors duration-300">
-                        {suggestion.title}
-                      </div>
-                    </div>
-                    <div className="text-sm text-gray-600 leading-relaxed">
-                      {suggestion.description}
-                    </div>
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col w-full space-y-6 relative">
-              {messages.map((message, index) => (
-                <div 
-                  key={message.id || index}
-                  className="animate-in slide-in-from-bottom-2 duration-500"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <ChatMessage
-                    content={message.content}
-                    role={message.role as "user" | "assistant"}
-                    timestamp={new Date()}
-                  />
+                <div className="bg-white/80 backdrop-blur-md border border-gray-200/50 rounded-2xl p-2 shadow-lg">
+                  <ModelSelect model={model} setModel={setModel} />
                 </div>
-              ))}
 
-              {isMutating && (
-                <div className="flex justify-start animate-in slide-in-from-bottom-2 duration-300">
-                  <div className="bg-white/90 backdrop-blur-sm border border-gray-200/50 rounded-2xl px-6 py-4 shadow-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="relative">
-                        <Loader2 className="w-5 h-5 animate-spin text-[#0BA5EC]" />
-                        <div className="absolute inset-0 w-5 h-5 rounded-full bg-[#0BA5EC]/20 animate-ping" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto text-center mt-10">
+                  {suggestions.map((suggestion, index) => (
+                    <button 
+                      key={index}
+                      onClick={() => setInput(suggestion.description)}
+                      className="group p-6 bg-white/60 backdrop-blur-sm border border-gray-200/50 rounded-2xl hover:border-[#0BA5EC]/50 hover:bg-white/80 transition-all duration-300 text-left shadow-sm hover:shadow-lg hover:-translate-y-1 animate-in slide-in-from-bottom-4 duration-700"
+                      style={{ animationDelay: `${(index + 4) * 100}ms` }}
+                    >
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="text-2xl bg-gradient-to-br from-[#0BA5EC]/20 to-[#0BA5EC]/10 rounded-xl p-2 group-hover:scale-110 transition-transform duration-300">
+                          {suggestion.icon}
+                        </div>
+                        <div className="text-lg font-semibold text-gray-800 group-hover:text-[#0BA5EC] transition-colors duration-300">
+                          {suggestion.title}
+                        </div>
                       </div>
-                      <span className="text-gray-600 font-medium">AI is thinking...</span>
+                      <div className="text-sm text-gray-600 leading-relaxed">
+                        {suggestion.description}
+                      </div>
+                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <>
+                {messages.map((message, index) => (
+                  <div 
+                    key={message.id || index}
+                    className="animate-in slide-in-from-bottom-2 duration-500"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <ChatMessage
+                      content={message.content}
+                      role={message.role as "user" | "assistant"}
+                      timestamp={new Date()}
+                    />
+                  </div>
+                ))}
+
+                {isMutating && (
+                  <div className="flex justify-start animate-in slide-in-from-bottom-2 duration-300">
+                    <div className="bg-white/90 backdrop-blur-sm border border-gray-200/50 rounded-2xl px-6 py-4 shadow-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="relative">
+                          <Loader2 className="w-5 h-5 animate-spin text-[#0BA5EC]" />
+                          <div className="absolute inset-0 w-5 h-5 rounded-full bg-[#0BA5EC]/20 animate-ping" />
+                        </div>
+                        <span className="text-gray-600 font-medium">AI is thinking...</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <div ref={messagesEndRef} />
-            </div>
-          )}
+                <div ref={messagesEndRef} />
+              </>
+            )}
+          </div>
         </div>
+
+        {/* @ui-clean - Input bar with surface card + teal send button */}
+        <div className="border-t border-gray-200/50 bg-white/80 backdrop-blur-md">
+          <form onSubmit={handleSubmit} className="flex items-center gap-2 p-3">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Type your message..."
+              disabled={isMutating}
+              autoFocus
+              className="flex-1 resize-none bg-transparent text-text-main placeholder-text-muted border-none outline-none text-[16px] focus:outline-none focus:ring-0 selection:bg-primary-100 selection:text-text-main"
+            />
+            <Button
+              type="submit"
+              disabled={!input.trim() || isMutating}
+              className="rounded-full bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 shadow-sm/5 hover:shadow-md/10 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
+            >
+              {isMutating ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </Button>
+          </form>
+        </div>
+        {/* @ui-clean - End input bar */}
       </div>
       {/* @ui-clean - End chat container */}
-
-      {/* @ui-clean - Input bar with surface card + teal send button */}
-      <form
-        onSubmit={handleSubmit}
-        className="absolute bottom-0 left-0 right-0 bg-surface/95 backdrop-blur z-20"
-      >
-        <div className="max-w-screen-md mx-auto flex items-center gap-2 p-3">
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Type your message..."
-            disabled={isMutating}
-            autoFocus
-            className="flex-1 resize-none bg-transparent text-text-main placeholder-text-muted border-none outline-none text-[16px] focus:outline-none focus:ring-0 selection:bg-primary-100 selection:text-text-main"
-          />
-          <Button
-            type="submit"
-            disabled={!input.trim() || isMutating}
-            className="rounded-full bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 shadow-sm/5 hover:shadow-md/10 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
-          >
-            {isMutating ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" />
-            )}
-          </Button>
-        </div>
-      </form>
-      {/* @ui-clean - End input bar */}
     </section>
   );
 }

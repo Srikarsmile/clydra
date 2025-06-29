@@ -11,7 +11,19 @@ interface TokenUsage {
   cap: number;
 }
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = async (url: string): Promise<TokenUsage> => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error("Failed to fetch token usage:", error);
+    // Return default values if the API fails
+    return { used: 0, cap: 1500000 };
+  }
+};
 
 export function TokenGauge() {
   const { data, error } = useSWR<TokenUsage>("/api/tokens/current", fetcher, {

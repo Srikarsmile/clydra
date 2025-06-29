@@ -22,14 +22,16 @@ export default async function handler(
     // Get or create user in Supabase
     const userResult = await getOrCreateUser(clerkUserId);
     if (!userResult.success || !userResult.user) {
-      return res.status(500).json({
-        error: userResult.error || "Failed to get user",
+      // Return default values instead of error to prevent blocking the UI
+      return res.status(200).json({
+        used: 0,
+        cap: 1500000,
       });
     }
 
     const userId = userResult.user.id;
 
-    // Get token usage
+    // Get token usage - these functions now return 0 on error instead of throwing
     const used = await getUsage(userId);
     const cap = getCap("pro"); // TODO: fetch actual plan from database
 
@@ -39,8 +41,10 @@ export default async function handler(
     });
   } catch (error) {
     console.error("Error fetching token usage:", error);
-    return res.status(500).json({
-      error: "Failed to fetch token usage",
+    // Return default values instead of 500 error to prevent blocking the UI
+    return res.status(200).json({
+      used: 0,
+      cap: 1500000,
     });
   }
 } 
