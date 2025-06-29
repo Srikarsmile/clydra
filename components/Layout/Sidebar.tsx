@@ -99,10 +99,10 @@ export default function Sidebar({
   return (
     <aside
       className={cn(
-        "h-full flex flex-col transition-all duration-300 bg-gradient-to-b",
-        "from-brand-50/50 to-bglight dark:from-[#1B1B23] dark:to-[#141418]",
-        "border-r border-gray-200 dark:border-[#2A2A2E]",
-        collapsed ? "w-15" : "w-64"
+        "flex flex-col h-full transition-width duration-300",
+        collapsed ? "w-16" : "w-64",
+        "bg-gradient-to-b from-sidebar-from to-sidebar-to",
+        "border-r border-gray-200 dark:border-[#2A2A2E]"
       )}
     >
       {/* top controls */}
@@ -124,17 +124,18 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* new chat */}
+      {/* @ui-clean - New Chat button with primary-500 */}
       <button
         onClick={createThread}
         className={cn(
-          "mx-3 mb-3 rounded-md bg-brand-500 py-2 text-white text-sm font-medium",
-          "hover:bg-brand-600 transition",
-          collapsed && "mx-2 px-2" // Adjust padding when collapsed
+          "mx-3 mb-3 rounded-md bg-primary-500 py-2 text-white text-sm font-medium",
+          "hover:bg-primary-600 transition",
+          collapsed && "mx-2 px-2"
         )}
       >
         {collapsed ? "+" : "+ New Chat"}
       </button>
+      {/* @ui-clean - End New Chat button update */}
 
       {/* @layout-fix - search + thread list */}
       <div className="flex-1 overflow-y-auto px-3 space-y-3">

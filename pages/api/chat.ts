@@ -81,7 +81,7 @@ export default async function handler(
       });
     }
 
-    console.log(`@or Making OpenRouter request for model: ${validatedModel}`);
+    
 
     // @or Make request to OpenRouter
     const response = await fetch(`${baseURL}/chat/completions`, {

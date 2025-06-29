@@ -75,7 +75,7 @@ export async function executeModelRequest(
     };
 
     // Execute the model
-    console.log("Calling fal.subscribe with model:", request.model);
+    
 
     // Set timeout for image generation
     const timeoutMs = 120000; // 2 minutes for image
@@ -105,7 +105,7 @@ export async function executeModelRequest(
       ),
     ]);
 
-    console.log("FAL API completed successfully");
+    
 
     const latency = Date.now() - startTime;
 

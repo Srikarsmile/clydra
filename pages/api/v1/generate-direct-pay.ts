@@ -64,7 +64,7 @@ async function processDirectPayment(
     // In production, this would be a real payment processor call
     // For now, we'll simulate successful payment for testing
 
-    console.log(`Processing payment: $${amount} for ${description}`);
+    
 
     // Simulate payment processing delay
     await new Promise((resolve) => setTimeout(resolve, 100));

@@ -1,85 +1,79 @@
 import Link from "next/link";
 import { useState } from "react";
-
-type ServiceKey = "image";
-
-interface Service {
-  title: string;
-  description: string;
-  features: string[];
-  pricing: string;
-  examples: string[];
-}
-
-type Services = Record<ServiceKey, Service>;
+import PageTransition from "../components/PageTransition";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<ServiceKey>("image");
 
-  const services: Services = {
-    image: {
-      title: "AI Image Generation",
-      description:
-        "Create stunning, photorealistic images from simple text descriptions using state-of-the-art AI models",
-      features: [
-        "4K image quality",
-        "Style customization",
-        "Batch processing",
-        "Commercial usage",
-      ],
-      pricing: "Starting at $0.05/image",
-      examples: [
-        "Product photography",
-        "Marketing visuals",
-        "Concept art",
-        "Social media content",
-      ],
+
+  const features = [
+    {
+      title: "GPT-4o & Claude Sonnet",
+      description: "Access the most advanced AI models including GPT-4o, Claude Sonnet, and Gemini through our unified interface",
+      icon: "🧠"
     },
-  };
+    {
+      title: "Stream Responses",
+      description: "Get real-time streaming responses for natural, conversational interactions with minimal wait time",
+      icon: "⚡"
+    },
+    {
+      title: "Smart Usage Tracking",
+      description: "Built-in token usage monitoring with daily limits and transparent pricing across all models",
+      icon: "📊"
+    }
+  ];
+
+  const models = [
+    { name: "GPT-3.5 Turbo", status: "Free", description: "Fast, reliable responses for everyday tasks" },
+    { name: "GPT-4o", status: "Pro", description: "Most advanced reasoning and complex problem solving" },
+    { name: "Claude Sonnet", status: "Pro", description: "Superior writing and analysis capabilities" },
+    { name: "Gemini Pro", status: "Pro", description: "Multimodal AI with advanced understanding" }
+  ];
 
   return (
-    <div className="min-h-screen bg-bg-base">
+    <PageTransition>
+      <div className="min-h-screen bg-bg-base">
       {/* Navigation */}
-      <nav className="bg-surface/80 backdrop-blur-xl border-b border-border sticky top-0 z-50 transition-all duration-300">
+      <nav className="glass border-b border-border sticky top-0 z-50 nav-item animate-slide-in-top">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-neo-wave rounded-xl flex items-center justify-center shadow-primary-glow transition-transform duration-300 hover:scale-105 animate-float">
+              <div className="w-10 h-10 bg-[#0BA5EC] rounded-xl flex items-center justify-center shadow-lg transition-transform duration-300 hover:scale-105 animate-float">
                 <span className="text-white font-semibold text-headline">
-                  R
+                  C
                 </span>
               </div>
               <div className="flex flex-col">
                 <span className="text-title-2 font-semibold text-text-main">
-                  Rivo Labs
+                  Clydra
                 </span>
                 <span className="text-caption-1 text-text-muted font-medium -mt-1">
-                  Neo-Wave Tech
+                  AI Chat Platform
                 </span>
               </div>
             </div>
 
             <div className="hidden md:flex items-center space-x-8">
               <Link
-                href="#services"
-                className="text-text-muted hover:text-primary transition-all duration-300 font-medium relative group text-callout"
+                href="#models"
+                className="text-text-muted hover:text-[#0BA5EC] transition-all duration-300 font-medium relative group text-callout"
               >
-                Services
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full rounded-full"></span>
+                Models
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0BA5EC] transition-all duration-300 group-hover:w-full rounded-full"></span>
+              </Link>
+              <Link
+                href="#features"
+                className="text-text-muted hover:text-[#0BA5EC] transition-all duration-300 font-medium relative group text-callout"
+              >
+                Features
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0BA5EC] transition-all duration-300 group-hover:w-full rounded-full"></span>
               </Link>
               <Link
                 href="#pricing"
-                className="text-text-muted hover:text-primary transition-all duration-300 font-medium relative group text-callout"
+                className="text-text-muted hover:text-[#0BA5EC] transition-all duration-300 font-medium relative group text-callout"
               >
                 Pricing
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full rounded-full"></span>
-              </Link>
-              <Link
-                href="#about"
-                className="text-text-muted hover:text-primary transition-all duration-300 font-medium relative group text-callout"
-              >
-                About
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full rounded-full"></span>
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#0BA5EC] transition-all duration-300 group-hover:w-full rounded-full"></span>
               </Link>
             </div>
 
@@ -90,8 +84,11 @@ export default function Home() {
               >
                 Sign In
               </Link>
-              <Link href="/sign-up" className="btn btn-primary">
-                Get Started
+                            <Link
+                href="/sign-up" 
+                className="btn-primary-professional"
+              >
+                Start Chatting
               </Link>
             </div>
           </div>
@@ -99,153 +96,130 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-20 pb-16 relative overflow-hidden">
+      <section className="pt-20 pb-16 relative overflow-hidden section-container">
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-wave-pattern opacity-30"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0BA5EC]/5 via-transparent to-[#0BA5EC]/10"></div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold text-text-main mb-6 animate-fade-in-up tracking-tight">
-              AI-Powered Creative
-              <span className="text-gradient-neo-wave block animate-ocean-flow font-semibold">
-                Services
+              Chat with
+              <span className="text-[#0BA5EC] block animate-ocean-flow font-semibold">
+                Advanced AI
               </span>
             </h1>
             <p className="text-title-3 md:text-title-2 text-text-muted mb-8 leading-relaxed animate-fade-in-up animation-delay-200 text-balance font-normal max-w-3xl mx-auto">
-              Rivo Labs provides enterprise-grade AI services for image
-              generation and video creation. Built on cutting-edge
-              infrastructure for reliable, scalable results.
+              Access GPT-4o, Claude Sonnet, and Gemini through one beautiful interface. 
+              Get 40 free messages daily, then upgrade for unlimited access to all models.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animation-delay-400">
               <Link
                 href="/sign-up"
-                className="btn btn-primary btn-lg transform hover:scale-105 transition-all duration-300"
+                className="btn-primary-professional text-lg px-8 py-4 animate-button-pulse"
               >
-                <span className="text-callout font-semibold">
-                  Start Creating
+                <span className="flex items-center">
+                  Start Chatting Free
+                  <svg
+                    className="w-5 h-5 ml-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 7l5 5m0 0l-5 5m5-5H6"
+                    />
+                  </svg>
                 </span>
-                <svg
-                  className="w-5 h-5 ml-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
-                </svg>
               </Link>
               <Link
-                href="#services"
-                className="btn btn-ghost btn-lg transform hover:scale-105 transition-all duration-300"
+                href="#models"
+                className="btn-secondary-professional text-lg px-8 py-4"
               >
-                <span className="text-callout font-medium">
-                  Explore Services
-                </span>
+                Explore Models
               </Link>
             </div>
           </div>
         </div>
 
         {/* Floating Elements */}
-        <div className="absolute top-20 left-10 w-20 h-20 bg-secondary/20 rounded-full blur-xl animate-float animation-delay-100"></div>
-        <div className="absolute top-40 right-20 w-32 h-32 bg-primary/20 rounded-full blur-xl animate-float animation-delay-300"></div>
-        <div className="absolute bottom-20 left-1/4 w-16 h-16 bg-accent/20 rounded-full blur-xl animate-float animation-delay-500"></div>
+        <div className="absolute top-20 left-10 w-20 h-20 bg-[#0BA5EC]/20 rounded-full blur-xl animate-float animation-delay-100"></div>
+        <div className="absolute top-40 right-20 w-32 h-32 bg-[#0BA5EC]/10 rounded-full blur-xl animate-float animation-delay-300"></div>
+        <div className="absolute bottom-20 left-1/4 w-16 h-16 bg-[#0BA5EC]/15 rounded-full blur-xl animate-float animation-delay-500"></div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-surface/50 backdrop-blur-sm">
+      {/* AI Models Section */}
+      <section id="models" className="py-20 bg-surface/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-large-title md:text-5xl font-semibold text-text-main mb-4 animate-fade-in-up tracking-tight">
-              Why Choose Rivo Labs?
+              Premium AI Models
             </h2>
             <p className="text-title-3 text-text-muted max-w-3xl mx-auto animate-fade-in-up animation-delay-100 font-normal">
-              Experience the future of AI-powered creativity with our
-              cutting-edge platform
+              Access the world's most advanced AI models through our unified chat interface
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: (
-                  <div className="w-16 h-16 bg-gradient-to-br from-accent/20 to-accent/30 rounded-2xl flex items-center justify-center mb-6 shadow-accent-glow">
-                    <svg
-                      className="w-8 h-8 text-accent"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
-                    </svg>
-                  </div>
-                ),
-                title: "Lightning Fast",
-                description:
-                  "Generate high-quality content in seconds with our optimized AI infrastructure and cutting-edge processing power.",
-              },
-              {
-                icon: (
-                  <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/30 rounded-2xl flex items-center justify-center mb-6 shadow-primary-glow">
-                    <svg
-                      className="w-8 h-8 text-primary"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                      />
-                    </svg>
-                  </div>
-                ),
-                title: "Enterprise Grade",
-                description:
-                  "Built for scale with 99.9% uptime, enterprise-level security, and comprehensive data protection standards.",
-              },
-              {
-                icon: (
-                  <div className="w-16 h-16 bg-gradient-to-br from-secondary/20 to-secondary/30 rounded-2xl flex items-center justify-center mb-6 shadow-wave-glow">
-                    <svg
-                      className="w-8 h-8 text-secondary"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z"
-                      />
-                    </svg>
-                  </div>
-                ),
-                title: "Fluid Experience",
-                description:
-                  "Intuitive interface designed for seamless creative workflows with Apple-inspired design principles.",
-              },
-            ].map((feature, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-stagger">
+            {models.map((model, index) => (
               <div
                 key={index}
-                className={`group relative bg-surface/80 backdrop-blur-xl rounded-3xl p-8 border border-border/50 hover:border-primary/30 transition-all duration-500 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-2 animate-fade-in-up animation-delay-${(index + 2) * 100}`}
+                className={`group relative bg-surface/80 backdrop-blur-xl rounded-2xl p-6 border transition-all duration-500 hover:shadow-xl hover:-translate-y-2 animate-fade-in-up animation-delay-${(index + 2) * 100} ${
+                  model.status === "Free" 
+                    ? "border-[#0BA5EC]/30 hover:border-[#0BA5EC]/50" 
+                    : "border-border/50 hover:border-[#0BA5EC]/30"
+                }`}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] to-secondary/[0.02] rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-[#0BA5EC]/[0.02] to-[#0BA5EC]/[0.05] rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div className="relative z-10">
-                  {feature.icon}
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-title-3 font-semibold text-text-main">
+                      {model.name}
+                    </h3>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      model.status === "Free" 
+                        ? "bg-[#0BA5EC] text-white" 
+                        : "bg-surface text-text-muted border border-border"
+                    }`}>
+                      {model.status}
+                    </span>
+                  </div>
+                  <p className="text-body text-text-muted leading-relaxed font-normal">
+                    {model.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-20 bg-bg-base">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-large-title md:text-5xl font-semibold text-text-main mb-4 tracking-tight">
+              Why Choose Clydra?
+            </h2>
+            <p className="text-title-3 text-text-muted max-w-3xl mx-auto font-normal">
+              Experience the future of AI conversation with our advanced features
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-stagger">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className={`group relative bg-surface/80 backdrop-blur-xl rounded-3xl p-8 border border-border/50 hover:border-[#0BA5EC]/30 transition-all duration-500 hover:shadow-xl hover:shadow-[#0BA5EC]/5 hover:-translate-y-2 animate-fade-in-up animation-delay-${(index + 2) * 100}`}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-[#0BA5EC]/[0.02] to-[#0BA5EC]/[0.02] rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="relative z-10">
+                  <div className="w-16 h-16 bg-gradient-to-br from-[#0BA5EC]/20 to-[#0BA5EC]/30 rounded-2xl flex items-center justify-center mb-6 shadow-lg text-2xl">
+                    {feature.icon}
+                  </div>
                   <h3 className="text-title-2 font-semibold text-text-main mb-4 tracking-tight">
                     {feature.title}
                   </h3>
@@ -259,146 +233,125 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Services Section */}
-      <section id="services" className="py-20 bg-bg-base">
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 bg-surface/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-large-title md:text-5xl font-semibold text-text-main mb-4 tracking-tight">
-              Our AI Services
+              Simple, Fair Pricing
             </h2>
             <p className="text-title-3 text-text-muted max-w-3xl mx-auto font-normal">
-              Professional AI tools designed for businesses, creators, and
-              developers
+              Start free, upgrade when you need more
             </p>
           </div>
 
-          {/* Service Tabs */}
-          <div className="flex justify-center mb-12">
-            <div className="bg-surface/80 backdrop-blur-xl p-2 rounded-2xl shadow-lg border border-border/50">
-              {Object.entries(services).map(([key, service]) => (
-                <button
-                  key={key}
-                  onClick={() => setActiveTab(key as ServiceKey)}
-                  className={`px-8 py-4 rounded-xl font-medium transition-all duration-300 relative overflow-hidden text-callout ${
-                    activeTab === key
-                      ? "bg-primary text-white shadow-primary-glow transform scale-[1.02]"
-                      : "text-text-muted hover:text-text-main hover:bg-surface/50"
-                  }`}
-                >
-                  {activeTab === key && (
-                    <span className="absolute inset-0 bg-gradient-neo-wave rounded-xl opacity-20"></span>
-                  )}
-                  <span className="relative z-10 font-medium">
-                    {service.title}
-                  </span>
-                </button>
-              ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Free Plan */}
+            <div className="card-professional p-8 relative animate-slide-in-left">
+              <h3 className="text-title-1 font-semibold text-text-main mb-2">Free</h3>
+              <div className="text-3xl font-semibold text-text-main mb-6">₹0<span className="text-body text-text-muted font-normal">/month</span></div>
+              <ul className="space-y-4 mb-8">
+                <li className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-[#0BA5EC] rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="text-text-main">40 messages per day</span>
+                </li>
+                <li className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-[#0BA5EC] rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="text-text-main">GPT-3.5 Turbo access</span>
+                </li>
+                <li className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-[#0BA5EC] rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="text-text-main">Chat history</span>
+                </li>
+              </ul>
+                             <Link href="/sign-up" className="btn-secondary-professional w-full text-center">
+                 Get Started Free
+               </Link>
             </div>
-          </div>
 
-          {/* Active Service Details */}
-          <div className="bg-surface/80 backdrop-blur-xl rounded-3xl p-8 md:p-12 border border-border/50 shadow-xl relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] via-transparent to-secondary/[0.02] rounded-3xl"></div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
-              <div>
-                <h3 className="text-title-1 font-semibold text-text-main mb-6 tracking-tight">
-                  {services[activeTab].title}
-                </h3>
-                <p className="text-body text-text-muted mb-8 leading-relaxed font-normal">
-                  {services[activeTab].description}
-                </p>
-
-                <div className="space-y-4 mb-8">
-                  {services[activeTab].features.map(
-                    (feature: string, index: number) => (
-                      <div key={index} className="flex items-center space-x-4">
-                        <div className="w-6 h-6 bg-secondary rounded-full flex items-center justify-center shadow-wave-glow flex-shrink-0">
-                          <svg
-                            className="w-3.5 h-3.5 text-white"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </div>
-                        <span className="text-body text-text-main font-normal">
-                          {feature}
-                        </span>
-                      </div>
-                    )
-                  )}
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-4 items-start">
-                  <Link href="/sign-up" className="btn btn-primary btn-lg">
-                    <span className="text-callout font-semibold">
-                      Get Started
-                    </span>
-                  </Link>
-                  <div className="flex items-center space-x-2 px-4 py-3">
-                    <span className="text-callout text-text-muted font-medium">
-                      {services[activeTab].pricing}
-                    </span>
-                  </div>
-                </div>
+            {/* Pro Plan */}
+            <div className="card-glass p-8 relative animate-slide-in-right bg-gradient-to-br from-[#0BA5EC]/5 to-[#0BA5EC]/10 border-[#0BA5EC]/30">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <span className="bg-[#0BA5EC] text-white px-4 py-1 rounded-full text-sm font-medium">Popular</span>
               </div>
-
-              <div className="relative">
-                <div className="bg-surface/60 backdrop-blur-sm rounded-2xl p-8 border border-border/30 shadow-lg">
-                  <h4 className="text-title-3 font-semibold text-text-main mb-6 tracking-tight">
-                    Use Cases
-                  </h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    {services[activeTab].examples.map(
-                      (example: string, index: number) => (
-                        <div
-                          key={index}
-                          className="bg-surface/80 backdrop-blur-sm rounded-xl p-4 border border-border/30 hover:border-primary/30 hover:shadow-md transition-all duration-300 hover:-translate-y-1 group"
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.01] to-secondary/[0.01] rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                          <span className="text-callout text-text-main font-medium relative z-10">
-                            {example}
-                          </span>
-                        </div>
-                      )
-                    )}
+              <h3 className="text-title-1 font-semibold text-text-main mb-2">Pro</h3>
+              <div className="text-3xl font-semibold text-text-main mb-6">₹799<span className="text-body text-text-muted font-normal">/month</span></div>
+              <ul className="space-y-4 mb-8">
+                <li className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-[#0BA5EC] rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
                   </div>
-                </div>
-              </div>
+                  <span className="text-text-main">Unlimited messages</span>
+                </li>
+                <li className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-[#0BA5EC] rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="text-text-main">GPT-4o, Claude Sonnet, Gemini</span>
+                </li>
+                <li className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-[#0BA5EC] rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="text-text-main">Priority support</span>
+                </li>
+                <li className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-[#0BA5EC] rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="text-text-main">Advanced features</span>
+                </li>
+              </ul>
+                             <Link href="/sign-up" className="btn-primary-professional w-full text-center">
+                 Upgrade to Pro
+               </Link>
             </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-neo-wave text-white relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-br from-[#0BA5EC] to-[#0BA5EC]/80 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-wave-pattern opacity-20"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <h2 className="text-large-title md:text-5xl font-semibold mb-6 animate-fade-in-up tracking-tight">
-            Ready to Transform Your Creative Workflow?
+            Ready to Start Chatting?
           </h2>
           <p className="text-title-3 mb-8 opacity-90 max-w-3xl mx-auto animate-fade-in-up animation-delay-100 font-normal leading-relaxed">
-            Join thousands of creators and businesses already using Rivo Labs to
-            bring their ideas to life.
+            Join thousands of users already using Clydra to have meaningful conversations with AI.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animation-delay-200">
             <Link
               href="/sign-up"
-              className="btn bg-white text-primary hover:bg-white/90 btn-lg transform hover:scale-105 transition-all duration-300 shadow-xl"
+              className="bg-white text-[#0BA5EC] hover:bg-white/90 px-8 py-4 rounded-xl font-semibold text-lg transform hover:scale-105 transition-all duration-300 shadow-xl"
             >
-              <span className="text-callout font-semibold">
-                Start Creating Today
-              </span>
+              Start Free Today
             </Link>
             <Link
               href="#pricing"
-              className="btn bg-transparent text-white border-white/30 hover:bg-white/10 btn-lg transform hover:scale-105 transition-all duration-300"
+              className="bg-transparent text-white border-2 border-white/30 hover:bg-white/10 px-8 py-4 rounded-xl font-medium text-lg transform hover:scale-105 transition-all duration-300"
             >
-              <span className="text-callout font-medium">View Pricing</span>
+              View Pricing
             </Link>
           </div>
         </div>
@@ -410,37 +363,52 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-neo-wave rounded-xl flex items-center justify-center shadow-primary-glow">
+                <div className="w-10 h-10 bg-[#0BA5EC] rounded-xl flex items-center justify-center shadow-lg">
                   <span className="text-white font-semibold text-headline">
-                    R
+                    C
                   </span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-title-3 font-semibold text-text-main">
-                    Rivo Labs
+                    Clydra
                   </span>
                   <span className="text-caption-1 text-text-muted font-medium -mt-1">
-                    Neo-Wave Tech
+                    AI Chat Platform
                   </span>
                 </div>
               </div>
               <p className="text-body text-text-muted max-w-md font-normal leading-relaxed">
-                Empowering creativity through advanced AI technology. Build,
-                create, and innovate with our cutting-edge platform.
+                Chat with the world's most advanced AI models through our beautiful, unified interface.
               </p>
             </div>
 
             <div>
               <h4 className="text-headline font-semibold text-text-main mb-4">
-                Services
+                Product
               </h4>
               <ul className="space-y-2">
                 <li>
                   <Link
-                    href="#services"
-                    className="text-callout text-text-muted hover:text-primary transition-colors font-normal"
+                    href="#models"
+                    className="text-callout text-text-muted hover:text-[#0BA5EC] transition-colors font-normal"
                   >
-                    Image Generation
+                    AI Models
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="#features"
+                    className="text-callout text-text-muted hover:text-[#0BA5EC] transition-colors font-normal"
+                  >
+                    Features
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="#pricing"
+                    className="text-callout text-text-muted hover:text-[#0BA5EC] transition-colors font-normal"
+                  >
+                    Pricing
                   </Link>
                 </li>
               </ul>
@@ -454,7 +422,7 @@ export default function Home() {
                 <li>
                   <Link
                     href="/privacy"
-                    className="text-callout text-text-muted hover:text-primary transition-colors font-normal"
+                    className="text-callout text-text-muted hover:text-[#0BA5EC] transition-colors font-normal"
                   >
                     Privacy Policy
                   </Link>
@@ -462,35 +430,30 @@ export default function Home() {
                 <li>
                   <Link
                     href="/terms"
-                    className="text-callout text-text-muted hover:text-primary transition-colors font-normal"
+                    className="text-callout text-text-muted hover:text-[#0BA5EC] transition-colors font-normal"
                   >
                     Terms of Service
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#about"
-                    className="text-callout text-text-muted hover:text-primary transition-colors font-normal"
-                  >
-                    About Us
                   </Link>
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-footnote text-text-muted font-normal">
-              © 2025 Rivo Labs. All rights reserved.
-            </p>
-            <div className="flex items-center space-x-6 mt-4 md:mt-0">
-              <span className="text-footnote text-text-muted font-medium">
-                Built with Neo-Wave Tech
-              </span>
+          <div className="border-t border-border pt-8 mt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <p className="text-callout text-text-muted font-normal">
+                © 2024 Clydra. All rights reserved.
+              </p>
+              <div className="flex space-x-6 mt-4 md:mt-0">
+                <span className="text-callout text-text-muted font-normal">
+                  Made with ❤️ for AI enthusiasts
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </footer>
     </div>
+    </PageTransition>
   );
 }

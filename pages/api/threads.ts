@@ -69,7 +69,7 @@ export default async function handler(
     try {
       const { threadId } = req.body;
 
-      console.log("DELETE request received:", { threadId, userId, userDbId: user.id });
+
 
       if (!threadId) {
         console.error("No threadId provided in request body");
@@ -97,7 +97,7 @@ export default async function handler(
         return res.status(404).json({ error: "Thread not found or access denied" });
       }
 
-      console.log("Thread verified, proceeding with deletion:", existingThread);
+
 
       // First delete all messages in the thread
       const { error: messagesError } = await supabaseAdmin
@@ -123,7 +123,7 @@ export default async function handler(
         throw deleteError;
       }
 
-      console.log("Thread deleted successfully:", threadId);
+
       res.status(200).json({ success: true });
     } catch (error) {
       console.error("Failed to delete thread - full error:", error);

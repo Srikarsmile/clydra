@@ -14,10 +14,9 @@ interface ModelPickerProps {
   userPlan: "free" | "pro" | "max";
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const PLAN_RANK = { free: 0, pro: 0, max: 0 } as const; // @unlock
+// All models unlocked for internal build
 
-const MODELS: { key: ChatModel; minPlan: keyof typeof PLAN_RANK }[] = [
+const MODELS: { key: ChatModel; minPlan: "free" | "pro" | "max" }[] = [
   { key: "openai/gpt-4o", minPlan: "free" },
   { key: "google/gemini-2.5-flash-preview", minPlan: "free" }, // @fluid-ui - updated model name
   { key: "google/gemini-2.5-pro", minPlan: "free" }, // @unlock @gem25
@@ -39,8 +38,7 @@ export default function ModelPicker({
   return (
     <div className="flex flex-wrap gap-2">
       {MODELS.map((m) => {
-        // const locked = PLAN_RANK[userPlan] < PLAN_RANK[m.minPlan];
-        const locked = false; // all models unlocked for testing
+        const locked = false; // All models unlocked for internal build
         return (
           <ModelPill
             key={m.key}

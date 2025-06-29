@@ -19,7 +19,6 @@ export default function UpgradeCTA({
 }: UpgradeCTAProps) {
   const handleUpgradeClick = () => {
     // TODO: Integrate with Stripe payment link
-    console.log("Upgrade to Pro clicked - TODO: Add Stripe integration");
     // For now, redirect to a placeholder or services page
     window.open("#TODO-stripe-payment-link", "_blank");
   };

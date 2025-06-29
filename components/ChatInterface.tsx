@@ -226,14 +226,14 @@ export default function ChatInterface({
       </div>
 
       {/* Optimized input */}
-      <div className="p-4 border-t border-border/30 bg-white/50">
+      <div className="p-4 border-t border-border/30 bg-surface/50">
         <div className="flex items-end space-x-3">
           <div className="flex-1">
             <form onSubmit={handleSubmit} className="flex space-x-4">
               <select
                 value={selectedModel}
                 onChange={(e) => handleModelSelect(e.target.value)}
-                className="px-4 py-2 rounded-xl bg-surface border border-border/50 text-text-main focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="px-4 py-2 rounded-xl bg-surface border border-gray-200/50 text-text-main focus:outline-none focus:ring-2 focus:ring-brand-200 shadow-sm/5"
               >
                 <option value="anthropic/claude-3-sonnet-20240229">
                   Claude 3 Sonnet
@@ -251,14 +251,14 @@ export default function ChatInterface({
                 type="text"
                 value={inputMessage}
                 onChange={handleInputChange}
-                placeholder="Type your message..."
-                className="flex-1 px-4 py-2 rounded-xl bg-surface border border-border/50 text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
+                placeholder="Ask me anything..."
+                className="flex-1 px-4 py-2 rounded-xl bg-surface border border-gray-200/50 text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand-200 selection:bg-brand-200 selection:text-text-main shadow-sm/5"
                 disabled={isLoading}
               />
               <button
                 type="submit"
                 disabled={isLoading || !inputMessage.trim()}
-                className="px-6 py-2 bg-primary text-white rounded-xl font-medium hover:shadow-primary-glow transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-brand-500 text-white rounded-xl font-medium hover:bg-brand-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm/5 hover:shadow-md/10"
               >
                 Send
               </button>

@@ -9,7 +9,7 @@ import { Shell } from "../components/Layout/Shell";
 
 // Lazy load components
 const ChatPanel = lazy(() => import("../components/Chat/ChatPanel"));
-const ThreadList = lazy(() => import("../components/Sidebar/ThreadList")); // @threads
+ // @threads
 
 interface DashboardStats {
   totalChats: number;
