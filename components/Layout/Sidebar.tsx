@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import ThreadList from "../Sidebar/ThreadList";
 import ThreadSearch from "../Sidebar/ThreadSearch";
 import PlanBadge from "../PlanBadge";
+import { TokenGauge } from "../Sidebar/TokenGauge";
 
 interface SidebarProps {
   planType?: string;
@@ -147,7 +148,8 @@ export default function Sidebar({
       {/* bottom cluster */}
       <div className="px-3 py-4 border-t border-gray-200 dark:border-[#2A2A2E]">
         {!collapsed && (
-          <div className="mb-3">
+          <div className="mb-3 space-y-3">
+            <TokenGauge />
             <PlanBadge 
               plan={planType as "free" | "pro" | "max"} 
               onClick={navigateToServices} 

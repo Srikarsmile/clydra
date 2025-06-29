@@ -11,6 +11,7 @@ import OpenAI from "openai";
 import { useOpenRouter } from "../lib/useOpenRouter";
 import { estimateConversationTokens } from "../lib/chatTokens";
 import { hasExceededDailyLimit, updateUsageMeter } from "../lib/usage";
+import { addTokens, getUsage, getCap, checkQuota } from "../lib/tokens"; // @token-meter
 import { supabaseAdmin } from "../../lib/supabase";
 import { MODEL_ALIASES, ChatModel } from "../../types/chatModels";
 
@@ -88,7 +89,20 @@ export async function processChatRequest(
     );
   }
 
-  // @clydra-core Check daily message limit
+  // @clydra-core Estimate input tokens
+  const inputTokens = estimateConversationTokens(
+    validatedInput.messages,
+    model
+  );
+
+  // @token-meter Check quota before making request
+  const plan = "pro";                              // TODO: fetch from DB
+  const quotaCheck = await checkQuota(userId, inputTokens, plan);
+  if (!quotaCheck.allowed) {
+    throw new ChatError("FORBIDDEN", quotaCheck.reason || "Quota exceeded");
+  }
+
+  // @clydra-core Check daily message limit (legacy)
   const hasExceeded = await hasExceededDailyLimit(userId);
   if (hasExceeded) {
     throw new ChatError(
@@ -96,12 +110,6 @@ export async function processChatRequest(
       "Daily message limit exceeded. Upgrade to Pro for unlimited messages."
     );
   }
-
-  // @clydra-core Estimate input tokens
-  const inputTokens = estimateConversationTokens(
-    validatedInput.messages,
-    model
-  );
 
   // @clydra-core Set up OpenRouter client via OpenAI SDK
   const baseURL = process.env.OPENROUTER_BASE || "https://openrouter.ai/api/v1";
@@ -153,7 +161,10 @@ export async function processChatRequest(
       Math.ceil(assistantMessage.length / 4);
     const totalTokens = inputTokens + outputTokens;
 
-    // @clydra-core Update usage meter
+    // @token-meter Update token usage meter
+    await addTokens(userId, completion.usage?.total_tokens || totalTokens);
+
+    // @clydra-core Update legacy usage meter 
     await updateUsageMeter(userId, totalTokens);
 
     // @clydra-core Save chat to history
