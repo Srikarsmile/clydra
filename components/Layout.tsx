@@ -2,7 +2,6 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React from "react";
-import WelcomePopup from "./WelcomePopup";
 import PageTransition from "./PageTransition";
 
 interface LayoutProps {
@@ -27,15 +26,15 @@ export default function Layout({ children }: LayoutProps) {
             {/* Logo */}
             <div className="flex items-center">
               <Link href="/" className="flex items-center space-x-3 group">
-                <div className="w-10 h-10 bg-gradient-neo-wave rounded-xl flex items-center justify-center shadow-primary-glow group-hover:shadow-primary-glow-lg transition-all duration-300 group-hover:scale-105">
-                  <span className="text-white font-bold text-lg">R</span>
+                <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                  <span className="text-white font-bold text-lg">C</span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-large-title text-text-main group-hover:text-primary transition-colors duration-200">
-                    Rivo Labs
+                    Clydra
                   </span>
                   <span className="text-caption-1 text-text-muted -mt-1">
-                    Neo-Wave Tech
+                    AI Chat Platform
                   </span>
                 </div>
               </Link>
@@ -68,10 +67,10 @@ export default function Layout({ children }: LayoutProps) {
                 <div className="flex items-center space-x-3">
                   <div className="hidden md:block text-right">
                     <div className="text-callout font-medium text-text-main">
-                      AI Services
+                      Chat with AI
                     </div>
                     <div className="text-caption-1 text-text-muted">
-                      Platform
+                      Clydra Platform
                     </div>
                   </div>
                   <UserButton
@@ -124,8 +123,7 @@ export default function Layout({ children }: LayoutProps) {
         )}
       </nav>
 
-      {/* Welcome Popup */}
-      {isSignedIn && <WelcomePopup />}
+
 
       {/* Main Content */}
       <main className="relative">
@@ -141,13 +139,13 @@ export default function Layout({ children }: LayoutProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-gradient-neo-wave rounded-lg flex items-center justify-center shadow-primary-glow">
-                <span className="text-white font-bold">R</span>
+              <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold">C</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-title-3 text-text-main">Rivo Labs</span>
+                <span className="text-title-3 text-text-main">Clydra</span>
                 <span className="text-caption-1 text-text-muted -mt-1">
-                  Neo-Wave Tech
+                  AI Chat Platform
                 </span>
               </div>
             </div>
@@ -174,7 +172,7 @@ export default function Layout({ children }: LayoutProps) {
             </div>
 
             <div className="text-callout text-text-muted mt-4 md:mt-0">
-              © 2025 Rivo Labs. All rights reserved.
+              © 2025 Clydra. All rights reserved.
             </div>
           </div>
         </div>

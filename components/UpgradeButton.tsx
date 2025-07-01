@@ -1,107 +1,91 @@
 // @or Upgrade button with updated pricing
-import React from "react";
+import React, { useState } from "react";
+import { Check } from "lucide-react";
 
 interface UpgradeButtonProps {
-  onClick: () => void;
   className?: string;
-  variant?: "primary" | "secondary";
+  size?: "sm" | "lg";
 }
 
 export default function UpgradeButton({
-  onClick,
   className = "",
-  variant = "primary",
+  size = "sm",
 }: UpgradeButtonProps) {
-  const isPrimary = variant === "primary";
+  const [showModal, setShowModal] = useState(false);
 
   return (
-    <button
-      onClick={onClick}
-      className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 hover:scale-105 active:scale-95 ${
-        isPrimary
-          ? "border-primary bg-gradient-to-r from-primary to-primary/80 text-white shadow-primary-glow hover:shadow-primary-glow/50"
-          : "border-border/30 bg-surface/60 hover:border-primary/30 hover:bg-surface/80"
-      } ${className}`}
-    >
-      {/* Background gradient effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    <>
+      <button
+        onClick={() => setShowModal(true)}
+        className={`bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-medium rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 ${
+          size === "lg" ? "px-8 py-4 text-lg" : "px-6 py-3"
+        } ${className}`}
+      >
+        ✨ Upgrade to Pro
+      </button>
 
-      <div className="relative p-4">
-        <div className="flex items-center gap-3">
-          <div
-            className={`p-2 rounded-xl ${isPrimary ? "bg-white/20" : "bg-primary/10"}`}
-          >
-            <span className="text-xl">🚀</span>
-          </div>
-
-          <div className="flex-1 text-left">
-            <div className="flex items-center gap-2 mb-1">
-              <h3
-                className={`text-callout font-bold ${isPrimary ? "text-white" : "text-text-main"}`}
-              >
-                ₹ 799 / $10 – Upgrade to Pro
-              </h3>
-              <span className="text-yellow-400">⭐</span>
-            </div>
-
-            <p
-              className={`text-caption-1 ${isPrimary ? "text-white/80" : "text-text-muted"}`}
-            >
-              Unlimited Claude & Gemini • 300 images • 5× speed
-            </p>
-
-            {/* Feature highlights */}
-            <div className="flex items-center gap-4 mt-2">
-              <div className="flex items-center gap-1">
-                <span
-                  className={`text-xs ${isPrimary ? "text-white/60" : "text-text-muted"}`}
-                >
-                  💬
-                </span>
-                <span
-                  className={`text-xs ${isPrimary ? "text-white/80" : "text-text-muted"}`}
-                >
-                  Unlimited Chat
-                </span>
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full mx-auto shadow-2xl border border-gray-200">
+            <div className="p-6">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <span className="text-white text-2xl">✨</span>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  Upgrade to Pro
+                </h3>
+                <p className="text-gray-600">
+                  Unlock advanced AI models and unlimited conversations
+                </p>
               </div>
-              <div className="flex items-center gap-1">
-                <span
-                  className={`text-xs ${isPrimary ? "text-white/60" : "text-text-muted"}`}
-                >
-                  🎨
-                </span>
-                <span
-                  className={`text-xs ${isPrimary ? "text-white/80" : "text-text-muted"}`}
-                >
-                  300 Images
-                </span>
+
+              <div className="space-y-4 mb-6">
+                <div className="bg-gradient-to-r from-primary-50 to-primary-100 rounded-xl p-4 border border-primary-200">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-primary-600 mb-1">
+                      1.5M tokens/month
+                    </div>
+                    <div className="text-sm text-primary-700">
+                      Claude Sonnet 4 • Gemini Pro • DeepSeek R1
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {[
+                    "GPT-4o (Latest)",
+                    "Claude Sonnet 4",
+                    "Grok 3 Beta", 
+                    "Gemini 2.5 Pro",
+                    "🌐 Web Search on all models",
+                    "1.5M tokens monthly",
+                  ].map((feature, index) => (
+                    <div key={index} className="flex items-center space-x-3">
+                      <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                      <span className="text-gray-700">{feature}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <span
-                  className={`text-xs ${isPrimary ? "text-white/60" : "text-text-muted"}`}
+
+              <div className="space-y-3">
+                <button className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-medium py-3 rounded-xl transition-all duration-300">
+                  Coming Soon - $15/month
+                </button>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="w-full text-gray-500 hover:text-gray-700 py-2 transition-colors"
                 >
-                  ⚡
-                </span>
-                <span
-                  className={`text-xs ${isPrimary ? "text-white/80" : "text-text-muted"}`}
-                >
-                  Priority Speed
-                </span>
+                  Maybe later
+                </button>
               </div>
             </div>
-          </div>
-
-          <div
-            className={`text-xs font-medium px-2 py-1 rounded-full ${
-              isPrimary
-                ? "bg-white/20 text-white"
-                : "bg-primary/10 text-primary"
-            }`}
-          >
-            Upgrade
           </div>
         </div>
-      </div>
-    </button>
+      )}
+    </>
   );
 }

@@ -24,19 +24,19 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
 
   // Fetch threads - optimized with useCallback
   const fetchThreads = useCallback(async () => {
-    try {
-      const response = await fetch("/api/threads");
-      if (response.ok) {
-        const data = await response.json();
+      try {
+        const response = await fetch("/api/threads");
+        if (response.ok) {
+          const data = await response.json();
         setThreads(data || []);
       } else {
         console.error("Failed to fetch threads:", response.status, response.statusText);
+        }
+      } catch (error) {
+        console.error("Failed to fetch threads:", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to fetch threads:", error);
-    } finally {
-      setIsLoading(false);
-    }
   }, []);
 
   useEffect(() => {
@@ -171,21 +171,21 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
                   )}
                 </div>
               ) : (
-                <Link
-                  href={`/dashboard?thread=${thread.id}`}
+              <Link
+                href={`/dashboard?thread=${thread.id}`}
                   onClick={(e) => handleThreadClick(thread.id, e)}
-                  className={cn(
-                    "flex items-center justify-between flex-1 px-2 py-1 text-sm transition-colors",
+                className={cn(
+                  "flex items-center justify-between flex-1 px-2 py-1 text-sm transition-colors",
                     "hover:bg-brand-50/50"
-                  )}
-                >
-                  <span className="truncate">{thread.title}</span>
-                  {thread.msg_count && thread.msg_count > 0 && (
-                    <span className="ml-2 text-[10px] rounded bg-gray-200 px-1">
-                      {thread.msg_count}
-                    </span>
-                  )}
-                </Link>
+                )}
+              >
+                <span className="truncate">{thread.title}</span>
+                {thread.msg_count && thread.msg_count > 0 && (
+                  <span className="ml-2 text-[10px] rounded bg-gray-200 px-1">
+                    {thread.msg_count}
+                  </span>
+                )}
+              </Link>
               )}
 
               <button

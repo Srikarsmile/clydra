@@ -613,6 +613,45 @@ html {
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
+  /* Premium Glassmorphism Effects */
+  .glass-premium {
+    backdrop-filter: blur(20px) saturate(180%);
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  .glass-premium:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .dark .glass-premium {
+    background: rgba(30, 30, 30, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .dark .glass-premium:hover {
+    background: rgba(30, 30, 30, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Glass Input Field */
+  .glass-input {
+    backdrop-filter: blur(16px);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-input:focus {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(11, 165, 236, 0.4);
+    box-shadow: 0 0 0 3px rgba(11, 165, 236, 0.1);
+  }
+
   /* Typography Utilities */
   .text-balance {
     text-wrap: balance;
@@ -628,35 +667,50 @@ html {
     display: none;
   }
 
-  /* Custom scrollbar for chat areas */
+  /* @fluid-scroll - Enhanced chat scrolling with performance optimizations */
+  .chat-scroll {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+
   .chat-scroll::-webkit-scrollbar {
     width: 6px;
   }
 
   .chat-scroll::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 3px;
+    background: transparent;
+    border-radius: 10px;
   }
 
   .chat-scroll::-webkit-scrollbar-thumb {
-    background: rgba(11, 165, 236, 0.3);
-    border-radius: 3px;
+    background: rgba(156, 163, 175, 0.3);
+    border-radius: 10px;
+    transition: background-color 0.2s ease;
   }
 
   .chat-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(11, 165, 236, 0.5);
+    background: rgba(156, 163, 175, 0.5);
+  }
+
+  /* Ensure proper flex scroll behavior */
+  .chat-scroll:hover::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.6);
   }
 
   .dark .chat-scroll::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
+    background: transparent;
   }
 
   .dark .chat-scroll::-webkit-scrollbar-thumb {
-    background: rgba(11, 165, 236, 0.4);
+    background: rgba(255, 255, 255, 0.2);
   }
 
   .dark .chat-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(11, 165, 236, 0.6);
+    background: rgba(255, 255, 255, 0.4);
   }
 
   /* Line Clamp Utilities */
@@ -676,24 +730,15 @@ html {
 
   /* Animation Classes */
   .animate-fade-in-up {
-    animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: fade-in-up 0.4s ease-out forwards;
   }
 
   .animate-scale-in-spring {
-    animation: scale-in-spring 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)
-      forwards;
+    animation: scale-in-spring 0.5s ease-out forwards;
   }
 
   .animate-slide-in-right {
-    animation: slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-
-  .animate-ocean-flow {
-    animation: ocean-flow 8s ease-in-out infinite;
-  }
-
-  .animate-wave-ripple {
-    animation: wave-ripple 2s ease-out infinite;
+    animation: slide-in-right 0.3s ease-out forwards;
   }
 
   /* Animation Delays */
@@ -924,8 +969,8 @@ html {
 
 /* Staggered animations for lists */
 .animate-stagger > * {
+  animation: fade-in-up 0.6s ease-out forwards;
   opacity: 0;
-  animation: slideInFromBottom var(--transition-normal) ease-out forwards;
 }
 
 .animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
@@ -977,4 +1022,198 @@ html {
 /* Modern navigation transitions */
 .nav-item {
   @apply transition-all duration-300 hover:scale-105 active:scale-95;
+}
+
+/* Hide Scrollbars */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Chat-specific scrollbar styling - keeps functionality but styled nicely */
+.chat-scroll {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+
+.chat-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 10px;
+  transition: background-color 0.2s ease;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+/* Ensure proper flex scroll behavior */
+.chat-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.6);
+}
+
+/* Allow normal scrolling for main document */
+html, body {
+  scroll-behavior: smooth;
+}
+
+/* @fluid-scroll - Smooth animations for chat messages */
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in-spring {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-right {
+  0% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* @fluid-scroll - Staggered animation for suggestion cards */
+.animate-stagger > * {
+  animation: fade-in-up 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.animate-stagger > *:nth-child(2) { animation-delay: 100ms; }
+.animate-stagger > *:nth-child(3) { animation-delay: 200ms; }
+.animate-stagger > *:nth-child(4) { animation-delay: 300ms; }
+.animate-stagger > *:nth-child(5) { animation-delay: 400ms; }
+.animate-stagger > *:nth-child(6) { animation-delay: 500ms; }
+
+/* @fluid-scroll - Animation utilities */
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+
+.animate-scale-in-spring {
+  animation: scale-in-spring 0.5s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out forwards;
+}
+
+/* @fluid-scroll - Smooth transforms for interactive elements */
+.transform-gpu {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* @fluid-scroll - Enhanced loading animation */
+@keyframes loading-dots {
+  0%, 20% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+  80%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-loading-dots {
+  animation: loading-dots 1.4s ease-in-out infinite;
+}
+
+/* @fluid-scroll - Smooth scroll container optimization */
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+/* @fluid-scroll - Performance hint for scroll containers */
+.scroll-container {
+  contain: layout style paint;
+  will-change: scroll-position;
+  transform: translateZ(0);
+}
+
+/* @fluid-scroll - Better focus management during scroll */
+.scroll-container:focus-within {
+  outline: none;
+}
+
+/* @fluid-scroll - Optimized message containers */
+.message-container {
+  contain: layout style;
+  will-change: transform, opacity;
+}
+
+/* @fluid-scroll - Smooth hover effects for messages */
+.message-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.message-hover:hover {
+  transform: scale(1.02) translateZ(0);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* @fluid-scroll - Enhanced suggestion card animations */
+.suggestion-card {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+
+.suggestion-card:hover {
+  transform: scale(1.05) translateY(-4px) translateZ(0);
+}
+
+/* @fluid-scroll - Better scroll indicators */
+.scroll-indicator {
+  transition: opacity 0.3s ease;
+}
+
+.scroll-indicator.visible {
+  opacity: 1;
+}
+
+.scroll-indicator.hidden {
+  opacity: 0;
 }

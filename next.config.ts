@@ -27,7 +27,16 @@ const nextConfig: NextConfig = {
   
   // Image optimizations
   images: {
-    domains: ["img.clerk.com", "images.clerk.dev"],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'img.clerk.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.clerk.dev',
+      },
+    ],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60,
   },

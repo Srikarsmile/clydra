@@ -15,24 +15,32 @@ export default function Services() {
       name: "Free",
       price: "$0",
       period: "",
-      description: "Perfect for getting started",
-      features: ["30 images", "Standard quality", "Basic support"],
+      description: "Perfect for getting started with AI chat",
+      features: [
+        "GPT-4o Mini", 
+        "DeepSeek R1", 
+        "Gemini 2.5 Flash",
+        "40,000 tokens/day", 
+        "Basic support"
+      ],
       cta: "Current Plan",
       ctaClass: "btn btn-ghost",
       ctaAction: () => {},
       popular: false,
     },
     {
-      name: "Creator",
+      name: "Pro",
       price: "$15",
       period: "/mo",
-      description: "For content creators",
+      description: "For power users and professionals",
       features: [
-        "500 images",
-        "HD quality",
+        "1.5M tokens/month",
+        "GPT-4o (Latest)",
+        "Claude Sonnet 4", 
+        "Grok 3 Beta",
+        "Gemini 2.5 Pro",
+        "🌐 Web Search on all models",
         "Priority support",
-        "Custom styles",
-        "Commercial rights",
       ],
       cta: "Coming Soon",
       ctaClass: "btn btn-primary",
@@ -40,18 +48,18 @@ export default function Services() {
       popular: true,
     },
     {
-      name: "Pro",
+      name: "Max",
       price: "$59",
-      period: "/mo",
-      description: "For professional teams",
+      period: "/mo", 
+      description: "For teams and intensive usage",
       features: [
-        "5,000 images",
-        "Ultra HD quality",
-        "24/7 support",
-        "Advanced features",
+        "5M tokens/month",
+        "All Pro features",
+        "🌐 Advanced Web Search",
         "Team collaboration",
         "API access",
-        "Priority processing",
+        "24/7 support",
+        "Custom integrations",
       ],
       cta: "Coming Soon",
       ctaClass: "btn btn-primary",
@@ -71,14 +79,14 @@ export default function Services() {
         )}
 
         {/* Header */}
-        <div className="bg-gradient-neo-wave text-white">
+        <div className="bg-gradient-to-br from-primary-500 to-primary-600 text-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
             <div className="text-center">
               <h1 className="text-large-title font-semibold mb-4 tracking-tight">
                 Simple, Transparent Pricing
               </h1>
               <p className="text-title-3 font-normal opacity-90 max-w-3xl mx-auto">
-                Choose the perfect plan for your creative needs
+                Choose the perfect plan for your AI chat needs
               </p>
             </div>
           </div>
@@ -169,11 +177,10 @@ export default function Services() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
               <div className="bg-surface/80 backdrop-blur-xl rounded-2xl p-6 border border-border/50">
                 <h4 className="text-callout font-semibold text-text-main mb-3">
-                  What happens when I exceed my plan limits?
+                  What happens when I exceed my token limit?
                 </h4>
                 <p className="text-caption-1 text-text-muted">
-                  You can purchase additional credits or upgrade to a higher
-                  plan anytime. No generation requests are blocked.
+                  You can upgrade to a higher plan anytime. Your usage resets automatically each month.
                 </p>
               </div>
 
@@ -189,43 +196,20 @@ export default function Services() {
 
               <div className="bg-surface/80 backdrop-blur-xl rounded-2xl p-6 border border-border/50">
                 <h4 className="text-callout font-semibold text-text-main mb-3">
-                  Do credits roll over?
+                  Do tokens roll over?
                 </h4>
                 <p className="text-caption-1 text-text-muted">
-                  Unused credits carry over to the next month. They never expire
-                  as long as you have an active subscription.
+                  Tokens reset to full quota on the 1st of each month. Monthly limits ensure fair usage across all users.
                 </p>
               </div>
 
               <div className="bg-surface/80 backdrop-blur-xl rounded-2xl p-6 border border-border/50">
                 <h4 className="text-callout font-semibold text-text-main mb-3">
-                  Is there a free trial?
+                  Do you offer a free trial?
                 </h4>
                 <p className="text-caption-1 text-text-muted">
-                  Yes! Every new user gets $3 in free credits to try our
-                  platform. No credit card required.
+                  Yes! Every new user gets access to our Free plan with daily token allowance to try Clydra.
                 </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Call to Action */}
-          <div className="text-center mt-16">
-            <div className="bg-surface/80 backdrop-blur-xl rounded-3xl p-8 border border-border/50 shadow-lg">
-              <h3 className="text-title-2 font-semibold text-text-main mb-4 tracking-tight">
-                Ready to Start Creating?
-              </h3>
-              <p className="text-body text-text-muted mb-6 max-w-2xl mx-auto">
-                Join thousands of creators using our AI platform to bring their
-                ideas to life
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/sign-up" className="btn btn-primary btn-lg">
-                  Get Started Free
-                </Link>
-                <Link href="/dashboard" className="btn btn-ghost btn-lg">
-                  Go to Dashboard
-                </Link>
               </div>
             </div>
           </div>

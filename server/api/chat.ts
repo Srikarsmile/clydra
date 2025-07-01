@@ -13,9 +13,10 @@ import { estimateConversationTokens } from "../lib/chatTokens";
 import { hasExceededDailyLimit, updateUsageMeter } from "../lib/usage";
 import { addTokens, getUsage, getCap, checkQuota } from "../lib/tokens"; // @token-meter
 import { supabaseAdmin } from "../../lib/supabase";
+import { getOrCreateUser } from "../../lib/user-utils";
 import { MODEL_ALIASES, ChatModel } from "../../types/chatModels";
 
-// @clydra-core Input validation schema
+// @dashboard-redesign - Updated input validation schema to match frontend models
 const chatInputSchema = z.object({
   messages: z.array(
     z.object({
@@ -25,18 +26,24 @@ const chatInputSchema = z.object({
   ),
   model: z
     .enum([
+      // @dashboard-redesign - Models matching the design brief
+      "google/gemini-2.5-flash", // Free model
       "openai/gpt-4o",
-      "google/gemini-2.5-pro", // @gem25
+      "anthropic/claude-3.5-sonnet", // Updated from claude-sonnet-4
+      "google/gemini-2.5-pro",
+      // Legacy models for compatibility
+      "openai/gpt-4o-mini",
+      "deepseek/deepseek-r1",
+      "x-ai/grok-3-beta",
       "google/gemini-2.5-flash-preview",
       "anthropic/claude-sonnet-4",
       "anthropic/claude-opus-4",
       "anthropic/claude-3-sonnet-20240229",
       "google/gemini-1.5-pro",
-      "deepseek/deepseek-r1",
       "anthropic/claude-3-opus-20240229",
       "meta-llama/llama-3-70b-instruct",
     ] as const)
-    .default("openai/gpt-4o"),
+    .default("anthropic/claude-3.5-sonnet"), // @dashboard-redesign - Default to Claude 4 Sonnet
   threadId: z.string().optional(), // @threads - Add threadId support
 });
 
@@ -69,10 +76,17 @@ export class ChatError extends Error {
  * @threads - Updated to support threadId for message persistence
  */
 export async function processChatRequest(
-  userId: string,
+  clerkUserId: string, // Clerk user ID from auth
   input: ChatInput,
   threadId?: string // @threads - Add threadId parameter
 ): Promise<ChatResponse> {
+  // Convert Clerk ID to Supabase UUID
+  const userResult = await getOrCreateUser(clerkUserId);
+  if (!userResult.success || !userResult.user) {
+    throw new ChatError("UNAUTHORIZED", "User not found or could not be created");
+  }
+  const userId = userResult.user.id; // Now we have the Supabase UUID
+
   // @clydra-core Validate input
   const validatedInput = chatInputSchema.parse(input);
 
@@ -171,7 +185,7 @@ export async function processChatRequest(
     if (threadId || input.threadId) {
       // @threads - Save to thread-based messages
       await saveMessagesToThread(
-        userId,
+        userId, // Already converted to Supabase UUID
         threadId || input.threadId!,
         validatedInput.messages,
         assistantMessage
@@ -179,7 +193,7 @@ export async function processChatRequest(
     } else {
       // @clydra-core Legacy chat history (fallback)
       await saveChatToHistory(
-        userId,
+        userId, // Already converted to Supabase UUID
         validatedInput.messages,
         assistantMessage,
         model
@@ -221,22 +235,13 @@ export async function processChatRequest(
 
 // @threads - Helper function to save messages to thread
 async function saveMessagesToThread(
-  userId: string,
+  userId: string, // Now expects Supabase UUID
   threadId: string,
   userMessages: Array<{ role: string; content: string }>,
   assistantResponse: string
 ): Promise<void> {
   try {
-    // Get user info
-    const { data: user } = await supabaseAdmin
-      .from("users")
-      .select("*")
-      .eq("clerk_id", userId)
-      .single();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
+    // userId is already a Supabase UUID, no need to convert
 
     // Get the last user message
     const lastUserMessage = userMessages[userMessages.length - 1];
@@ -278,12 +283,14 @@ async function saveMessagesToThread(
 
 // @clydra-core Helper function to save chat to Supabase
 async function saveChatToHistory(
-  userId: string,
+  userId: string, // Now expects Supabase UUID
   messages: Array<{ role: string; content: string }>,
   assistantResponse: string,
   model: string
 ): Promise<void> {
   try {
+    // userId is already a Supabase UUID, no need to convert
+
     // Add the assistant response to messages
     const fullConversation = [
       ...messages,
@@ -292,7 +299,7 @@ async function saveChatToHistory(
 
     // Create or update chat history
     const { error } = await supabaseAdmin.from("chat_history").insert({
-      user_id: userId,
+      user_id: userId, // Already a Supabase UUID
       title: generateChatTitle(messages[0]?.content || "New Chat"),
       messages: fullConversation,
       model,

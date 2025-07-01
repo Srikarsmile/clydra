@@ -1,6 +1,5 @@
 import { WebhookEvent } from "@clerk/nextjs/server";
 import { createOrGetUser } from "./supabase";
-import { initializeUserCredits } from "./credit-utils";
 
 export async function syncClerkUserToSupabase(
   clerkUserId: string,
@@ -19,15 +18,6 @@ export async function syncClerkUserToSupabase(
     if (result.error) {
       console.error("Error syncing user to Supabase:", result.error);
       return { success: false, error: result.error };
-    }
-
-    // Initialize credits for new users
-    if (result.data) {
-      const creditResult = await initializeUserCredits(result.data.id);
-      if (!creditResult.success) {
-        console.error("Error initializing user credits:", creditResult.error);
-        // Don't fail the whole process, just log the error
-      }
     }
 
     return { success: true, user: result.data };

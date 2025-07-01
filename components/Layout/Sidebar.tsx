@@ -14,56 +14,16 @@ interface SidebarProps {
   planType?: string;
 }
 
-export default function Sidebar({
-  planType = "free",
-}: SidebarProps) {
-  const [collapsed, setCollapsed] = useState(false);
-  const router = useRouter();
+// @dashboard-redesign - ProfileChip component
+function ProfileChip({ collapsed }: { collapsed: boolean }) {
   const { signOut } = useClerk();
   const { user } = useUser();
 
-  // Get threadId from query params - memoized
-  const threadId = useMemo(() => {
-    return typeof router.query.thread === "string" ? router.query.thread : null;
-  }, [router.query.thread]);
-
-  // Create new thread - optimized with useCallback and better error handling
-  const createThread = useCallback(async () => {
-    try {
-      const response = await fetch("/api/threads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (response.ok) {
-        const { id } = await response.json();
-        // Use replace instead of push to avoid navigation history issues
-        await router.replace(`/dashboard?thread=${id}`);
-      } else {
-        console.error("Failed to create thread:", response.status, response.statusText);
-      }
-    } catch (error) {
-      console.error("Failed to create thread:", error);
-    }
-  }, [router]);
-
-  // Toggle sidebar collapse - optimized with useCallback
-  const toggleCollapse = useCallback(() => {
-    setCollapsed(prev => !prev);
-  }, []);
-
-  // Sign out handler - optimized with useCallback
   const handleSignOut = useCallback(() => {
     signOut();
   }, [signOut]);
 
-  // Navigation to services - optimized with useCallback
-  const navigateToServices = useCallback(() => {
-    router.push("/services");
-  }, [router]);
-
-  // UserChip component - memoized to prevent re-renders
-  const UserChip = useMemo(() => (
+  return (
     <div className="flex items-center gap-2">
       {user?.imageUrl ? (
         <Image
@@ -95,13 +55,57 @@ export default function Sidebar({
         </button>
       )}
     </div>
-  ), [user, collapsed, handleSignOut]);
+  );
+}
+
+export default function Sidebar({
+  planType = "free",
+}: SidebarProps) {
+  const [collapsed, setCollapsed] = useState(false);
+  const router = useRouter();
+
+  // Get threadId from query params - memoized
+  const threadId = useMemo(() => {
+    return typeof router.query.thread === "string" ? router.query.thread : null;
+  }, [router.query.thread]);
+
+  // Create new thread - optimized with useCallback and better error handling
+  const createThread = useCallback(async () => {
+    try {
+      const response = await fetch("/api/threads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.ok) {
+        const { id } = await response.json();
+        // Use replace instead of push to avoid navigation history issues
+        await router.replace(`/dashboard?thread=${id}`);
+      } else {
+        console.error("Failed to create thread:", response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error("Failed to create thread:", error);
+    }
+  }, [router]);
+
+  // Toggle sidebar collapse - optimized with useCallback
+  const toggleCollapse = useCallback(() => {
+    setCollapsed(prev => !prev);
+  }, []);
+
+  // Navigation to services - optimized with useCallback
+  const navigateToServices = useCallback(() => {
+    router.push("/services");
+  }, [router]);
 
   return (
     <aside
       className={cn(
         "flex flex-col h-full transition-width duration-300",
-        collapsed ? "w-16" : "w-64",
+        // @dashboard-redesign - Updated width from w-64 to w-60, collapsed from w-16
+        collapsed ? "w-16" : "w-60",
+        // @dashboard-redesign - Updated gradient background
         "bg-gradient-to-b from-sidebar-from to-sidebar-to",
         "border-r border-gray-200 dark:border-[#2A2A2E]"
       )}
@@ -125,27 +129,25 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* @ui-clean - New Chat button with primary-500 */}
+      {/* @dashboard-redesign - New Chat button with brand-500 */}
       <button
         onClick={createThread}
         className={cn(
-          "mx-3 mb-3 rounded-md bg-primary-500 py-2 text-white text-sm font-medium",
-          "hover:bg-primary-600 transition",
+          "mx-3 mb-3 rounded-md bg-brand-500 py-2 text-white text-sm font-medium",
+          "hover:bg-brand-600 transition",
           collapsed && "mx-2 px-2"
         )}
       >
         {collapsed ? "+" : "+ New Chat"}
       </button>
-      {/* @ui-clean - End New Chat button update */}
 
-      {/* @layout-fix - search + thread list */}
+      {/* search + thread list */}
       <div className="flex-1 overflow-y-auto px-3 space-y-3">
         {!collapsed && <ThreadSearch />}
-        
         {!collapsed && <ThreadList activeThread={threadId} />}
       </div>
 
-      {/* bottom cluster */}
+      {/* @dashboard-redesign - bottom cluster with TokenGauge and ProfileChip */}
       <div className="px-3 py-4 border-t border-gray-200 dark:border-[#2A2A2E]">
         {!collapsed && (
           <div className="mb-3 space-y-3">
@@ -156,7 +158,7 @@ export default function Sidebar({
             />
           </div>
         )}
-        {UserChip}
+        <ProfileChip collapsed={collapsed} />
       </div>
     </aside>
   );

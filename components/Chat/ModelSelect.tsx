@@ -5,22 +5,16 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import { Check, ChevronDown, Sparkles, Zap, Crown } from "lucide-react";
-import { MODEL_ALIASES, ChatModel } from "@/types/chatModels";
+import { Check, ChevronDown, Sparkles, Zap, Crown, Globe } from "lucide-react";
+import { MODEL_ALIASES, ChatModel, FREE_PLAN_MODELS, PRO_PLAN_MODELS, modelSupportsWebSearch } from "@/types/chatModels";
 import { cn } from "@/lib/utils";
 
-// Models array with plan requirements - memoized outside component
+// Models array with plan requirements - now using the centralized model organization
 const MODELS: { key: ChatModel; minPlan: "free" | "pro" | "max" }[] = [
-  { key: "openai/gpt-4o", minPlan: "free" },
-  { key: "google/gemini-2.5-flash-preview", minPlan: "free" },
-  { key: "google/gemini-2.5-pro", minPlan: "pro" },
-  { key: "anthropic/claude-sonnet-4", minPlan: "pro" },
-  { key: "anthropic/claude-opus-4", minPlan: "max" },
-  { key: "deepseek/deepseek-r1", minPlan: "pro" },
-  { key: "anthropic/claude-3-sonnet-20240229", minPlan: "pro" },
-  { key: "google/gemini-1.5-pro", minPlan: "pro" },
-  { key: "anthropic/claude-3-opus-20240229", minPlan: "max" },
-  { key: "meta-llama/llama-3-70b-instruct", minPlan: "max" },
+  // Free plan models
+  ...FREE_PLAN_MODELS.map(key => ({ key, minPlan: "free" as const })),
+  // Pro plan models (excluding ones already in free)
+  ...PRO_PLAN_MODELS.map(key => ({ key, minPlan: "pro" as const })),
 ];
 
 // Plan configuration - memoized outside component
@@ -35,7 +29,7 @@ const PLAN_CONFIG = {
   },
   pro: {
     label: "PRO",
-    description: "Advanced Models",
+    description: "Advanced Models + 🌐 Web Search",
     icon: Zap,
     color: "text-blue-600",
     bgColor: "bg-blue-50",
@@ -43,7 +37,7 @@ const PLAN_CONFIG = {
   },
   max: {
     label: "MAX",
-    description: "Premium Models",
+    description: "Premium Models + 🌐 Web Search",
     icon: Crown,
     color: "text-purple-600",
     bgColor: "bg-purple-50",
@@ -54,9 +48,10 @@ const PLAN_CONFIG = {
 interface ModelSelectProps {
   model: ChatModel;
   setModel: (model: ChatModel) => void;
+  userPlan?: "free" | "pro" | "max";
 }
 
-export function ModelSelect({ model, setModel }: ModelSelectProps) {
+export function ModelSelect({ model, setModel, userPlan = "pro" }: ModelSelectProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -137,6 +132,10 @@ export function ModelSelect({ model, setModel }: ModelSelectProps) {
         {/* Simplified models list */}
         <div className="max-h-80 overflow-y-auto">
           {(["free", "pro", "max"] as const).map((plan) => {
+            // Only show plans the user has access to
+            if (userPlan === "free" && plan !== "free") return null;
+            if (userPlan === "pro" && plan === "max") return null;
+            
             const config = PLAN_CONFIG[plan];
             const Icon = config.icon;
             const planModels = filteredGroups[plan];
@@ -176,47 +175,58 @@ export function ModelSelect({ model, setModel }: ModelSelectProps) {
 
                 {/* Models in this plan */}
                 <div className="px-2 pb-2">
-                  {planModels.map((m) => (
-                    <button
-                      key={m.key}
-                      onClick={() => handleModelSelect(m.key)}
-                      className={cn(
-                        "w-full flex items-center gap-3 px-3 py-3 mx-1 my-1 rounded-xl cursor-pointer transition-all duration-200 text-left",
-                        "hover:bg-gray-50 hover:shadow-sm",
-                        model === m.key &&
-                          "bg-brand-50 border border-brand-200 shadow-sm"
-                      )}
-                    >
-                      {/* Selection indicator */}
-                      <div className="flex items-center justify-center w-5 h-5">
-                        {model === m.key ? (
-                          <div className="w-4 h-4 rounded-full bg-brand-500 flex items-center justify-center">
-                            <Check className="w-2.5 h-2.5 text-white" />
-                          </div>
-                        ) : (
-                          <div className="w-4 h-4 rounded-full border-2 border-gray-300"></div>
-                        )}
-                      </div>
-
-                      {/* Model info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-gray-900 text-sm truncate">
-                          {MODEL_ALIASES[m.key]}
-                        </div>
-                      </div>
-
-                      {/* Plan badge */}
-                      <div
+                  {planModels.map((m) => {
+                    const isLocked = (userPlan === "free" && m.minPlan !== "free") || 
+                                     (userPlan === "pro" && m.minPlan === "max");
+                    
+                    return (
+                      <button
+                        key={m.key}
+                        onClick={() => !isLocked && handleModelSelect(m.key)}
+                        disabled={isLocked}
                         className={cn(
-                          "px-2 py-1 rounded-full text-xs font-semibold tracking-wide",
-                          config.color,
-                          config.bgColor
+                          "w-full flex items-center gap-3 px-3 py-3 mx-1 my-1 rounded-xl cursor-pointer transition-all duration-200 text-left",
+                          isLocked ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50 hover:shadow-sm",
+                          model === m.key &&
+                            "bg-brand-50 border border-brand-200 shadow-sm"
                         )}
                       >
-                        {config.label}
-                      </div>
-                    </button>
-                  ))}
+                        {/* Selection indicator */}
+                        <div className="flex items-center justify-center w-5 h-5">
+                          {model === m.key ? (
+                            <div className="w-4 h-4 rounded-full bg-brand-500 flex items-center justify-center">
+                              <Check className="w-2.5 h-2.5 text-white" />
+                            </div>
+                          ) : (
+                            <div className="w-4 h-4 rounded-full border-2 border-gray-300"></div>
+                          )}
+                        </div>
+
+                        {/* Model info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-900 text-sm truncate">
+                              {MODEL_ALIASES[m.key]}
+                            </span>
+                            {modelSupportsWebSearch(m.key) && (
+                              <Globe className="w-3 h-3 text-blue-500 flex-shrink-0" />
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Plan badge */}
+                        <div
+                          className={cn(
+                            "px-2 py-1 rounded-full text-xs font-semibold tracking-wide",
+                            config.color,
+                            config.bgColor
+                          )}
+                        >
+                          {config.label}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -230,22 +240,24 @@ export function ModelSelect({ model, setModel }: ModelSelectProps) {
           )}
         </div>
 
-        {/* Simplified upgrade CTA */}
-        <div className="p-4 border-t border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50 rounded-b-2xl">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-900 mb-1">
-                Unlock Premium Models
-              </p>
-              <p className="text-xs text-gray-600">
-                Access Claude Opus, advanced reasoning, and higher limits
-              </p>
+        {/* Upgrade CTA - only show for free plan users */}
+        {userPlan === "free" && (
+          <div className="p-4 border-t border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50 rounded-b-2xl">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-gray-900 mb-1">
+                  Unlock Premium Models
+                </p>
+                <p className="text-xs text-gray-600">
+                  Access GPT-4o, Claude Sonnet 4, Grok 3, and web search
+                </p>
+              </div>
+              <button className="ml-4 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-semibold rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
+                Upgrade
+              </button>
             </div>
-            <button className="ml-4 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-semibold rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
-              Upgrade
-            </button>
           </div>
-        </div>
+        )}
       </PopoverContent>
     </Popover>
   );

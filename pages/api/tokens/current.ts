@@ -40,7 +40,7 @@ export default async function handler(
       cap,
     });
   } catch (error) {
-    console.error("Error fetching token usage:", error);
+    console.error("Token API: Unexpected error:", error);
     // Return default values instead of 500 error to prevent blocking the UI
     return res.status(200).json({
       used: 0,

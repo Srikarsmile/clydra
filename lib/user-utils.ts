@@ -1,5 +1,4 @@
 import { supabaseAdmin } from "./supabase";
-import { initializeUserCredits } from "./credit-utils";
 
 export interface UserResult {
   success: boolean;
@@ -14,12 +13,21 @@ export async function getOrCreateUser(
   clerkUserId: string
 ): Promise<UserResult> {
   try {
-    // First try to get existing user
-    let { data: user } = await supabaseAdmin
+    // First try to get existing user using admin client
+    let { data: user, error: selectError } = await supabaseAdmin
       .from("users")
       .select("id")
       .eq("clerk_id", clerkUserId)
       .single();
+
+    if (selectError && selectError.code !== "PGRST116") {
+      // PGRST116 = no rows found, which is OK for new users
+      console.error("getOrCreateUser: Error selecting user:", selectError);
+      return {
+        success: false,
+        error: "Failed to query user",
+      };
+    }
 
     // If user doesn't exist, create them
     if (!user) {
@@ -37,7 +45,7 @@ export async function getOrCreateUser(
         .single();
 
       if (createError || !newUser) {
-        console.error("Error creating user:", createError);
+        console.error("getOrCreateUser: Error creating user:", createError);
         return {
           success: false,
           error: "Failed to create user",
@@ -45,13 +53,6 @@ export async function getOrCreateUser(
       }
 
       user = newUser;
-
-      // Initialize credits for new user
-      const creditResult = await initializeUserCredits(user.id);
-      if (!creditResult.success) {
-        console.error("Error initializing user credits:", creditResult.error);
-        // Don't fail the whole process, just log the error
-      }
     }
 
     return {
@@ -59,7 +60,7 @@ export async function getOrCreateUser(
       user,
     };
   } catch (error) {
-    console.error("Error in getOrCreateUser:", error);
+    console.error("getOrCreateUser: Unexpected error:", error);
     return {
       success: false,
       error: "Database error",

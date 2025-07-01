@@ -35,6 +35,25 @@ const config: Config = {
           800: "#075985",
           900: "#0c4a6e",
         },
+        // @dashboard-redesign - Brand color system
+        brand: {
+          50: "#f0f9ff",
+          100: "#e0f2fe",
+          200: "#bae6fd",
+          300: "#7dd3fc",
+          400: "#38bdf8",
+          500: "#0BA5EC",
+          600: "#0284c7",
+          700: "#0369a1",
+          800: "#075985",
+          900: "#0c4a6e",
+        },
+        // @dashboard-redesign - Surface and background colors
+        surface: "#ffffff",
+        "text-main": "#1f2937",
+        "text-muted": "#64748b",
+        "sidebar-from": "#f8fafc",
+        "sidebar-to": "#f1f5f9",
         // Neo-Wave Tech Color System
         primary: {
           50: "#e6f4f8",
@@ -98,7 +117,20 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // @dashboard-redesign - Add custom utility plugins
+    function ({ addUtilities }: { addUtilities: Function }) {
+      addUtilities({
+        '.no-scrollbar': {
+          '-ms-overflow-style': 'none',
+          'scrollbar-width': 'none',
+        },
+        '.no-scrollbar::-webkit-scrollbar': {
+          'display': 'none',
+        },
+      });
+    },
+  ],
 };
 
 export default config;

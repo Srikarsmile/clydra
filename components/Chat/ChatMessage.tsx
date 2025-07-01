@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
@@ -9,7 +9,7 @@ export interface ChatMessageProps {
   timestamp?: Date;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({
+const ChatMessage: React.FC<ChatMessageProps> = memo(({
   content,
   role,
   timestamp = new Date(),
@@ -17,25 +17,20 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const isUser = role === "user";
 
   return (
-    <div className={cn("flex gap-3", isUser ? "flex-row-reverse" : "flex-row")}>
+    <div className={cn("flex gap-4 w-full", isUser ? "flex-row-reverse" : "flex-row")}>
       <div className={cn(
-        "w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-md flex-shrink-0 transition-transform duration-300",
+        "w-8 h-8 rounded-full flex items-center justify-center text-white font-medium text-xs shadow-sm flex-shrink-0",
+        "transition-all duration-300 transform hover:scale-110",
+        "will-change-transform",
         isUser 
-          ? "bg-gradient-to-br from-primary-500 to-primary-600" 
-          : "bg-gradient-to-br from-primary-500 to-primary-600"
+          ? "bg-gradient-to-br from-brand-500 to-brand-600" 
+          : "bg-gradient-to-br from-gray-500 to-gray-600"
       )}>
         {isUser ? "You" : "AI"}
       </div>
       
-      <div>
-        <div
-          className={cn(
-            'rounded-lg px-4 py-2 shadow-sm/5',
-            isUser 
-              ? 'bg-primary-100 text-primary-600'
-              : 'bg-surface text-text-main border border-gray-200/50'
-          )}
-        >
+      <div className="min-w-0 flex-1">
+        <div className="prose prose-sm max-w-none text-inherit">
           <ReactMarkdown 
             remarkPlugins={[remarkGfm]}
             components={{
@@ -43,9 +38,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 const inline = !className?.includes('language-');
                 return !inline ? (
                   <pre className={cn(
-                    "overflow-x-auto rounded-lg border p-4 text-sm",
-                    "bg-gray-50 border-gray-200 text-gray-900",
-                    "dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                    "overflow-x-auto rounded-xl border p-4 text-sm my-4",
+                    "bg-gray-50/80 backdrop-blur-sm border-gray-200/50 text-gray-900",
+                    "dark:bg-gray-800/80 dark:border-gray-600/50 dark:text-gray-100",
+                    "transition-all duration-200 hover:bg-gray-50",
+                    "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
                   )}>
                     <code className={className} {...props}>
                       {children}
@@ -54,9 +51,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 ) : (
                   <code 
                     className={cn(
-                      "rounded px-1 py-0.5 text-sm font-mono",
-                      "bg-gray-100 text-gray-900",
-                      "dark:bg-gray-700 dark:text-gray-200"
+                      "rounded-md px-2 py-1 text-sm font-mono",
+                      "bg-gray-100/80 text-gray-900 border border-gray-200/50",
+                      "dark:bg-gray-700/80 dark:text-gray-200 dark:border-gray-600/50",
+                      "transition-colors duration-150"
                     )} 
                     {...props}
                   >
@@ -66,8 +64,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               },
               table({children, ...props}) {
                 return (
-                  <div className="overflow-x-auto my-4">
-                    <table className="min-w-full border-collapse border border-gray-300 dark:border-gray-600" {...props}>
+                  <div className="overflow-x-auto my-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700" {...props}>
                       {children}
                     </table>
                   </div>
@@ -77,14 +75,43 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 return (
                   <blockquote 
                     className={cn(
-                      "border-l-4 pl-4 py-2 my-4 italic",
-                      "border-gray-300 bg-gray-50 text-gray-700",
-                      "dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                      "border-l-4 pl-6 py-3 my-6 italic rounded-r-lg",
+                      "border-brand-300 bg-brand-50/50 text-gray-700",
+                      "dark:border-brand-400 dark:bg-brand-900/20 dark:text-gray-300",
+                      "transition-colors duration-200"
                     )}
                     {...props}
                   >
                     {children}
                   </blockquote>
+                );
+              },
+              p({children, ...props}) {
+                return (
+                  <p className="leading-relaxed mb-3 last:mb-0" {...props}>
+                    {children}
+                  </p>
+                );
+              },
+              ul({children, ...props}) {
+                return (
+                  <ul className="space-y-1 ml-4 mb-4 last:mb-0" {...props}>
+                    {children}
+                  </ul>
+                );
+              },
+              ol({children, ...props}) {
+                return (
+                  <ol className="space-y-1 ml-4 mb-4 last:mb-0" {...props}>
+                    {children}
+                  </ol>
+                );
+              },
+              li({children, ...props}) {
+                return (
+                  <li className="leading-relaxed" {...props}>
+                    {children}
+                  </li>
                 );
               }
             }}
@@ -94,13 +121,15 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         </div>
         
         {timestamp && (
-          <p className="mt-1 text-[10px] text-text-muted text-right">
-            {timestamp.toLocaleTimeString()}
+          <p className="mt-2 text-xs text-gray-400 transition-opacity duration-200 opacity-60 hover:opacity-100">
+            {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </p>
         )}
       </div>
     </div>
   );
-};
+});
+
+ChatMessage.displayName = "ChatMessage";
 
 export default ChatMessage;

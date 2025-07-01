@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import ChatSidebar from "./ChatSidebar";
 import ChatInterface from "./ChatInterface";
-import Sheet from "./Sheet";
+// import Sheet from "./Sheet";  // @remove-inner-rail - no longer needed without mobile sidebar
+import { useUser } from "@clerk/nextjs";
 
 interface ChatLayoutProps {
   children?: React.ReactNode;
@@ -28,110 +28,107 @@ interface ChatUsage {
 }
 
 export default function ChatLayout({ children }: ChatLayoutProps) {
-  const [activeTab, setActiveTab] = useState("chat");
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user } = useUser();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
+  // @remove-inner-rail - removed unused state variables for sidebar functionality
+  // const [activeTab, setActiveTab] = useState("chat");
+  // const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // const [chatUsage, setChatUsage] = useState<ChatUsage>({ used: 0, total: 100 });
 
-  // Default chat usage
-  const chatUsage: ChatUsage = {
-    used: chatHistory.length,
-    total: 500, // Example total limit
-  };
-
-  // Load chat history when component mounts
+  // Load chat history on component mount
   useEffect(() => {
     const loadChatHistory = async () => {
       try {
-        const response = await fetch("/api/chat/history");
-        if (!response.ok) throw new Error("Failed to load chat history");
-        const data = await response.json();
-        setChatHistory(data);
+        const response = await fetch("/api/threads");
+        if (response.ok) {
+          const data = await response.json();
+          // Transform threads data to match the expected ChatHistory interface
+          const threadsAsHistory = data.map((thread: any) => ({
+            id: thread.id,
+            title: thread.title || "New Chat",
+            model: "GPT-4", // Default model, this should be tracked per thread
+            messages: [], // Messages will be loaded separately when thread is selected
+            last_message_at: thread.created_at,
+          }));
+          setChatHistory(threadsAsHistory);
+        }
       } catch (error) {
         console.error("Error loading chat history:", error);
       }
     };
 
-    loadChatHistory();
-  }, []);
-
-  // Load selected chat messages
-  useEffect(() => {
-    if (selectedChatId) {
-      const selectedChat = chatHistory.find(
-        (chat) => chat.id === selectedChatId
-      );
-      if (selectedChat) {
-        setMessages(selectedChat.messages);
-      }
-    } else {
-      setMessages([]);
+    if (user) {
+      loadChatHistory();
     }
-  }, [selectedChatId, chatHistory]);
+  }, [user]);
+
+  // Note: Messages are now loaded directly in handleChatSelect function
 
   const handleSendMessage = async (content: string, model: string) => {
-    const userMessage: Message = {
+    if (!content.trim() || isLoading) return;
+
+    const newMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content,
+      content: content.trim(),
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => [...prev, newMessage]);
     setIsLoading(true);
 
     try {
-      // Call your chat API
+      // Call your chat API here
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          message: content,
           model,
-          messages: [...messages, userMessage].map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
+          threadId: selectedChatId,
+          messages: [...messages, newMessage],
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to get response");
-      const data = await response.json();
+      if (response.ok) {
+        const data = await response.json();
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: data.message,
+          timestamp: new Date(),
+        };
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.message.content,
-        timestamp: new Date(),
-      };
+        const updatedMessages = [...messages, newMessage, assistantMessage];
+        setMessages(updatedMessages);
 
-      setMessages((prev) => [...prev, assistantMessage]);
+        // Update chat history if this is part of an existing chat
+        if (selectedChatId) {
+          await fetch("/api/chat/history", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: selectedChatId,
+              messages: updatedMessages,
+            }),
+          });
 
-      // Update chat history with new messages
-      if (selectedChatId) {
-        const updatedMessages = [...messages, userMessage, assistantMessage];
-        await fetch("/api/chat/history", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: selectedChatId,
-            messages: updatedMessages,
-          }),
-        });
-
-        // Update local chat history
-        setChatHistory((prev) =>
-          prev.map((chat) =>
-            chat.id === selectedChatId
-              ? {
-                  ...chat,
-                  messages: updatedMessages,
-                  last_message_at: new Date().toISOString(),
-                }
-              : chat
-          )
-        );
+          // Update local chat history
+          setChatHistory((prev) =>
+            prev.map((chat) =>
+              chat.id === selectedChatId
+                ? {
+                    ...chat,
+                    messages: updatedMessages,
+                    last_message_at: new Date().toISOString(),
+                  }
+                : chat
+            )
+          );
+        }
       }
     } catch (error) {
       console.error("Chat error:", error);
@@ -146,15 +143,41 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
     setMessages([]);
   };
 
-  const handleChatSelect = (chatId: string) => {
+  const handleChatSelect = async (chatId: string) => {
     setSelectedChatId(chatId);
+    
+    // Load messages for the selected thread
+    try {
+      const response = await fetch(`/api/messages/${chatId}`);
+      if (response.ok) {
+        const messagesData = await response.json();
+        // Transform messages to match the expected interface
+        const transformedMessages = messagesData.map((msg: any) => ({
+          id: msg.id.toString(),
+          role: msg.role,
+          content: msg.content,
+          timestamp: new Date(msg.created_at),
+        }));
+        setMessages(transformedMessages);
+      }
+    } catch (error) {
+      console.error("Error loading messages:", error);
+      setMessages([]);
+    }
   };
 
   const handleDeleteChat = async (chatId: string) => {
     try {
-      await fetch(`/api/chat/history?id=${chatId}`, {
+      const response = await fetch("/api/threads", {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ threadId: chatId }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to delete chat: ${response.status} - ${errorData.error}`);
+      }
 
       setChatHistory((prev) => prev.filter((chat) => chat.id !== chatId));
       if (selectedChatId === chatId) {
@@ -163,142 +186,63 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
       }
     } catch (error) {
       console.error("Error deleting chat:", error);
+      // You could add user-facing error notification here
     }
   };
 
+  // @remove-inner-rail - simplified to always render chat interface without tab switching
   const renderContent = () => {
-    switch (activeTab) {
-      case "chat":
-        return (
-          <ChatInterface
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            isLoading={isLoading}
-          />
-        );
-      case "history":
-        return (
-          <div className="flex flex-col h-full bg-bg-base">
-            <div className="p-6 border-b border-border/30 bg-surface/50 backdrop-blur-sm">
-              <h2 className="text-title-2 font-semibold text-text-main">
-                Chat History
-              </h2>
-              <p className="text-body text-text-muted mt-2">
-                View your previous conversations
-              </p>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="max-w-4xl mx-auto">
-                {/* History Items */}
-                <div className="space-y-4">
-                  {chatHistory.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-surface/60 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl">📚</span>
-                      </div>
-                      <h3 className="text-title-3 font-semibold text-text-main mb-2">
-                        No History Yet
-                      </h3>
-                      <p className="text-body text-text-muted">
-                        Start chatting to see your conversation history here.
-                      </p>
-                    </div>
-                  ) : (
-                    chatHistory.map((chat) => (
-                      <div
-                        key={chat.id}
-                        className="bg-surface/80 backdrop-blur-xl rounded-2xl p-6 border border-border/50 hover:border-primary/30 transition-all cursor-pointer"
-                        onClick={() => handleChatSelect(chat.id)}
-                      >
-                        <div className="flex items-start space-x-4">
-                          <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-neo-wave">
-                            <span className="text-white text-xl">💬</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-3 mb-1">
-                              <h3 className="text-callout font-semibold text-text-main">
-                                {chat.title}
-                              </h3>
-                            </div>
-                            <p className="text-caption-1 text-text-muted line-clamp-2 mb-3">
-                              {chat.messages[chat.messages.length - 1]
-                                ?.content || "No messages"}
-                            </p>
-                            <div className="flex items-center space-x-4 text-caption-1 text-text-muted">
-                              <span>
-                                {new Date(
-                                  chat.last_message_at
-                                ).toLocaleTimeString()}
-                              </span>
-                              <span>•</span>
-                              <span>{chat.model}</span>
-                            </div>
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteChat(chat.id);
-                            }}
-                            className="p-2 rounded-lg transition-all hover:bg-surface"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      default:
-        return null;
-    }
+    return (
+      <ChatInterface
+        messages={messages}
+        onSendMessage={handleSendMessage}
+        isLoading={isLoading}
+      />
+    );
   };
+
+  if (!user) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="flex h-screen">
-      {/* Desktop Sidebar */}
-      <div className="hidden md:block w-80">
+      {/* Desktop Sidebar - removed ChatSidebar with chat and settings */}
+      {/* @remove-inner-rail - commented out desktop ChatSidebar
+      <div className="hidden md:block">
         <ChatSidebar
-          activeTab={activeTab}
+          userName={user.fullName || user.firstName || "User"}
+          userEmail={user.primaryEmailAddress?.emailAddress || ""}
+          onNewChat={handleNewChat}
+          selectedTab={activeTab}
           onTabChange={setActiveTab}
-          chatUsage={chatUsage}
         />
       </div>
+      */}
 
-      {/* Mobile Sidebar */}
+      {/* Mobile Sidebar - removed ChatSidebar with chat and settings */}
+      {/* @remove-inner-rail - commented out mobile ChatSidebar
       <Sheet
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
       >
         <ChatSidebar
-          activeTab={activeTab}
+          userName={user.fullName || user.firstName || "User"}
+          userEmail={user.primaryEmailAddress?.emailAddress || ""}
+          onNewChat={handleNewChat}
+          selectedTab={activeTab}
           onTabChange={(tab) => {
             setActiveTab(tab);
             setIsMobileMenuOpen(false);
           }}
-          chatUsage={chatUsage}
         />
       </Sheet>
+      */}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Mobile Header */}
+        {/* Mobile Header - removed menu button since no mobile sidebar */}
+        {/* @remove-inner-rail - commented out mobile menu button
         <div className="md:hidden p-4 border-b border-border/30">
           <button
             onClick={() => setIsMobileMenuOpen(true)}
@@ -307,6 +251,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
             <span className="text-2xl">☰</span>
           </button>
         </div>
+        */}
 
         {/* Content Area */}
         <div className="flex-1 overflow-hidden">{renderContent()}</div>

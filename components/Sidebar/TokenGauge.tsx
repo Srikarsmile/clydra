@@ -15,12 +15,15 @@ const fetcher = async (url: string): Promise<TokenUsage> => {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      console.warn(`Token API returned ${response.status}:`, await response.text());
+      // Return default values instead of throwing to prevent UI crashes
+      return { used: 0, cap: 1500000 };
     }
-    return response.json();
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error("Failed to fetch token usage:", error);
-    // Return default values if the API fails
+    // Return default values if the API fails to prevent UI crashes
     return { used: 0, cap: 1500000 };
   }
 };

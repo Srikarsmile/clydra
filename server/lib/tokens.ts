@@ -5,16 +5,56 @@ import { startOfMonth } from "date-fns";
 const CAP_PRO = 1_500_000;        // 1.5 M / month
 const CAP_FREE_DAILY = 40_000;    // 40k / day for free tier
 
+// Helper function to get Supabase user ID from Clerk ID
+async function getSupabaseUserId(clerkUserId: string): Promise<string | null> {
+  try {
+    const { data: user } = await supabaseAdmin
+      .from("users")
+      .select("id")
+      .eq("clerk_id", clerkUserId)
+      .single();
+    
+    return user?.id || null;
+  } catch (error) {
+    console.error("Error getting Supabase user ID:", error);
+    return null;
+  }
+}
+
+// Helper function to check if a string is a UUID format (Supabase ID) or Clerk ID
+function isUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
+// Helper function to normalize user ID (convert Clerk ID to Supabase UUID if needed)
+async function normalizeUserId(userId: string): Promise<string | null> {
+  if (isUUID(userId)) {
+    // Already a Supabase UUID
+    return userId;
+  } else {
+    // Clerk ID, need to convert
+    return await getSupabaseUserId(userId);
+  }
+}
+
 export async function addTokens(userId: string, tokens: number): Promise<void> {
   const month = startOfMonth(new Date());
   const monthStr = month.toISOString().split('T')[0]; // YYYY-MM-DD format
   
   try {
+    // Normalize user ID (handle both Clerk ID and Supabase UUID)
+    const supabaseUserId = await normalizeUserId(userId);
+    if (!supabaseUserId) {
+      console.error("User not found for token tracking:", userId);
+      return;
+    }
+
     // First try to get existing record
     const { data: existing } = await supabaseAdmin
       .from("token_usage")
       .select("tokens_used")
-      .eq("user_id", userId)
+      .eq("user_id", supabaseUserId)
       .eq("month_start", monthStr)
       .single();
 
@@ -25,7 +65,7 @@ export async function addTokens(userId: string, tokens: number): Promise<void> {
         .update({
           tokens_used: existing.tokens_used + tokens
         })
-        .eq("user_id", userId)
+        .eq("user_id", supabaseUserId)
         .eq("month_start", monthStr);
 
       if (error) {
@@ -38,7 +78,7 @@ export async function addTokens(userId: string, tokens: number): Promise<void> {
       const { error } = await supabaseAdmin
         .from("token_usage")
         .insert({
-          user_id: userId,
+          user_id: supabaseUserId,
           month_start: monthStr,
           tokens_used: tokens
         });
@@ -61,10 +101,17 @@ export async function getUsage(userId: string): Promise<number> {
   const monthStr = month.toISOString().split('T')[0]; // YYYY-MM-DD format
   
   try {
+    // Normalize user ID (handle both Clerk ID and Supabase UUID)
+    const supabaseUserId = await normalizeUserId(userId);
+    if (!supabaseUserId) {
+      console.error("User not found for usage tracking:", userId);
+      return 0;
+    }
+
     const { data, error } = await supabaseAdmin
       .from("token_usage")
       .select("tokens_used")
-      .eq("user_id", userId)
+      .eq("user_id", supabaseUserId)
       .eq("month_start", monthStr)
       .single();
 

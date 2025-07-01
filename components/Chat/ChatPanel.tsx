@@ -1,19 +1,17 @@
 /**
- * @clydra-core
- * Convo Core - Chat Panel Component
- *
- * Main chat interface with message list, input, model selection, and usage tracking
+ * @dashboard-redesign
+ * Redesigned Chat Panel Component with fluid scrolling and smooth animations
  */
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useUser } from "@clerk/nextjs";
-import { Send, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import useSWRMutation from "swr/mutation";
 import { Button } from "../ui/button";
-import { ModelSelect } from "./ModelSelect"; // @fluid-ui
-import { ChatModel, MODEL_ALIASES } from "@/types/chatModels"; // @fluid-ui
+import { ChatModel, MODEL_ALIASES, getModelsByPlan } from "@/types/chatModels";
 import UpgradeCTA from "../UpgradeCTA";
-import ChatMessage from "./ChatMessage"; // Import the proper ChatMessage component
+import ChatMessage from "./ChatMessage";
+import InputBar from "./InputBar"; // @dashboard-redesign
 
 interface Message {
   role: "user" | "assistant" | "system";
@@ -36,7 +34,7 @@ interface ChatResponse {
 // SWR fetcher for sending messages
 const sendMessage = async (
   url: string,
-  { arg }: { arg: { messages: Message[]; model: ChatModel; threadId?: string } }
+  { arg }: { arg: { messages: Message[]; model: ChatModel; threadId?: string; enableWebSearch?: boolean } }
 ) => {
   const response = await fetch(url, {
     method: "POST",
@@ -45,22 +43,19 @@ const sendMessage = async (
   });
 
   if (!response.ok) {
-    // Check if response is JSON before parsing
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
       try {
         const error = await response.json();
         throw new Error(error.message || "Failed to send message");
-      } catch (parseError) {
+      } catch {
         throw new Error(`Server error: ${response.status} ${response.statusText}`);
       }
     } else {
-      // If not JSON, use status text
       throw new Error(`Server error: ${response.status} ${response.statusText}`);
     }
   }
 
-  // Check if successful response is JSON
   const contentType = response.headers.get("content-type");
   if (contentType && contentType.includes("application/json")) {
     return response.json();
@@ -77,53 +72,107 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   const { user } = useUser();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [model, setModel] = useState<ChatModel>("openai/gpt-4o");
+  const [model, setModel] = useState<ChatModel>("anthropic/claude-3.5-sonnet");
+  const [enableWebSearch] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const previousMessagesLength = useRef(0);
 
-  // Load existing messages when threadId changes
+  // @dashboard-redesign - Load messages when threadId changes
   useEffect(() => {
-    if (threadId) {
-      const loadMessages = async () => {
-        try {
-          const response = await fetch(`/api/messages/${threadId}`);
-          if (response.ok) {
-            // Check if response is JSON before parsing
-            const contentType = response.headers.get("content-type");
-            if (contentType && contentType.includes("application/json")) {
-              const data = await response.json();
-              setMessages(data || []);
-            } else {
-              console.warn("API returned non-JSON response for messages");
-              setMessages([]);
-            }
-          } else {
-            console.warn(`Failed to load messages: ${response.status} ${response.statusText}`);
-            setMessages([]);
-          }
-        } catch (error) {
-          console.error("Failed to load messages:", error);
-          setMessages([]);
+    if (!threadId || !user) return;
+    
+    const loadMessages = async () => {
+      try {
+        const response = await fetch(`/api/messages/${threadId}`);
+        if (response.ok) {
+          const data = await response.json();
+          const formattedMessages: Message[] = data.map((msg: { role: string; content: string; id?: number }) => ({
+            role: msg.role,
+            content: msg.content,
+            id: msg.id?.toString(),
+          }));
+          setMessages(formattedMessages);
         }
-      };
-      loadMessages();
-    } else {
+      } catch (error) {
+        console.error("Failed to load messages:", error);
+      }
+    };
+
+    loadMessages();
+  }, [threadId, user]);
+
+  // @dashboard-redesign - Clear messages when no threadId (new chat)
+  useEffect(() => {
+    if (!threadId) {
       setMessages([]);
     }
   }, [threadId]);
 
-  // Auto-scroll to bottom when messages change - optimized
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // @fluid-scroll - Enhanced smooth scroll with proper timing and user intent detection
+  const scrollToBottom = useCallback((force = false) => {
+    if (!messagesEndRef.current || !scrollContainerRef.current) return;
+
+    const container = scrollContainerRef.current;
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+    
+    // Only auto-scroll if user is near bottom or if forced (new message)
+    if (force || isNearBottom) {
+      setIsAutoScrolling(true);
+      
+      // Use requestAnimationFrame for smooth performance
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ 
+          behavior: "smooth",
+          block: "end"
+        });
+        
+        // Reset auto-scroll flag after animation
+        setTimeout(() => setIsAutoScrolling(false), 300);
+      });
+    }
   }, []);
 
+  // @fluid-scroll - Smart auto-scroll logic
   useEffect(() => {
-    scrollToBottom();
+    const currentLength = messages.length;
+    
+    if (currentLength > previousMessagesLength.current) {
+      // New message added, scroll to bottom
+      scrollToBottom(true);
+    }
+    
+    previousMessagesLength.current = currentLength;
   }, [messages, scrollToBottom]);
 
-  // SWR mutation for sending messages - optimized callbacks
+  // @fluid-scroll - Intersection Observer for detecting scroll position
+  useEffect(() => {
+    if (!messagesEndRef.current || !scrollContainerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !isAutoScrolling) {
+            // User manually scrolled to bottom
+            setIsAutoScrolling(false);
+          }
+        });
+      },
+      { 
+        root: scrollContainerRef.current,
+        threshold: 0.1 
+      }
+    );
+
+    observer.observe(messagesEndRef.current);
+
+    return () => observer.disconnect();
+  }, [isAutoScrolling]);
+
+  // SWR mutation for sending messages
   const { trigger, isMutating } = useSWRMutation(
     "/api/chat/proxy",
     sendMessage,
@@ -141,9 +190,8 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
     }
   );
 
-  // Handle form submission - optimized with useCallback
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Handle form submission with smooth UX
+  const handleSubmit = useCallback(async () => {
     if (!input.trim() || isMutating || !user) return;
 
     const userMessage: Message = {
@@ -156,30 +204,72 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
     setMessages(newMessages);
     setInput("");
 
+    // Immediate scroll for user message
+    requestAnimationFrame(() => scrollToBottom(true));
+
     try {
       await trigger({
         messages: newMessages,
         model,
         threadId,
+        enableWebSearch,
       });
     } catch (error) {
       console.error("Failed to send message:", error);
     }
-  }, [input, isMutating, user, messages, model, threadId, trigger]);
+  }, [input, isMutating, user, messages, model, threadId, enableWebSearch, trigger, scrollToBottom]);
 
-  // Handle keyboard shortcuts - optimized with useCallback
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-      handleSubmit(e);
+  // @dashboard-redesign - Retry last message with different model
+  const handleRetryWithModel = useCallback(async (newModel: ChatModel) => {
+    if (isMutating || !user || messages.length === 0) return;
+
+    // Find the last user message
+    const lastUserMessageIndex = messages.findLastIndex(msg => msg.role === 'user');
+    if (lastUserMessageIndex === -1) return;
+
+    // Get messages up to and including the last user message (exclude any AI responses after it)
+    const messagesToSend = messages.slice(0, lastUserMessageIndex + 1);
+    
+    // Remove any AI responses after the last user message
+    setMessages(messagesToSend);
+    
+    // Set the new model
+    setModel(newModel);
+
+    try {
+      await trigger({
+        messages: messagesToSend,
+        model: newModel,
+        threadId,
+        enableWebSearch,
+      });
+    } catch (error) {
+      console.error("Failed to retry with new model:", error);
     }
-  }, [handleSubmit]);
+  }, [isMutating, user, messages, threadId, enableWebSearch, trigger]);
 
-  // Optimized input change handler
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value);
-  }, []);
+  // @dashboard-redesign - Clear conversation when switching models
+  const handleModelChange = useCallback((newModel: ChatModel) => {
+    if (newModel !== model && messages.length > 0) {
+      // If there are messages, ask user if they want to retry with new model or start fresh
+      const shouldRetry = window.confirm(
+        `Switch to ${MODEL_ALIASES[newModel]}?\n\n` +
+        `• "OK" to retry your last question with ${MODEL_ALIASES[newModel]}\n` +
+        `• "Cancel" to start a fresh conversation with ${MODEL_ALIASES[newModel]}`
+      );
+      
+      if (shouldRetry) {
+        handleRetryWithModel(newModel);
+      } else {
+        setMessages([]);
+        setModel(newModel);
+      }
+    } else {
+      setModel(newModel);
+    }
+  }, [model, messages.length, handleRetryWithModel]);
 
-  // Memoized suggestions to prevent re-renders
+  // @dashboard-redesign - Suggestions for empty state
   const suggestions = useMemo(() => [
     {
       icon: "✨",
@@ -231,128 +321,129 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   }
 
   return (
-    <section className="flex flex-col h-full bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30 relative">
-      {/* Subtle background pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(11,165,236,0.05),transparent_50%)] pointer-events-none" />
-      
-      {/* @ui-clean - Chat container with max-w-screen-md centric */}
-      <div className="flex flex-col h-full mx-auto w-full max-w-screen-md px-4">
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30 relative overflow-hidden">
+      {/* @dashboard-redesign - Chat container expanded to full width */}
+      <div className="flex-1 flex flex-col w-full px-6 pb-20 min-h-0">
         
-        {/* @ui-clean - Sticky badge top-right */}
+        {/* @dashboard-redesign - Single model badge in top-right corner */}
         <div className="sticky top-2 self-end z-10 mb-4">
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/80 backdrop-blur-md border border-primary-500/20 text-primary-500 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-            <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" /> 
-            Using&nbsp;{MODEL_ALIASES[model]}
+          <span className="inline-flex items-center gap-2 rounded-full bg-surface/80 backdrop-blur-md border border-brand-500/20 text-brand-500 px-4 py-2 text-sm shadow-sm transition-all duration-300">
+            <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" /> 
+            Using {MODEL_ALIASES[model]}
           </span>
         </div>
-        {/* @ui-clean - End sticky badge */}
 
-        {/* Messages area with proper height and scrolling */}
-        <div className="flex-1 overflow-y-auto min-h-0 pb-4 chat-scroll">
-          <div className="space-y-6">
+        {/* @fluid-scroll - Enhanced messages area with smooth scrolling */}
+        <div 
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto min-h-0 chat-scroll scroll-smooth"
+          style={{ height: '100%', overflowY: 'auto' }}
+        >
+          <div className="space-y-6 py-4 pb-6 min-h-full">
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center text-center space-y-6 py-16 lg:py-24">
-                <h1 className="text-4xl lg:text-6xl font-extrabold">
-                  Hello,<span className="text-primary-500"> {user?.firstName}!</span>
+              // @dashboard-redesign - Empty state with smooth animations
+              <div className="flex flex-col items-center space-y-6 py-16 animate-fade-in-up">
+                <h1 className="text-4xl font-bold text-center">
+                  Hello <span className="text-brand-500">{user?.firstName}!</span>
                 </h1>
-                <p className="text-xl font-medium">
+                <p className="text-xl text-text-muted text-center">
                   How can I assist you today?
                 </p>
 
-                <div className="bg-white/80 backdrop-blur-md border border-gray-200/50 rounded-2xl p-2 shadow-lg">
-                  <ModelSelect model={model} setModel={setModel} />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto text-center mt-10">
+                {/* @dashboard-redesign - 4 suggestion cards with stagger animation */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl w-full mt-8 animate-stagger">
                   {suggestions.map((suggestion, index) => (
                     <button 
                       key={index}
                       onClick={() => setInput(suggestion.description)}
-                      className="group p-6 bg-white/60 backdrop-blur-sm border border-gray-200/50 rounded-2xl hover:border-[#0BA5EC]/50 hover:bg-white/80 transition-all duration-300 text-left shadow-sm hover:shadow-lg hover:-translate-y-1 animate-in slide-in-from-bottom-4 duration-700"
-                      style={{ animationDelay: `${(index + 4) * 100}ms` }}
+                      className="group p-4 bg-surface border border-gray-200 rounded-xl hover:border-brand-300 hover:shadow-lg transition-all duration-300 text-left transform hover:scale-105 hover:-translate-y-1"
                     >
-                      <div className="flex items-center space-x-3 mb-3">
-                        <div className="text-2xl bg-gradient-to-br from-[#0BA5EC]/20 to-[#0BA5EC]/10 rounded-xl p-2 group-hover:scale-110 transition-transform duration-300">
-                          {suggestion.icon}
-                        </div>
-                        <div className="text-lg font-semibold text-gray-800 group-hover:text-[#0BA5EC] transition-colors duration-300">
-                          {suggestion.title}
-                        </div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="text-xl transition-transform duration-300 group-hover:scale-110">{suggestion.icon}</div>
+                        <div className="font-medium text-text-main">{suggestion.title}</div>
                       </div>
-                      <div className="text-sm text-gray-600 leading-relaxed">
-                        {suggestion.description}
-                      </div>
-                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+                      <div className="text-sm text-text-muted">{suggestion.description}</div>
                     </button>
                   ))}
                 </div>
               </div>
             ) : (
               <>
+                {/* @fluid-scroll - Message list with expanded widths for larger screens */}
                 {messages.map((message, index) => (
-                  <div 
+                  <div
                     key={message.id || index}
-                    className="animate-in slide-in-from-bottom-2 duration-500"
-                    style={{ animationDelay: `${index * 50}ms` }}
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}
+                    style={{
+                      animationDelay: `${Math.min(index * 50, 500)}ms`,
+                      animationFillMode: 'both'
+                    }}
                   >
-                    <ChatMessage
-                      content={message.content}
-                      role={message.role as "user" | "assistant"}
-                      timestamp={new Date()}
-                    />
+                    <div className={`max-w-xs sm:max-w-sm md:max-w-md lg:max-w-2xl xl:max-w-4xl ${
+                      message.role === 'assistant' 
+                        ? 'bg-surface text-text-main shadow-md' 
+                        : 'bg-brand-50 text-brand-600 shadow-sm'
+                    } rounded-2xl px-6 py-4 relative group transition-all duration-300 hover:shadow-lg transform hover:scale-[1.02]`}>
+                      <ChatMessage
+                        content={message.content}
+                        role={message.role as "user" | "assistant"}
+                        timestamp={new Date()}
+                      />
+                      
+                      {/* @dashboard-redesign - Retry button for assistant messages */}
+                      {message.role === 'assistant' && index === messages.length - 1 && (
+                        <div className="absolute -bottom-12 left-0 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                          <div className="flex gap-2 text-xs">
+                            {getModelsByPlan("pro").filter((m: ChatModel) => m !== model).slice(0, 3).map((altModel: ChatModel) => (
+                              <button
+                                key={altModel}
+                                onClick={() => handleRetryWithModel(altModel)}
+                                disabled={isMutating}
+                                className="px-3 py-1.5 bg-white hover:bg-gray-50 rounded-lg text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 disabled:opacity-50 transform hover:scale-105"
+                              >
+                                Retry with {MODEL_ALIASES[altModel]}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
 
+                {/* @fluid-scroll - Loading indicator with smooth animation */}
                 {isMutating && (
-                  <div className="flex justify-start animate-in slide-in-from-bottom-2 duration-300">
-                    <div className="bg-white/90 backdrop-blur-sm border border-gray-200/50 rounded-2xl px-6 py-4 shadow-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="relative">
-                          <Loader2 className="w-5 h-5 animate-spin text-[#0BA5EC]" />
-                          <div className="absolute inset-0 w-5 h-5 rounded-full bg-[#0BA5EC]/20 animate-ping" />
-                        </div>
-                        <span className="text-gray-600 font-medium">AI is thinking...</span>
+                  <div className="flex justify-start animate-fade-in-up">
+                    <div className="bg-surface border border-gray-200 rounded-2xl px-6 py-4 flex items-center gap-3 shadow-md">
+                      <Loader2 className="w-5 h-5 animate-spin text-brand-500" />
+                      <span className="text-text-muted">AI is thinking...</span>
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-brand-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-brand-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-brand-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                       </div>
                     </div>
                   </div>
                 )}
 
-                <div ref={messagesEndRef} />
+                <div ref={messagesEndRef} className="h-8" />
               </>
             )}
           </div>
         </div>
-
-        {/* @ui-clean - Input bar with surface card + teal send button */}
-        <div className="border-t border-gray-200/50 bg-white/80 backdrop-blur-md">
-          <form onSubmit={handleSubmit} className="flex items-center gap-2 p-3">
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your message..."
-              disabled={isMutating}
-              autoFocus
-              className="flex-1 resize-none bg-transparent text-text-main placeholder-text-muted border-none outline-none text-[16px] focus:outline-none focus:ring-0 selection:bg-primary-100 selection:text-text-main"
-            />
-            <Button
-              type="submit"
-              disabled={!input.trim() || isMutating}
-              className="rounded-full bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 shadow-sm/5 hover:shadow-md/10 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
-            >
-              {isMutating ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-            </Button>
-          </form>
-        </div>
-        {/* @ui-clean - End input bar */}
       </div>
-      {/* @ui-clean - End chat container */}
-    </section>
+
+      {/* @dashboard-redesign - InputBar component with model selector */}
+      <InputBar
+        value={input}
+        onChange={setInput}
+        onSubmit={handleSubmit}
+        disabled={isMutating}
+        placeholder="Type your message..."
+        selectedModel={model}
+        onModelChange={handleModelChange}
+        userPlan="pro"
+      />
+    </div>
   );
 }
