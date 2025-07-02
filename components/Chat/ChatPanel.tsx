@@ -504,6 +504,13 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                         ? 'bg-surface text-text-main shadow-md' 
                         : 'bg-brand-50 text-brand-600 shadow-sm'
                     } rounded-2xl px-6 py-4 relative group transition-all duration-300 hover:shadow-lg transform hover:scale-[1.02]`}>
+                      {/* Show model name for assistant messages */}
+                      {message.role === 'assistant' && (
+                        <div className="flex items-center gap-2 mb-2 text-xs text-brand-500">
+                          <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
+                          {MODEL_ALIASES[model]}
+                        </div>
+                      )}
                       <ChatMessage
                         content={message.content}
                         role={message.role as "user" | "assistant"}
@@ -535,37 +542,21 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                 {streamingMessage && (
                   <div className="flex justify-start animate-fade-in-up">
                     <div className="max-w-xs sm:max-w-sm md:max-w-md lg:max-w-2xl xl:max-w-4xl bg-surface text-text-main shadow-md rounded-2xl px-6 py-4 relative">
+                      {/* Show model name when there's actual output */}
+                      <div className="flex items-center gap-2 mb-2 text-xs text-brand-500">
+                        <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
+                        {MODEL_ALIASES[model]}
+                      </div>
                       <ChatMessage
                         content={streamingMessage}
                         role="assistant"
                         timestamp={new Date()}
                       />
-                      {/* @performance - Streaming indicator */}
-                      <div className="absolute bottom-2 right-4">
-                        <div className="flex gap-1">
-                          <div className="w-1 h-1 bg-brand-500 rounded-full animate-pulse"></div>
-                          <div className="w-1 h-1 bg-brand-500 rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-1 h-1 bg-brand-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 )}
 
-                {/* @fluid-scroll - Loading indicator for non-streaming requests */}
-                {(isStreaming && !streamingMessage) && (
-                  <div className="flex justify-start animate-fade-in-up">
-                    <div className="bg-surface border border-gray-200 rounded-2xl px-6 py-4 flex items-center gap-3 shadow-md">
-                      <Loader2 className="w-5 h-5 animate-spin text-brand-500" />
-                      <span className="text-text-muted">AI is thinking...</span>
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-brand-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-2 h-2 bg-brand-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-2 h-2 bg-brand-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+
 
                 <div ref={messagesEndRef} className="h-8" />
               </>
@@ -580,7 +571,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
         onChange={setInput}
         onSubmit={handleSubmit}
         disabled={isStreaming || isMutating} // @performance - Disable during streaming
-        placeholder={isStreaming ? "AI is responding..." : "Type your message..."}
+        placeholder="Type your message..."
         selectedModel={model}
         onModelChange={handleModelChange}
         userPlan="pro"
