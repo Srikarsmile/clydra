@@ -2,18 +2,17 @@
 export const MODEL_ALIASES = {
   // Free Plan Models - as specified in design brief
   "google/gemini-2.5-flash": "Gemini 2.5 Flash",
-  
+
   // Pro Plan Models - as specified in design brief
   "openai/gpt-4o": "GPT-4o",
-  "anthropic/claude-3.5-sonnet": "Claude 4 Sonnet",
+  "anthropic/claude-sonnet-4": "Claude 4 Sonnet",
   "x-ai/grok-3-beta": "Grok-3 Beta",
   "google/gemini-2.5-pro": "Gemini 2.5 Pro",
-  
+
   // Legacy models (kept for compatibility)
   "openai/gpt-4o-mini": "GPT-4o Mini",
   "deepseek/deepseek-r1": "DeepSeek R1",
-  "google/gemini-2.5-flash-preview": "Gemini 2.5 Flash", 
-  "anthropic/claude-sonnet-4": "Claude 4 Sonnet",
+  "google/gemini-2.5-flash-preview": "Gemini 2.5 Flash",
   "anthropic/claude-opus-4": "Claude 4 Opus",
   "anthropic/claude-3-sonnet-20240229": "Claude 3 Sonnet",
   "google/gemini-1.5-pro": "Gemini 1.5 Pro",
@@ -30,7 +29,7 @@ export const FREE_PLAN_MODELS: ChatModel[] = [
 
 export const PRO_PLAN_MODELS: ChatModel[] = [
   "openai/gpt-4o",
-  "anthropic/claude-3.5-sonnet", 
+  "anthropic/claude-sonnet-4",
   "x-ai/grok-3-beta",
   "google/gemini-2.5-pro",
 ];
@@ -39,7 +38,7 @@ export const PRO_PLAN_MODELS: ChatModel[] = [
 export const MODELS_WITH_WEB_SEARCH: ChatModel[] = [
   // Pro plan models with web search capability
   "openai/gpt-4o",
-  "anthropic/claude-3.5-sonnet", 
+  "anthropic/claude-sonnet-4",
   "x-ai/grok-3-beta",
   "google/gemini-2.5-pro",
 ];

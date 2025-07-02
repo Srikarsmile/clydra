@@ -38,7 +38,7 @@ const config: Config = {
         // Option 3 Color Palette - Purple/Blue/Turquoise Theme
         brand: {
           50: "#f3f0ff",
-          100: "#ede9fe", 
+          100: "#ede9fe",
           200: "#ddd6fe",
           300: "#c4b5fd",
           400: "#a78bfa",
@@ -54,12 +54,12 @@ const config: Config = {
         "text-muted": "#64748b",
         "sidebar-from": "#f8fafc",
         "sidebar-to": "#f1f5f9",
-        
+
         // Primary Purple
         primary: {
           50: "#f3f0ff",
           100: "#ede9fe",
-          200: "#ddd6fe", 
+          200: "#ddd6fe",
           300: "#c4b5fd",
           400: "#a78bfa",
           500: "#5E35B1", // Primary Purple
@@ -71,11 +71,11 @@ const config: Config = {
           dark: "#5E35B1", // Primary for light mode
           DEFAULT: "#5E35B1",
         },
-        
+
         // Turquoise Secondary
         secondary: {
           50: "#f0fdfa",
-          100: "#ccfbf1", 
+          100: "#ccfbf1",
           200: "#99f6e4",
           300: "#5eead4",
           400: "#2dd4bf",
@@ -88,7 +88,7 @@ const config: Config = {
           dark: "#00BFA5", // Primary for light mode
           DEFAULT: "#00BFA5",
         },
-        
+
         // Electric Blue
         electric: {
           50: "#eff6ff",
@@ -103,7 +103,7 @@ const config: Config = {
           900: "#1e3a8a",
           DEFAULT: "#2196F3",
         },
-        
+
         // Bright Orange Accent
         accent: {
           50: "#fff7ed",
@@ -141,12 +141,12 @@ const config: Config = {
     // @dashboard-redesign - Add custom utility plugins
     function ({ addUtilities }: { addUtilities: Function }) {
       addUtilities({
-        '.no-scrollbar': {
-          '-ms-overflow-style': 'none',
-          'scrollbar-width': 'none',
+        ".no-scrollbar": {
+          "-ms-overflow-style": "none",
+          "scrollbar-width": "none",
         },
-        '.no-scrollbar::-webkit-scrollbar': {
-          'display': 'none',
+        ".no-scrollbar::-webkit-scrollbar": {
+          display: "none",
         },
       });
     },

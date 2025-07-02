@@ -145,7 +145,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
 
   const handleChatSelect = async (chatId: string) => {
     setSelectedChatId(chatId);
-    
+
     // Load messages for the selected thread
     try {
       const response = await fetch(`/api/messages/${chatId}`);
@@ -176,7 +176,9 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Failed to delete chat: ${response.status} - ${errorData.error}`);
+        throw new Error(
+          `Failed to delete chat: ${response.status} - ${errorData.error}`
+        );
       }
 
       setChatHistory((prev) => prev.filter((chat) => chat.id !== chatId));

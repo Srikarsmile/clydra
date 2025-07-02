@@ -25,30 +25,36 @@ html {
 /* Clydra Core Design Tokens */
 :root {
   /* Option 3 Color Palette - Purple/Blue/Turquoise Theme */
-  --primary-purple: #5E35B1;
-  --electric-blue: #2196F3;
-  --turquoise: #00BFA5;
-  --snow-white: #FFFFFF;
+  --primary-purple: #5e35b1;
+  --electric-blue: #2196f3;
+  --turquoise: #00bfa5;
+  --snow-white: #ffffff;
   --dark-gray: #212121;
-  --bright-orange: #FF5722;
+  --bright-orange: #ff5722;
 
   /* Enhanced transition variables */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  
+
   /* Professional shadows with new color theme */
   --shadow-sm: 0 1px 2px 0 rgba(94, 53, 177, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(94, 53, 177, 0.1), 0 2px 4px -1px rgba(94, 53, 177, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(94, 53, 177, 0.1), 0 4px 6px -2px rgba(94, 53, 177, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(94, 53, 177, 0.1), 0 10px 10px -5px rgba(94, 53, 177, 0.04);
-  
+  --shadow-md:
+    0 4px 6px -1px rgba(94, 53, 177, 0.1),
+    0 2px 4px -1px rgba(94, 53, 177, 0.06);
+  --shadow-lg:
+    0 10px 15px -3px rgba(94, 53, 177, 0.1),
+    0 4px 6px -2px rgba(94, 53, 177, 0.05);
+  --shadow-xl:
+    0 20px 25px -5px rgba(94, 53, 177, 0.1),
+    0 10px 10px -5px rgba(94, 53, 177, 0.04);
+
   /* Clydra brand colors updated to new theme */
   --clydra-primary: var(--primary-purple);
   --clydra-primary-light: rgba(94, 53, 177, 0.1);
-  --clydra-primary-dark: #4A148C;
-  
+  --clydra-primary-dark: #4a148c;
+
   /* Surface colors for glassmorphism */
   --surface-glass: rgba(255, 255, 255, 0.8);
   --surface-glass-dark: rgba(255, 255, 255, 0.05);
@@ -102,9 +108,9 @@ html {
 
 /* Dark Mode Variables */
 .dark {
-  --color-primary: #7C4DFF; /* Brighter Purple for visibility */
-  --color-secondary: #1DE9B6; /* Bright Turquoise */
-  --color-accent: #FF6D40; /* Vibrant Orange */
+  --color-primary: #7c4dff; /* Brighter Purple for visibility */
+  --color-secondary: #1de9b6; /* Bright Turquoise */
+  --color-accent: #ff6d40; /* Vibrant Orange */
   --color-bg-base: #1b1b1e; /* Deep Charcoal */
   --color-surface: #26272c; /* Card surfaces */
   --color-text-main: #f2f4f8; /* Light text */
@@ -114,9 +120,9 @@ html {
   /* Updated shadow with purple theme */
   --shadow-primary:
     0 0 0 1px rgba(124, 77, 255, 0.15), 0 0 25px rgba(124, 77, 255, 0.1);
-    
+
   /* Dark mode overrides for new palette */
-  --clydra-primary: #7C4DFF;
+  --clydra-primary: #7c4dff;
   --clydra-primary-light: rgba(124, 77, 255, 0.1);
   --border-glass: rgba(124, 77, 255, 0.2);
 }
@@ -785,9 +791,13 @@ html {
 
 /* Global smooth transitions */
 * {
-  transition: transform var(--transition-fast), opacity var(--transition-fast), 
-              box-shadow var(--transition-normal), background-color var(--transition-normal),
-              border-color var(--transition-normal), color var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    opacity var(--transition-fast),
+    box-shadow var(--transition-normal),
+    background-color var(--transition-normal),
+    border-color var(--transition-normal),
+    color var(--transition-fast);
 }
 
 /* Page transition animations */
@@ -868,7 +878,8 @@ html {
 
 /* Professional button hover effects */
 @keyframes buttonPulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 0 var(--clydra-primary-light);
   }
   50% {
@@ -987,12 +998,24 @@ html {
   opacity: 0;
 }
 
-.animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
-.animate-stagger > *:nth-child(2) { animation-delay: 100ms; }
-.animate-stagger > *:nth-child(3) { animation-delay: 200ms; }
-.animate-stagger > *:nth-child(4) { animation-delay: 300ms; }
-.animate-stagger > *:nth-child(5) { animation-delay: 400ms; }
-.animate-stagger > *:nth-child(6) { animation-delay: 500ms; }
+.animate-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.animate-stagger > *:nth-child(2) {
+  animation-delay: 100ms;
+}
+.animate-stagger > *:nth-child(3) {
+  animation-delay: 200ms;
+}
+.animate-stagger > *:nth-child(4) {
+  animation-delay: 300ms;
+}
+.animate-stagger > *:nth-child(5) {
+  animation-delay: 400ms;
+}
+.animate-stagger > *:nth-child(6) {
+  animation-delay: 500ms;
+}
 
 /* Smooth scrollbar styling */
 ::-webkit-scrollbar {
@@ -1040,12 +1063,12 @@ html {
 
 /* Hide Scrollbars */
 .hide-scrollbar {
-  -ms-overflow-style: none;  /* Internet Explorer 10+ */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
 }
 
 .hide-scrollbar::-webkit-scrollbar {
-  display: none;  /* Safari and Chrome */
+  display: none; /* Safari and Chrome */
 }
 
 /* Chat-specific scrollbar styling - keeps functionality but styled nicely */
@@ -1083,7 +1106,8 @@ html {
 }
 
 /* Allow normal scrolling for main document */
-html, body {
+html,
+body {
   scroll-behavior: smooth;
 }
 
@@ -1130,12 +1154,24 @@ html, body {
   opacity: 0;
 }
 
-.animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
-.animate-stagger > *:nth-child(2) { animation-delay: 100ms; }
-.animate-stagger > *:nth-child(3) { animation-delay: 200ms; }
-.animate-stagger > *:nth-child(4) { animation-delay: 300ms; }
-.animate-stagger > *:nth-child(5) { animation-delay: 400ms; }
-.animate-stagger > *:nth-child(6) { animation-delay: 500ms; }
+.animate-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.animate-stagger > *:nth-child(2) {
+  animation-delay: 100ms;
+}
+.animate-stagger > *:nth-child(3) {
+  animation-delay: 200ms;
+}
+.animate-stagger > *:nth-child(4) {
+  animation-delay: 300ms;
+}
+.animate-stagger > *:nth-child(5) {
+  animation-delay: 400ms;
+}
+.animate-stagger > *:nth-child(6) {
+  animation-delay: 500ms;
+}
 
 /* @fluid-scroll - Animation utilities */
 .animate-fade-in-up {
@@ -1158,7 +1194,8 @@ html, body {
 
 /* @fluid-scroll - Enhanced loading animation */
 @keyframes loading-dots {
-  0%, 20% {
+  0%,
+  20% {
     transform: scale(1);
     opacity: 1;
   }
@@ -1166,7 +1203,8 @@ html, body {
     transform: scale(1.3);
     opacity: 0.7;
   }
-  80%, 100% {
+  80%,
+  100% {
     transform: scale(1);
     opacity: 1;
   }
@@ -1238,12 +1276,17 @@ html, body {
 }
 
 /* For clickable elements */
-a, button, [role="button"] {
+a,
+button,
+[role="button"] {
   cursor: pointer;
 }
 
 /* For text input areas */
-input[type="text"], textarea, input[type="email"], input[type="password"] {
+input[type="text"],
+textarea,
+input[type="email"],
+input[type="password"] {
   cursor: text;
 }
 
@@ -1258,7 +1301,8 @@ input[type="text"], textarea, input[type="email"], input[type="password"] {
 }
 
 /* For disabled elements */
-.disabled, :disabled {
+.disabled,
+:disabled {
   cursor: not-allowed;
 }
 

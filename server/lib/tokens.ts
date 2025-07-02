@@ -2,8 +2,8 @@
 import { supabaseAdmin } from "../../lib/supabase";
 import { startOfMonth } from "date-fns";
 
-const CAP_PRO = 1_500_000;        // 1.5 M / month
-const CAP_FREE_DAILY = 40_000;    // 40k / day for free tier
+const CAP_PRO = 1_500_000; // 1.5 M / month
+const CAP_FREE_DAILY = 40_000; // 40k / day for free tier
 
 // Helper function to get Supabase user ID from Clerk ID
 async function getSupabaseUserId(clerkUserId: string): Promise<string | null> {
@@ -13,7 +13,7 @@ async function getSupabaseUserId(clerkUserId: string): Promise<string | null> {
       .select("id")
       .eq("clerk_id", clerkUserId)
       .single();
-    
+
     return user?.id || null;
   } catch (error) {
     console.error("Error getting Supabase user ID:", error);
@@ -23,7 +23,8 @@ async function getSupabaseUserId(clerkUserId: string): Promise<string | null> {
 
 // Helper function to check if a string is a UUID format (Supabase ID) or Clerk ID
 function isUUID(str: string): boolean {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(str);
 }
 
@@ -40,8 +41,8 @@ async function normalizeUserId(userId: string): Promise<string | null> {
 
 export async function addTokens(userId: string, tokens: number): Promise<void> {
   const month = startOfMonth(new Date());
-  const monthStr = month.toISOString().split('T')[0]; // YYYY-MM-DD format
-  
+  const monthStr = month.toISOString().split("T")[0]; // YYYY-MM-DD format
+
   try {
     // Normalize user ID (handle both Clerk ID and Supabase UUID)
     const supabaseUserId = await normalizeUserId(userId);
@@ -63,7 +64,7 @@ export async function addTokens(userId: string, tokens: number): Promise<void> {
       const { error } = await supabaseAdmin
         .from("token_usage")
         .update({
-          tokens_used: existing.tokens_used + tokens
+          tokens_used: existing.tokens_used + tokens,
         })
         .eq("user_id", supabaseUserId)
         .eq("month_start", monthStr);
@@ -75,13 +76,11 @@ export async function addTokens(userId: string, tokens: number): Promise<void> {
       }
     } else {
       // Insert new record
-      const { error } = await supabaseAdmin
-        .from("token_usage")
-        .insert({
-          user_id: supabaseUserId,
-          month_start: monthStr,
-          tokens_used: tokens
-        });
+      const { error } = await supabaseAdmin.from("token_usage").insert({
+        user_id: supabaseUserId,
+        month_start: monthStr,
+        tokens_used: tokens,
+      });
 
       if (error) {
         console.error("Error inserting tokens:", error);
@@ -98,8 +97,8 @@ export async function addTokens(userId: string, tokens: number): Promise<void> {
 
 export async function getUsage(userId: string): Promise<number> {
   const month = startOfMonth(new Date());
-  const monthStr = month.toISOString().split('T')[0]; // YYYY-MM-DD format
-  
+  const monthStr = month.toISOString().split("T")[0]; // YYYY-MM-DD format
+
   try {
     // Normalize user ID (handle both Clerk ID and Supabase UUID)
     const supabaseUserId = await normalizeUserId(userId);
@@ -120,7 +119,7 @@ export async function getUsage(userId: string): Promise<number> {
       // 42P01 = table doesn't exist, PGRST116 = no rows found
       return 0;
     }
-    
+
     if (error) {
       console.error("Error getting usage:", error);
       // Return 0 instead of throwing to prevent blocking the chat
@@ -140,18 +139,22 @@ export function getCap(plan: "free" | "pro"): number {
 }
 
 // @token-meter - Check if user has exceeded quota before making request
-export async function checkQuota(userId: string, requestTokens: number, plan: "free" | "pro"): Promise<{allowed: boolean, reason?: string}> {
+export async function checkQuota(
+  userId: string,
+  requestTokens: number,
+  plan: "free" | "pro"
+): Promise<{ allowed: boolean; reason?: string }> {
   try {
     const used = await getUsage(userId);
     const cap = getCap(plan);
-    
+
     if (used + requestTokens > cap) {
-      return { 
-        allowed: false, 
-        reason: `Quota exceeded. Used ${used.toLocaleString()} + ${requestTokens.toLocaleString()} would exceed ${cap.toLocaleString()} tokens.`
+      return {
+        allowed: false,
+        reason: `Quota exceeded. Used ${used.toLocaleString()} + ${requestTokens.toLocaleString()} would exceed ${cap.toLocaleString()} tokens.`,
       };
     }
-    
+
     return { allowed: true };
   } catch (error) {
     console.error("Error in checkQuota:", error);
@@ -159,4 +162,4 @@ export async function checkQuota(userId: string, requestTokens: number, plan: "f
     // This prevents the token system from blocking all chats if there's an issue
     return { allowed: true };
   }
-} 
+}

@@ -90,9 +90,7 @@ export default function SidebarNav({
           {/* Show description on hover/active */}
           {activeRoute === item.id && (
             <div className="mt-1 px-9">
-              <p className="text-xs text-text-muted">
-                {item.description}
-              </p>
+              <p className="text-xs text-text-muted">{item.description}</p>
             </div>
           )}
         </div>

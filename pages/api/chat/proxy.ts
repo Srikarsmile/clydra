@@ -41,17 +41,22 @@ export default async function handler(
 
       try {
         // @performance - Use streaming implementation
-        const result = await processChatRequest(userId, input, input.threadId, true);
+        const result = await processChatRequest(
+          userId,
+          input,
+          input.threadId,
+          true
+        );
 
         if ("stream" in result) {
           // @performance - Pipe the stream directly to response
           const reader = result.stream.getReader();
-          
+
           try {
             while (true) {
               const { done, value } = await reader.read();
               if (done) break;
-              
+
               res.write(value);
             }
           } finally {
@@ -71,7 +76,12 @@ export default async function handler(
 
     // @clydra-core Process chat request (non-streaming fallback)
     // @threads - Pass threadId if provided
-    const result = await processChatRequest(userId, input, input.threadId, false);
+    const result = await processChatRequest(
+      userId,
+      input,
+      input.threadId,
+      false
+    );
 
     return res.status(200).json(result);
   } catch (error) {

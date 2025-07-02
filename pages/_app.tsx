@@ -7,12 +7,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <ClerkProvider {...pageProps}>
       <Component {...pageProps} />
-      <Toaster 
-        position="top-right"
-        richColors
-        closeButton
-        duration={4000}
-      />
+      <Toaster position="top-right" richColors closeButton duration={4000} />
     </ClerkProvider>
   );
 }

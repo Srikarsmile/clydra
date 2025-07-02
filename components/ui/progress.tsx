@@ -12,7 +12,7 @@ interface ProgressProps extends React.HTMLAttributes<HTMLDivElement> {
 const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
   ({ className, value = 0, max = 100, ...props }, ref) => {
     const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
-    
+
     return (
       <div
         ref={ref}
@@ -25,14 +25,14 @@ const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
         <div
           className={cn(
             "h-full w-full flex-1 bg-gradient-to-r transition-all duration-300",
-            percentage <= 50 
-              ? "from-green-500 to-green-600" 
-              : percentage <= 80 
-              ? "from-yellow-500 to-yellow-600" 
-              : "from-red-500 to-red-600"
+            percentage <= 50
+              ? "from-green-500 to-green-600"
+              : percentage <= 80
+                ? "from-yellow-500 to-yellow-600"
+                : "from-red-500 to-red-600"
           )}
           style={{
-            transform: `translateX(-${100 - percentage}%)`
+            transform: `translateX(-${100 - percentage}%)`,
           }}
         />
       </div>
@@ -42,4 +42,4 @@ const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
 
 Progress.displayName = "Progress";
 
-export { Progress }; 
+export { Progress };

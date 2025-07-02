@@ -58,9 +58,7 @@ function ProfileChip({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-export default function Sidebar({
-  planType = "free",
-}: SidebarProps) {
+export default function Sidebar({ planType = "free" }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const router = useRouter();
 
@@ -82,7 +80,11 @@ export default function Sidebar({
         // Use replace instead of push to avoid navigation history issues
         await router.replace(`/dashboard?thread=${id}`);
       } else {
-        console.error("Failed to create thread:", response.status, response.statusText);
+        console.error(
+          "Failed to create thread:",
+          response.status,
+          response.statusText
+        );
       }
     } catch (error) {
       console.error("Failed to create thread:", error);
@@ -91,7 +93,7 @@ export default function Sidebar({
 
   // Toggle sidebar collapse - optimized with useCallback
   const toggleCollapse = useCallback(() => {
-    setCollapsed(prev => !prev);
+    setCollapsed((prev) => !prev);
   }, []);
 
   // Navigation to services - optimized with useCallback
@@ -118,7 +120,7 @@ export default function Sidebar({
         >
           {collapsed ? <Menu size={18} /> : <ChevronLeft size={18} />}
         </button>
-        
+
         {!collapsed && (
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-brand to-brand/70 rounded-lg flex items-center justify-center shadow-sm">
@@ -152,9 +154,9 @@ export default function Sidebar({
         {!collapsed && (
           <div className="mb-3 space-y-3">
             <TokenGauge />
-            <PlanBadge 
-              plan={planType as "free" | "pro" | "max"} 
-              onClick={navigateToServices} 
+            <PlanBadge
+              plan={planType as "free" | "pro" | "max"}
+              onClick={navigateToServices}
             />
           </div>
         )}

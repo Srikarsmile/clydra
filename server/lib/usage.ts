@@ -18,7 +18,7 @@ async function getSupabaseUserId(clerkUserId: string): Promise<string | null> {
       .select("id")
       .eq("clerk_id", clerkUserId)
       .single();
-    
+
     return user?.id || null;
   } catch (error) {
     console.error("Error getting Supabase user ID:", error);
@@ -28,7 +28,8 @@ async function getSupabaseUserId(clerkUserId: string): Promise<string | null> {
 
 // Helper function to check if a string is a UUID format (Supabase ID) or Clerk ID
 function isUUID(str: string): boolean {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(str);
 }
 
@@ -116,10 +117,8 @@ export async function incChatCount(
     // This will be called when a new chat conversation is created
     // The actual message counting is done by getDailyChatCount
     // which reads from the chat_history table
-
     // For now, we don't need to do anything here as messages
     // are tracked via the chat_history table
-
     // Chat count tracking is handled via chat_history table
   } catch (error) {
     console.error("Error incrementing chat count:", error);

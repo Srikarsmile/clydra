@@ -47,4 +47,4 @@ export default async function handler(
       cap: 1500000,
     });
   }
-} 
+}

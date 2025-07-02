@@ -1,7 +1,7 @@
 /**
- * @performance 
+ * @performance
  * High-Performance Streaming Chat API
- * 
+ *
  * Optimized for minimal latency with:
  * - Server-Sent Events streaming
  * - Parallel database operations
@@ -52,12 +52,12 @@ export default async function handler(
       if ("stream" in result) {
         // @performance - Pipe the stream directly to response
         const reader = result.stream.getReader();
-        
+
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            
+
             res.write(value);
           }
         } finally {
@@ -77,4 +77,4 @@ export default async function handler(
       error: error instanceof Error ? error.message : "Internal server error",
     });
   }
-} 
+}

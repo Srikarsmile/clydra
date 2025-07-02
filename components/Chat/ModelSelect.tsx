@@ -6,15 +6,21 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { Check, ChevronDown, Sparkles, Zap, Crown, Globe } from "lucide-react";
-import { MODEL_ALIASES, ChatModel, FREE_PLAN_MODELS, PRO_PLAN_MODELS, modelSupportsWebSearch } from "@/types/chatModels";
+import {
+  MODEL_ALIASES,
+  ChatModel,
+  FREE_PLAN_MODELS,
+  PRO_PLAN_MODELS,
+  modelSupportsWebSearch,
+} from "@/types/chatModels";
 import { cn } from "@/lib/utils";
 
 // Models array with plan requirements - now using the centralized model organization
 const MODELS: { key: ChatModel; minPlan: "free" | "pro" | "max" }[] = [
   // Free plan models
-  ...FREE_PLAN_MODELS.map(key => ({ key, minPlan: "free" as const })),
+  ...FREE_PLAN_MODELS.map((key) => ({ key, minPlan: "free" as const })),
   // Pro plan models (excluding ones already in free)
-  ...PRO_PLAN_MODELS.map(key => ({ key, minPlan: "pro" as const })),
+  ...PRO_PLAN_MODELS.map((key) => ({ key, minPlan: "pro" as const })),
 ];
 
 // Plan configuration - memoized outside component
@@ -51,43 +57,60 @@ interface ModelSelectProps {
   userPlan?: "free" | "pro" | "max";
 }
 
-export function ModelSelect({ model, setModel, userPlan = "pro" }: ModelSelectProps) {
+export function ModelSelect({
+  model,
+  setModel,
+  userPlan = "pro",
+}: ModelSelectProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // Memoized grouped models
-  const groups = useMemo(() => ({
-    free: MODELS.filter((m) => m.minPlan === "free"),
-    pro: MODELS.filter((m) => m.minPlan === "pro"),
-    max: MODELS.filter((m) => m.minPlan === "max"),
-  }), []);
+  const groups = useMemo(
+    () => ({
+      free: MODELS.filter((m) => m.minPlan === "free"),
+      pro: MODELS.filter((m) => m.minPlan === "pro"),
+      max: MODELS.filter((m) => m.minPlan === "max"),
+    }),
+    []
+  );
 
   // Memoized filtered models based on search
   const filteredGroups = useMemo(() => {
     if (!searchTerm.trim()) return groups;
-    
-    const filtered = { free: [] as typeof MODELS, pro: [] as typeof MODELS, max: [] as typeof MODELS };
+
+    const filtered = {
+      free: [] as typeof MODELS,
+      pro: [] as typeof MODELS,
+      max: [] as typeof MODELS,
+    };
     const search = searchTerm.toLowerCase();
-    
+
     for (const [planType, models] of Object.entries(groups)) {
-      filtered[planType as keyof typeof filtered] = models.filter(m =>
+      filtered[planType as keyof typeof filtered] = models.filter((m) =>
         MODEL_ALIASES[m.key].toLowerCase().includes(search)
       );
     }
-    
+
     return filtered;
   }, [groups, searchTerm]);
 
   // Optimized handlers
-  const handleModelSelect = useCallback((modelKey: ChatModel) => {
-    setModel(modelKey);
-    setOpen(false);
-    setSearchTerm(""); // Clear search when closing
-  }, [setModel]);
+  const handleModelSelect = useCallback(
+    (modelKey: ChatModel) => {
+      setModel(modelKey);
+      setOpen(false);
+      setSearchTerm(""); // Clear search when closing
+    },
+    [setModel]
+  );
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  }, []);
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchTerm(e.target.value);
+    },
+    []
+  );
 
   const handleOpenChange = useCallback((newOpen: boolean) => {
     setOpen(newOpen);
@@ -135,7 +158,7 @@ export function ModelSelect({ model, setModel, userPlan = "pro" }: ModelSelectPr
             // Only show plans the user has access to
             if (userPlan === "free" && plan !== "free") return null;
             if (userPlan === "pro" && plan === "max") return null;
-            
+
             const config = PLAN_CONFIG[plan];
             const Icon = config.icon;
             const planModels = filteredGroups[plan];
@@ -176,9 +199,10 @@ export function ModelSelect({ model, setModel, userPlan = "pro" }: ModelSelectPr
                 {/* Models in this plan */}
                 <div className="px-2 pb-2">
                   {planModels.map((m) => {
-                    const isLocked = (userPlan === "free" && m.minPlan !== "free") || 
-                                     (userPlan === "pro" && m.minPlan === "max");
-                    
+                    const isLocked =
+                      (userPlan === "free" && m.minPlan !== "free") ||
+                      (userPlan === "pro" && m.minPlan === "max");
+
                     return (
                       <button
                         key={m.key}
@@ -186,7 +210,9 @@ export function ModelSelect({ model, setModel, userPlan = "pro" }: ModelSelectPr
                         disabled={isLocked}
                         className={cn(
                           "w-full flex items-center gap-3 px-3 py-3 mx-1 my-1 rounded-xl cursor-pointer transition-all duration-200 text-left",
-                          isLocked ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50 hover:shadow-sm",
+                          isLocked
+                            ? "opacity-50 cursor-not-allowed"
+                            : "hover:bg-gray-50 hover:shadow-sm",
                           model === m.key &&
                             "bg-brand-50 border border-brand-200 shadow-sm"
                         )}
@@ -233,11 +259,16 @@ export function ModelSelect({ model, setModel, userPlan = "pro" }: ModelSelectPr
           })}
 
           {/* No results message */}
-          {searchTerm && Object.values(filteredGroups).every(group => group.length === 0) && (
-            <div className="p-6 text-center text-gray-500">
-                             <p className="text-sm">No models found matching &quot;{searchTerm}&quot;</p>
-            </div>
-          )}
+          {searchTerm &&
+            Object.values(filteredGroups).every(
+              (group) => group.length === 0
+            ) && (
+              <div className="p-6 text-center text-gray-500">
+                <p className="text-sm">
+                  No models found matching &quot;{searchTerm}&quot;
+                </p>
+              </div>
+            )}
         </div>
 
         {/* Upgrade CTA - only show for free plan users */}

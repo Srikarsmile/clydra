@@ -10,10 +10,10 @@ interface ModelBarProps {
   userPlan?: "free" | "pro" | "max";
 }
 
-export default function ModelBar({ 
-  selectedModel, 
-  onModelChange, 
-  userPlan = "free" 
+export default function ModelBar({
+  selectedModel,
+  onModelChange,
+  userPlan = "free",
 }: ModelBarProps) {
   const availableModels = getModelsByPlan(userPlan);
 
@@ -39,4 +39,4 @@ export default function ModelBar({
       </div>
     </div>
   );
-} 
+}

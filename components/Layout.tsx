@@ -123,8 +123,6 @@ export default function Layout({ children }: LayoutProps) {
         )}
       </nav>
 
-
-
       {/* Main Content */}
       <main className="relative">
         {/* Background Pattern */}

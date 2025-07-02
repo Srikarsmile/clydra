@@ -10,13 +10,17 @@ const nextConfig: NextConfig = {
       // Add custom aliases if needed
     },
   },
-  
+
   // Experimental features - simplified to avoid issues
   experimental: {
     // Remove problematic optimizeCss for now
-    optimizePackageImports: ['lucide-react', '@clerk/nextjs', '@supabase/supabase-js'],
+    optimizePackageImports: [
+      "lucide-react",
+      "@clerk/nextjs",
+      "@supabase/supabase-js",
+    ],
   },
-  
+
   // Build and compile optimizations
   eslint: {
     ignoreDuringBuilds: true,
@@ -24,48 +28,48 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  
+
   // Image optimizations
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'img.clerk.com',
+        protocol: "https",
+        hostname: "img.clerk.com",
       },
       {
-        protocol: 'https',
-        hostname: 'images.clerk.dev',
+        protocol: "https",
+        hostname: "images.clerk.dev",
       },
     ],
-    formats: ['image/avif', 'image/webp'],
+    formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60,
   },
-  
+
   // Performance optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
-  
+
   // Remove problematic output setting for now
   poweredByHeader: false,
-  
+
   // Headers for better performance
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: "/(.*)",
         headers: [
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
+            key: "X-Content-Type-Options",
+            value: "nosniff",
           },
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
+            key: "X-Frame-Options",
+            value: "DENY",
           },
           {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
           },
         ],
       },

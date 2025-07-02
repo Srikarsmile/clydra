@@ -3,7 +3,11 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getAuth } from "@clerk/nextjs/server";
 import OpenAI from "openai";
 import { estimateConversationTokens } from "../../server/lib/chatTokens";
-import { MODEL_ALIASES, ChatModel, modelSupportsWebSearch } from "../../types/chatModels";
+import {
+  MODEL_ALIASES,
+  ChatModel,
+  modelSupportsWebSearch,
+} from "../../types/chatModels";
 
 interface ChatMessage {
   role: "user" | "assistant" | "system";
@@ -85,30 +89,34 @@ export default async function handler(
       : "openai/gpt-4o-mini";
 
     // Check if web search is enabled and model supports it
-    const shouldUseWebSearch = enableWebSearch && modelSupportsWebSearch(validatedModel);
+    const shouldUseWebSearch =
+      enableWebSearch && modelSupportsWebSearch(validatedModel);
 
     // @or Estimate input tokens
     let enhancedMessages = [...messages];
-    
+
     // If web search is enabled, perform search based on the latest user message
     if (shouldUseWebSearch && messages.length > 0) {
       const lastUserMessage = messages[messages.length - 1];
       if (lastUserMessage.role === "user") {
         const searchResults = await performWebSearch(lastUserMessage.content);
-        
+
         // Add web search context to the conversation
         enhancedMessages = [
           ...messages.slice(0, -1),
           {
             role: "system",
-            content: `You have access to current web search results. Here are recent search results relevant to the user's query: ${searchResults}. Use this information to provide more accurate and up-to-date responses.`
+            content: `You have access to current web search results. Here are recent search results relevant to the user's query: ${searchResults}. Use this information to provide more accurate and up-to-date responses.`,
           },
-          lastUserMessage
+          lastUserMessage,
         ];
       }
     }
 
-    const inputTokens = estimateConversationTokens(enhancedMessages, validatedModel);
+    const inputTokens = estimateConversationTokens(
+      enhancedMessages,
+      validatedModel
+    );
 
     if (!process.env.OPENROUTER_API_KEY) {
       return res.status(500).json({
@@ -119,21 +127,25 @@ export default async function handler(
     try {
       // @or Make request using OpenAI client with OpenRouter
       if (stream) {
-        const completion = await openRouterClient.chat.completions.create({
-          model: validatedModel,
-          messages: enhancedMessages,
-          stream: true,
-          temperature: 0.7,
-          max_tokens: 4000,
-          top_p: 0.95,
-          frequency_penalty: 0,
-          presence_penalty: 0,
-        }, {
-          headers: {
-            "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-            "X-Title": "Clydra Chat",
+        const completion = await openRouterClient.chat.completions.create(
+          {
+            model: validatedModel,
+            messages: enhancedMessages,
+            stream: true,
+            temperature: 0.7,
+            max_tokens: 4000,
+            top_p: 0.95,
+            frequency_penalty: 0,
+            presence_penalty: 0,
           },
-        });
+          {
+            headers: {
+              "HTTP-Referer":
+                process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+              "X-Title": "Clydra Chat",
+            },
+          }
+        );
 
         // Handle streaming response
         res.setHeader("Content-Type", "text/event-stream");
@@ -152,24 +164,32 @@ export default async function handler(
         res.end();
         return;
       } else {
-        const completion = await openRouterClient.chat.completions.create({
-          model: validatedModel,
-          messages: enhancedMessages,
-          stream: false,
-          temperature: 0.7,
-          max_tokens: 4000,
-          top_p: 0.95,
-          frequency_penalty: 0,
-          presence_penalty: 0,
-        }, {
-          headers: {
-            "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-            "X-Title": "Clydra Chat",
+        const completion = await openRouterClient.chat.completions.create(
+          {
+            model: validatedModel,
+            messages: enhancedMessages,
+            stream: false,
+            temperature: 0.7,
+            max_tokens: 4000,
+            top_p: 0.95,
+            frequency_penalty: 0,
+            presence_penalty: 0,
           },
-        });
+          {
+            headers: {
+              "HTTP-Referer":
+                process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+              "X-Title": "Clydra Chat",
+            },
+          }
+        );
 
         // Handle regular response
-        if (!completion.choices || !completion.choices[0] || !completion.choices[0].message) {
+        if (
+          !completion.choices ||
+          !completion.choices[0] ||
+          !completion.choices[0].message
+        ) {
           return res.status(500).json({
             error: "Invalid response from OpenRouter",
           });
@@ -179,7 +199,8 @@ export default async function handler(
 
         // @or Estimate output tokens and log usage
         const outputTokens =
-          completion.usage?.completion_tokens || Math.ceil((assistantMessage?.length || 0) / 4);
+          completion.usage?.completion_tokens ||
+          Math.ceil((assistantMessage?.length || 0) / 4);
         await logUsage(userId, validatedModel, inputTokens, outputTokens);
 
         return res.status(200).json({
@@ -190,21 +211,24 @@ export default async function handler(
           usage: {
             inputTokens: completion.usage?.prompt_tokens || inputTokens,
             outputTokens: completion.usage?.completion_tokens || outputTokens,
-            totalTokens: completion.usage?.total_tokens || inputTokens + outputTokens,
+            totalTokens:
+              completion.usage?.total_tokens || inputTokens + outputTokens,
           },
           webSearchUsed: shouldUseWebSearch,
         });
       }
     } catch (openAIError: any) {
       console.error("OpenAI/OpenRouter API error:", openAIError);
-      
+
       // Handle specific error cases
       if (openAIError.status === 401) {
         return res.status(401).json({ error: "Invalid API key" });
       } else if (openAIError.status === 429) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       } else if (openAIError.status === 500) {
-        return res.status(500).json({ error: "OpenRouter internal server error" });
+        return res
+          .status(500)
+          .json({ error: "OpenRouter internal server error" });
       }
 
       return res.status(openAIError.status || 500).json({

@@ -56,7 +56,7 @@ export default function UpgradeButton({
                   {[
                     "GPT-4o (Latest)",
                     "Claude Sonnet 4",
-                    "Grok 3 Beta", 
+                    "Grok 3 Beta",
                     "Gemini 2.5 Pro",
                     "🌐 Web Search on all models",
                     "1.5M tokens monthly",

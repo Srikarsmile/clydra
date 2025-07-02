@@ -30,10 +30,10 @@ export default function ModelPill({
       disabled={locked}
       className={cn(
         // @palette - Updated with Clydra brand tokens
-        'rounded-full px-4 py-1 text-sm font-medium transition',
-        active && 'bg-brand-500 text-white hover:bg-brand-600 shadow-sm/5',
-        !active && !locked && 'bg-brand-50 text-brand-600 hover:bg-brand-100',
-        locked && 'opacity-40 cursor-not-allowed',
+        "rounded-full px-4 py-1 text-sm font-medium transition",
+        active && "bg-brand-500 text-white hover:bg-brand-600 shadow-sm/5",
+        !active && !locked && "bg-brand-50 text-brand-600 hover:bg-brand-100",
+        locked && "opacity-40 cursor-not-allowed",
         // @palette - End brand token update
         className
       )}

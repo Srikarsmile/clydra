@@ -162,7 +162,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   const { user } = useUser();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [model, setModel] = useState<ChatModel>("anthropic/claude-3.5-sonnet");
+  const [model, setModel] = useState<ChatModel>("anthropic/claude-sonnet-4");
   const [enableWebSearch] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);

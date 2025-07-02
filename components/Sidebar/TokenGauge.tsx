@@ -15,7 +15,10 @@ const fetcher = async (url: string): Promise<TokenUsage> => {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      console.warn(`Token API returned ${response.status}:`, await response.text());
+      console.warn(
+        `Token API returned ${response.status}:`,
+        await response.text()
+      );
       // Return default values instead of throwing to prevent UI crashes
       return { used: 0, cap: 1500000 };
     }
@@ -117,7 +120,7 @@ export function TokenGauge() {
               {percentage.toFixed(1)}%
             </span>
           </div>
-          
+
           {/* Progress Bar */}
           <Progress value={used} max={cap} className="h-2" />
         </div>
@@ -145,4 +148,4 @@ export function TokenGauge() {
       </div>
     </div>
   );
-} 
+}

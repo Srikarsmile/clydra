@@ -5,7 +5,12 @@
  * Shows available models organized by plan with proper gating
  */
 
-import { MODEL_ALIASES, ChatModel, getModelsByPlan, modelSupportsWebSearch } from "@/types/chatModels";
+import {
+  MODEL_ALIASES,
+  ChatModel,
+  getModelsByPlan,
+  modelSupportsWebSearch,
+} from "@/types/chatModels";
 import ModelPill from "./ModelPill";
 
 interface ModelPickerProps {
@@ -21,7 +26,7 @@ export default function ModelPicker({
 }: ModelPickerProps) {
   const availableModels = getModelsByPlan(userPlan);
   const allModels = getModelsByPlan("max"); // Get all models for comparison
-  
+
   return (
     <div className="space-y-4">
       {/* Free Plan Models */}
@@ -31,7 +36,7 @@ export default function ModelPicker({
           {getModelsByPlan("free").map((modelKey) => {
             const isAvailable = availableModels.includes(modelKey);
             const hasWebSearch = modelSupportsWebSearch(modelKey);
-            
+
             return (
               <div key={modelKey} className="relative">
                 <ModelPill
@@ -65,26 +70,28 @@ export default function ModelPicker({
           </span>
         </div>
         <div className="flex flex-wrap gap-2">
-          {getModelsByPlan("pro").filter(m => !getModelsByPlan("free").includes(m)).map((modelKey) => {
-            const isAvailable = availableModels.includes(modelKey);
-            const hasWebSearch = modelSupportsWebSearch(modelKey);
-            
-            return (
-              <div key={modelKey} className="relative">
-                <ModelPill
-                  label={MODEL_ALIASES[modelKey]}
-                  active={model === modelKey}
-                  locked={!isAvailable}
-                  onClick={() => isAvailable && setModel(modelKey)}
-                />
-                {hasWebSearch && (
-                  <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs px-1 rounded-full">
-                    🌐
-                  </span>
-                )}
-              </div>
-            );
-          })}
+          {getModelsByPlan("pro")
+            .filter((m) => !getModelsByPlan("free").includes(m))
+            .map((modelKey) => {
+              const isAvailable = availableModels.includes(modelKey);
+              const hasWebSearch = modelSupportsWebSearch(modelKey);
+
+              return (
+                <div key={modelKey} className="relative">
+                  <ModelPill
+                    label={MODEL_ALIASES[modelKey]}
+                    active={model === modelKey}
+                    locked={!isAvailable}
+                    onClick={() => isAvailable && setModel(modelKey)}
+                  />
+                  {hasWebSearch && (
+                    <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs px-1 rounded-full">
+                      🌐
+                    </span>
+                  )}
+                </div>
+              );
+            })}
         </div>
       </div>
     </div>

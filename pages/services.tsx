@@ -17,11 +17,11 @@ export default function Services() {
       period: "",
       description: "Perfect for getting started with AI chat",
       features: [
-        "GPT-4o Mini", 
-        "DeepSeek R1", 
+        "GPT-4o Mini",
+        "DeepSeek R1",
         "Gemini 2.5 Flash",
-        "40,000 tokens/day", 
-        "Basic support"
+        "40,000 tokens/day",
+        "Basic support",
       ],
       cta: "Current Plan",
       ctaClass: "btn btn-ghost",
@@ -36,7 +36,7 @@ export default function Services() {
       features: [
         "1.5M tokens/month",
         "GPT-4o (Latest)",
-        "Claude Sonnet 4", 
+        "Claude Sonnet 4",
         "Grok 3 Beta",
         "Gemini 2.5 Pro",
         "🌐 Web Search on all models",
@@ -50,7 +50,7 @@ export default function Services() {
     {
       name: "Max",
       price: "$59",
-      period: "/mo", 
+      period: "/mo",
       description: "For teams and intensive usage",
       features: [
         "5M tokens/month",
@@ -180,7 +180,8 @@ export default function Services() {
                   What happens when I exceed my token limit?
                 </h4>
                 <p className="text-caption-1 text-text-muted">
-                  You can upgrade to a higher plan anytime. Your usage resets automatically each month.
+                  You can upgrade to a higher plan anytime. Your usage resets
+                  automatically each month.
                 </p>
               </div>
 
@@ -199,7 +200,8 @@ export default function Services() {
                   Do tokens roll over?
                 </h4>
                 <p className="text-caption-1 text-text-muted">
-                  Tokens reset to full quota on the 1st of each month. Monthly limits ensure fair usage across all users.
+                  Tokens reset to full quota on the 1st of each month. Monthly
+                  limits ensure fair usage across all users.
                 </p>
               </div>
 
@@ -208,7 +210,8 @@ export default function Services() {
                   Do you offer a free trial?
                 </h4>
                 <p className="text-caption-1 text-text-muted">
-                  Yes! Every new user gets access to our Free plan with daily token allowance to try Clydra.
+                  Yes! Every new user gets access to our Free plan with daily
+                  token allowance to try Clydra.
                 </p>
               </div>
             </div>

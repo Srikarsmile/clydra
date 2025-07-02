@@ -10,7 +10,7 @@ export interface ChatMessageProps {
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = memo(
-  ({ content, role, timestamp = new Date() }) => {
+  ({ content, timestamp = new Date() }) => {
     return (
       <div className="w-full">
         <div className="w-full">

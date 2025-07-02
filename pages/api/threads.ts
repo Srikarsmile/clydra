@@ -69,8 +69,6 @@ export default async function handler(
     try {
       const { threadId } = req.body;
 
-
-
       if (!threadId) {
         console.error("No threadId provided in request body");
         return res.status(400).json({ error: "Thread ID is required" });
@@ -86,18 +84,24 @@ export default async function handler(
 
       if (verifyError) {
         console.error("Error verifying thread ownership:", verifyError);
-        if (verifyError.code === 'PGRST116') { // No rows returned
-          return res.status(404).json({ error: "Thread not found or access denied" });
+        if (verifyError.code === "PGRST116") {
+          // No rows returned
+          return res
+            .status(404)
+            .json({ error: "Thread not found or access denied" });
         }
         throw verifyError;
       }
 
       if (!existingThread) {
-        console.error("Thread not found or user doesn't have access:", { threadId, userId: user.id });
-        return res.status(404).json({ error: "Thread not found or access denied" });
+        console.error("Thread not found or user doesn't have access:", {
+          threadId,
+          userId: user.id,
+        });
+        return res
+          .status(404)
+          .json({ error: "Thread not found or access denied" });
       }
-
-
 
       // First delete all messages in the thread
       const { error: messagesError } = await supabaseAdmin
@@ -123,13 +127,12 @@ export default async function handler(
         throw deleteError;
       }
 
-
       res.status(200).json({ success: true });
     } catch (error) {
       console.error("Failed to delete thread - full error:", error);
-      res.status(500).json({ 
-        error: "Failed to delete thread", 
-        details: error instanceof Error ? error.message : "Unknown error"
+      res.status(500).json({
+        error: "Failed to delete thread",
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   } else {

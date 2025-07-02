@@ -7,7 +7,7 @@ Clydra provides cutting-edge conversational AI through an intuitive web interfac
 ## ✨ Features
 
 - **Multi-Model Chat**: Access GPT-4o, Claude Sonnet, Gemini Pro, and more through one interface
-- **Real-time Streaming**: Natural, conversational interactions with live response streaming  
+- **Real-time Streaming**: Natural, conversational interactions with live response streaming
 - **Smart Token Management**: Monthly quota system with real-time usage tracking and warnings
 - **Thread Management**: Organise conversations with persistent chat history
 - **Premium UI**: Beautiful glassmorphism design with smooth animations
@@ -25,12 +25,14 @@ Clydra provides cutting-edge conversational AI through an intuitive web interfac
 The application supports multiple AI models through OpenRouter integration:
 
 ### Pro Plan Models
+
 - **GPT-4o** - OpenAI's latest flagship model
-- **Claude 4 Sonnet** - Anthropic's balanced model  
+- **Claude 4 Sonnet** - Anthropic's balanced model
 - **Grok-3 Beta** - xAI's latest experimental model with enhanced capabilities
 - **Gemini 2.5 Pro** - Google's advanced multimodal model
 
-### Free Plan Models  
+### Free Plan Models
+
 - **Gemini 2.5 Flash** - Google's fast and efficient model
 
 ### Model Features

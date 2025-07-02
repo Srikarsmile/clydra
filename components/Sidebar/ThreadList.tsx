@@ -24,19 +24,23 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
 
   // Fetch threads - optimized with useCallback
   const fetchThreads = useCallback(async () => {
-      try {
-        const response = await fetch("/api/threads");
-        if (response.ok) {
-          const data = await response.json();
+    try {
+      const response = await fetch("/api/threads");
+      if (response.ok) {
+        const data = await response.json();
         setThreads(data || []);
       } else {
-        console.error("Failed to fetch threads:", response.status, response.statusText);
-        }
-      } catch (error) {
-        console.error("Failed to fetch threads:", error);
-      } finally {
-        setIsLoading(false);
+        console.error(
+          "Failed to fetch threads:",
+          response.status,
+          response.statusText
+        );
       }
+    } catch (error) {
+      console.error("Failed to fetch threads:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -44,88 +48,94 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
   }, [fetchThreads]);
 
   // Optimized navigation handler to prevent same URL navigation
-  const handleThreadClick = useCallback((threadId: string, event: React.MouseEvent) => {
-    // Don't navigate if this is already the active thread
-    if (activeThread === threadId) {
-      event.preventDefault();
-      return;
-    }
-    
-    // Let the Link component handle the navigation
-  }, [activeThread]);
+  const handleThreadClick = useCallback(
+    (threadId: string, event: React.MouseEvent) => {
+      // Don't navigate if this is already the active thread
+      if (activeThread === threadId) {
+        event.preventDefault();
+        return;
+      }
+
+      // Let the Link component handle the navigation
+    },
+    [activeThread]
+  );
 
   // Improved delete thread functionality with better error handling
-  const deleteThread = useCallback(async (threadId: string, event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
+  const deleteThread = useCallback(
+    async (threadId: string, event: React.MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
 
-    if (deletingId === threadId) return;
+      if (deletingId === threadId) return;
 
-    if (
-      !confirm(
-        "Are you sure you want to delete this chat? This action cannot be undone."
-      )
-    ) {
-      return;
-    }
+      if (
+        !confirm(
+          "Are you sure you want to delete this chat? This action cannot be undone."
+        )
+      ) {
+        return;
+      }
 
-    setDeletingId(threadId);
-    
-    try {
-      const response = await fetch("/api/threads", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ threadId }),
-      });
+      setDeletingId(threadId);
 
-      // Handle different response scenarios
-      if (response.ok) {
-        // Successfully deleted
-        setThreads((prev) => prev.filter((t) => t.id !== threadId));
-
-        // Redirect if deleting active thread
-        if (activeThread === threadId) {
-          router.push("/dashboard");
-        }
-      } else {
-        // Handle different error responses
-        let errorMessage = "Failed to delete chat";
-        
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch {
-          // If we can't parse JSON, use status text
-          errorMessage = `${errorMessage} (${response.status}: ${response.statusText})`;
-        }
-
-        console.error("Delete thread API error:", {
-          status: response.status,
-          statusText: response.statusText,
-          threadId
+      try {
+        const response = await fetch("/api/threads", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ threadId }),
         });
 
-        // Show user-friendly error message
-        if (response.status === 401) {
-          alert("Please sign in again to delete this chat.");
-          router.push("/sign-in");
-        } else if (response.status === 404) {
-          alert("This chat no longer exists or has already been deleted.");
-          // Remove from local state since it doesn't exist
+        // Handle different response scenarios
+        if (response.ok) {
+          // Successfully deleted
           setThreads((prev) => prev.filter((t) => t.id !== threadId));
-        } else if (response.status === 403) {
-          alert("You don't have permission to delete this chat.");
+
+          // Redirect if deleting active thread
+          if (activeThread === threadId) {
+            router.push("/dashboard");
+          }
         } else {
-          alert(`Failed to delete chat: ${errorMessage}`);
+          // Handle different error responses
+          let errorMessage = "Failed to delete chat";
+
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch {
+            // If we can't parse JSON, use status text
+            errorMessage = `${errorMessage} (${response.status}: ${response.statusText})`;
+          }
+
+          console.error("Delete thread API error:", {
+            status: response.status,
+            statusText: response.statusText,
+            threadId,
+          });
+
+          // Show user-friendly error message
+          if (response.status === 401) {
+            alert("Please sign in again to delete this chat.");
+            router.push("/sign-in");
+          } else if (response.status === 404) {
+            alert("This chat no longer exists or has already been deleted.");
+            // Remove from local state since it doesn't exist
+            setThreads((prev) => prev.filter((t) => t.id !== threadId));
+          } else if (response.status === 403) {
+            alert("You don't have permission to delete this chat.");
+          } else {
+            alert(`Failed to delete chat: ${errorMessage}`);
+          }
         }
+      } catch (networkError) {
+        console.error("Network error deleting thread:", networkError);
+        alert("Network error. Please check your connection and try again.");
+      } finally {
+        setDeletingId(null);
       }
-    } catch (networkError) {
-      console.error("Network error deleting thread:", networkError);
-      alert("Network error. Please check your connection and try again.");
-    } finally {
-      setDeletingId(null);
-    }
-  }, [deletingId, activeThread, router]);
+    },
+    [deletingId, activeThread, router]
+  );
 
   if (isLoading) {
     return (
@@ -171,21 +181,21 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
                   )}
                 </div>
               ) : (
-              <Link
-                href={`/dashboard?thread=${thread.id}`}
+                <Link
+                  href={`/dashboard?thread=${thread.id}`}
                   onClick={(e) => handleThreadClick(thread.id, e)}
-                className={cn(
-                  "flex items-center justify-between flex-1 px-2 py-1 text-sm transition-colors",
+                  className={cn(
+                    "flex items-center justify-between flex-1 px-2 py-1 text-sm transition-colors",
                     "hover:bg-brand-50/50"
-                )}
-              >
-                <span className="truncate">{thread.title}</span>
-                {thread.msg_count && thread.msg_count > 0 && (
-                  <span className="ml-2 text-[10px] rounded bg-gray-200 px-1">
-                    {thread.msg_count}
-                  </span>
-                )}
-              </Link>
+                  )}
+                >
+                  <span className="truncate">{thread.title}</span>
+                  {thread.msg_count && thread.msg_count > 0 && (
+                    <span className="ml-2 text-[10px] rounded bg-gray-200 px-1">
+                      {thread.msg_count}
+                    </span>
+                  )}
+                </Link>
               )}
 
               <button

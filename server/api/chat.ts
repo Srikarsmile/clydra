@@ -29,7 +29,7 @@ const chatInputSchema = z.object({
       // @dashboard-redesign - Models matching the design brief
       "google/gemini-2.5-flash", // Free model
       "openai/gpt-4o",
-      "anthropic/claude-3.5-sonnet", // Updated from claude-sonnet-4
+      "anthropic/claude-sonnet-4", // Updated to new Claude Sonnet 4
       "google/gemini-2.5-pro",
       // Legacy models for compatibility
       "openai/gpt-4o-mini",
@@ -43,7 +43,7 @@ const chatInputSchema = z.object({
       "anthropic/claude-3-opus-20240229",
       "meta-llama/llama-3-70b-instruct",
     ] as const)
-    .default("anthropic/claude-3.5-sonnet"), // @dashboard-redesign - Default to Claude 4 Sonnet
+    .default("anthropic/claude-sonnet-4"), // @dashboard-redesign - Default to Claude 4 Sonnet
   threadId: z.string().optional(), // @threads - Add threadId support
 });
 
@@ -66,7 +66,7 @@ export interface StreamingChatResponse {
   stream: ReadableStream;
   usage?: {
     inputTokens: number;
-    outputTokens: number; 
+    outputTokens: number;
     totalTokens: number;
   };
 }
@@ -95,7 +95,10 @@ export async function processChatRequest(
   // Convert Clerk ID to Supabase UUID
   const userResult = await getOrCreateUser(clerkUserId);
   if (!userResult.success || !userResult.user) {
-    throw new ChatError("UNAUTHORIZED", "User not found or could not be created");
+    throw new ChatError(
+      "UNAUTHORIZED",
+      "User not found or could not be created"
+    );
   }
   const userId = userResult.user.id; // Now we have the Supabase UUID
 
@@ -122,10 +125,10 @@ export async function processChatRequest(
   );
 
   // @performance - Parallel quota and limit checks to reduce latency
-  const plan = "pro";                              // Default to Pro plan
+  const plan = "pro"; // Default to Pro plan
   const [quotaCheck, hasExceeded] = await Promise.all([
     checkQuota(userId, inputTokens, plan),
-    hasExceededDailyLimit(userId)
+    hasExceededDailyLimit(userId),
   ]);
 
   if (!quotaCheck.allowed) {
@@ -187,7 +190,11 @@ export async function processChatRequest(
               if (content) {
                 fullMessage += content;
                 // Send chunk to client
-                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content })}\n\n`));
+                controller.enqueue(
+                  new TextEncoder().encode(
+                    `data: ${JSON.stringify({ content })}\n\n`
+                  )
+                );
               }
 
               // Track token usage from the stream
@@ -199,11 +206,27 @@ export async function processChatRequest(
             // @performance - Async database operations (don't block response)
             // Fire and forget - these operations don't need to block the stream
             Promise.all([
-              addTokens(userId, totalTokens || Math.ceil(fullMessage.length / 4)),
-              updateUsageMeter(userId, totalTokens || Math.ceil(fullMessage.length / 4)),
+              addTokens(
+                userId,
+                totalTokens || Math.ceil(fullMessage.length / 4)
+              ),
+              updateUsageMeter(
+                userId,
+                totalTokens || Math.ceil(fullMessage.length / 4)
+              ),
               threadId || input.threadId
-                ? saveMessagesToThread(userId, threadId || input.threadId!, validatedInput.messages, fullMessage)
-                : saveChatToHistory(userId, validatedInput.messages, fullMessage, model)
+                ? saveMessagesToThread(
+                    userId,
+                    threadId || input.threadId!,
+                    validatedInput.messages,
+                    fullMessage
+                  )
+                : saveChatToHistory(
+                    userId,
+                    validatedInput.messages,
+                    fullMessage,
+                    model
+                  ),
             ]).catch((error) => {
               console.error("Background database operations failed:", error);
             });
@@ -213,7 +236,7 @@ export async function processChatRequest(
           } catch (error) {
             controller.error(error);
           }
-        }
+        },
       });
 
       return {
@@ -222,7 +245,7 @@ export async function processChatRequest(
           inputTokens,
           outputTokens: Math.ceil(fullMessage.length / 4),
           totalTokens: inputTokens + Math.ceil(fullMessage.length / 4),
-        }
+        },
       };
     } else {
       // @clydra-core Non-streaming implementation (legacy)
@@ -254,13 +277,24 @@ export async function processChatRequest(
       // @performance - Parallel database operations to reduce latency
       await Promise.all([
         addTokens(userId, completion.usage?.total_tokens || totalTokens),
-        updateUsageMeter(userId, totalTokens)
+        updateUsageMeter(userId, totalTokens),
       ]);
 
       // @clydra-core Save chat to history (can be async)
-      const saveOperation = threadId || input.threadId
-        ? saveMessagesToThread(userId, threadId || input.threadId!, validatedInput.messages, assistantMessage)
-        : saveChatToHistory(userId, validatedInput.messages, assistantMessage, model);
+      const saveOperation =
+        threadId || input.threadId
+          ? saveMessagesToThread(
+              userId,
+              threadId || input.threadId!,
+              validatedInput.messages,
+              assistantMessage
+            )
+          : saveChatToHistory(
+              userId,
+              validatedInput.messages,
+              assistantMessage,
+              model
+            );
 
       // Don't wait for save operation to complete
       saveOperation.catch((error) => {
