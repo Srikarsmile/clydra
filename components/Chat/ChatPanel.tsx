@@ -548,13 +548,13 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30 relative overflow-hidden">
+    <div className="flex flex-col h-full bg-white relative overflow-hidden">
       {/* @dashboard-redesign - Chat container expanded to full width */}
       <div className="flex-1 flex flex-col w-full px-6 pb-32 min-h-0">
         {/* @dashboard-redesign - Single model badge in top-right corner */}
         <div className="sticky top-2 self-end z-10 mb-4">
-          <span className="inline-flex items-center gap-2 rounded-full bg-surface/80 backdrop-blur-md border border-brand-500/20 text-brand-500 px-4 py-2 text-sm shadow-sm transition-all duration-300">
-            <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+                      <span className="inline-flex items-center gap-2 rounded-full bg-white/80 backdrop-blur-md border border-gray-300/50 text-gray-700 px-4 py-2 text-sm shadow-sm transition-all duration-300">
+              <span className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" />
             Using {MODEL_ALIASES[model]}
           </span>
         </div>
@@ -571,7 +571,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
               <div className="flex flex-col items-center space-y-6 py-16 animate-fade-in-up">
                 <h1 className="text-4xl font-bold text-center">
                   Hello{" "}
-                  <span className="text-brand-500">{user?.firstName}!</span>
+                  <span className="text-gray-900">{user?.firstName}!</span>
                 </h1>
                 <p className="text-xl text-text-muted text-center">
                   How can I assist you today?
@@ -583,7 +583,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                     <button
                       key={index}
                       onClick={() => setInput(suggestion.description)}
-                      className="group p-4 bg-surface border border-gray-200 rounded-xl hover:border-brand-300 hover:shadow-lg transition-all duration-300 text-left transform hover:scale-105 hover:-translate-y-1"
+                      className="group p-4 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-lg transition-all duration-300 text-left transform hover:scale-105 hover:-translate-y-1"
                     >
                       <div className="flex items-center gap-3 mb-2">
                         <div className="text-xl transition-transform duration-300 group-hover:scale-110">
@@ -615,14 +615,14 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                     <div
                       className={`max-w-xs sm:max-w-sm md:max-w-md lg:max-w-2xl xl:max-w-4xl ${
                         message.role === "assistant"
-                          ? "bg-surface text-text-main shadow-md"
-                          : "bg-brand-50 text-brand-600 shadow-sm"
+                          ? "bg-white text-gray-900 shadow-md"
+                          : "bg-gray-100 text-gray-900 shadow-sm"
                       } rounded-2xl px-6 py-4 relative group transition-all duration-300 hover:shadow-lg transform hover:scale-[1.02]`}
                     >
                       {/* Show model name for assistant messages */}
                       {message.role === "assistant" && (
-                        <div className="flex items-center gap-2 mb-2 text-xs text-brand-500">
-                          <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
+                        <div className="flex items-center gap-2 mb-2 text-xs text-gray-600">
+                          <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
                           {MODEL_ALIASES[model]}
                         </div>
                       )}
@@ -662,10 +662,10 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                 {/* @performance - Real-time streaming message display */}
                 {streamingMessage && (
                   <div className="flex justify-start animate-fade-in-up">
-                    <div className="max-w-xs sm:max-w-sm md:max-w-md lg:max-w-2xl xl:max-w-4xl bg-surface text-text-main shadow-md rounded-2xl px-6 py-4 relative">
+                    <div className="max-w-xs sm:max-w-sm md:max-w-md lg:max-w-2xl xl:max-w-4xl bg-white text-gray-900 shadow-md rounded-2xl px-6 py-4 relative">
                       {/* Show model name when there's actual output */}
-                      <div className="flex items-center gap-2 mb-2 text-xs text-brand-500">
-                        <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
+                      <div className="flex items-center gap-2 mb-2 text-xs text-gray-600">
+                        <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-pulse" />
                         {MODEL_ALIASES[model]}
                       </div>
                       <ChatMessage

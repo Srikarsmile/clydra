@@ -45,9 +45,9 @@ const PLAN_CONFIG = {
     label: "MAX",
     description: "Premium Models + 🌐 Web Search",
     icon: Crown,
-    color: "text-purple-600",
-    bgColor: "bg-purple-50",
-    borderColor: "border-purple-200",
+    color: "text-gray-700",
+    bgColor: "bg-gray-100",
+    borderColor: "border-gray-300",
   },
 } as const;
 
@@ -122,9 +122,9 @@ export function ModelSelect({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <button className="group flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 hover:border-brand-300 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400">
+        <button className="group flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300/20 focus:border-gray-400">
           <div className="flex items-center gap-2 flex-1">
-            <div className="w-2 h-2 rounded-full bg-brand-500"></div>
+            <div className="w-2 h-2 rounded-full bg-gray-400"></div>
             <span className="font-medium text-gray-900 text-sm">
               {MODEL_ALIASES[model]}
             </span>
@@ -148,7 +148,7 @@ export function ModelSelect({
             placeholder="Search models..."
             value={searchTerm}
             onChange={handleSearchChange}
-            className="w-full h-9 bg-white border border-gray-200 rounded-lg px-3 text-sm placeholder:text-gray-400 focus:border-brand-300 focus:ring-2 focus:ring-brand-500/10 focus:outline-none"
+            className="w-full h-9 bg-white border border-gray-200 rounded-lg px-3 text-sm placeholder:text-gray-400 focus:border-gray-300 focus:ring-2 focus:ring-gray-300/20 focus:outline-none"
           />
         </div>
 
@@ -214,13 +214,13 @@ export function ModelSelect({
                             ? "opacity-50 cursor-not-allowed"
                             : "hover:bg-gray-50 hover:shadow-sm",
                           model === m.key &&
-                            "bg-brand-50 border border-brand-200 shadow-sm"
+                            "bg-gray-100 border border-gray-300 shadow-sm"
                         )}
                       >
                         {/* Selection indicator */}
                         <div className="flex items-center justify-center w-5 h-5">
                           {model === m.key ? (
-                            <div className="w-4 h-4 rounded-full bg-brand-500 flex items-center justify-center">
+                            <div className="w-4 h-4 rounded-full bg-black flex items-center justify-center">
                               <Check className="w-2.5 h-2.5 text-white" />
                             </div>
                           ) : (
@@ -273,7 +273,7 @@ export function ModelSelect({
 
         {/* Upgrade CTA - only show for free plan users */}
         {userPlan === "free" && (
-          <div className="p-4 border-t border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50 rounded-b-2xl">
+          <div className="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <p className="text-sm font-semibold text-gray-900 mb-1">
@@ -283,7 +283,7 @@ export function ModelSelect({
                   Access GPT-4o, Claude Sonnet 4, Grok 3, and web search
                 </p>
               </div>
-              <button className="ml-4 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-semibold rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
+              <button className="ml-4 px-4 py-2 bg-black text-white text-xs font-semibold rounded-lg hover:bg-gray-800 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
                 Upgrade
               </button>
             </div>
