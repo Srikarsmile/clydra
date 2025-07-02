@@ -1,0 +1,18 @@
+
+> rivo-labs@0.1.0 dev
+> next dev --turbo
+
+ ⚠ Port 3000 is in use, using available port 3004 instead.
+   ▲ Next.js 15.3.3 (Turbopack)
+   - Local:        http://localhost:3004
+   - Network:      http://192.168.0.34:3004
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Compiled middleware in 237ms
+ ✓ Ready in 1079ms
+ ✓ Compiled /api/chat/proxy in 376ms
+📝 Chat proxy called: POST
+🔐 Checking authentication...
+❌ No userId found
+ POST /api/chat/proxy 401 in 140ms

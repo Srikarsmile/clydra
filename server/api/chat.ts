@@ -36,7 +36,6 @@ const chatInputSchema = z.object({
       "deepseek/deepseek-r1",
       "x-ai/grok-3-beta",
       "google/gemini-2.5-flash-preview",
-      "anthropic/claude-sonnet-4",
       "anthropic/claude-opus-4",
       "anthropic/claude-3-sonnet-20240229",
       "google/gemini-1.5-pro",
@@ -114,7 +113,7 @@ export async function processChatRequest(
   if (!useOpenRouter()) {
     throw new ChatError(
       "SERVICE_UNAVAILABLE",
-      "Chat feature is not yet available"
+      "Chat feature is not yet available. Please set NEXT_PUBLIC_USE_OPENROUTER=true in your environment."
     );
   }
 
@@ -149,7 +148,7 @@ export async function processChatRequest(
   if (!apiKey) {
     throw new ChatError(
       "INTERNAL_SERVER_ERROR",
-      "OpenRouter API key not configured"
+      "OpenRouter API key not configured. Please set OPENROUTER_API_KEY in your environment."
     );
   }
 
@@ -160,9 +159,6 @@ export async function processChatRequest(
       "HTTP-Referer":
         process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
       "X-Title": "Clydra Chat",
-      // @performance - Connection optimization headers
-      "Connection": "keep-alive",
-      "Keep-Alive": "timeout=30, max=1000",
     },
     // @performance - Optimize connection settings for reduced latency
     timeout: 30000, // Reduced to 30 seconds for faster failures
@@ -183,8 +179,6 @@ export async function processChatRequest(
         frequency_penalty: 0,
         presence_penalty: 0,
         stream: true,
-        // @performance - Stream options for faster responses
-        stream_options: { include_usage: true },
       });
 
       let fullMessage = "";
@@ -243,6 +237,7 @@ export async function processChatRequest(
             controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
             controller.close();
           } catch (error) {
+            console.error("Streaming completion error:", error);
             controller.error(error);
           }
         },

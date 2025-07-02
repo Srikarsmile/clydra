@@ -31,61 +31,48 @@ export default async function handler(
     const input: ChatInput = req.body;
     const { stream = true } = req.body; // @performance - Default to streaming for better UX
 
-    // @performance - Set up streaming headers if requested
-    if (stream) {
-      res.setHeader("Content-Type", "text/event-stream");
-      res.setHeader("Cache-Control", "no-cache, no-transform");
-      res.setHeader("Connection", "keep-alive");
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Access-Control-Allow-Headers", "Cache-Control");
-      // @performance - Additional headers for optimized streaming
-      res.setHeader("X-Accel-Buffering", "no"); // Disable Nginx buffering
-      res.setHeader("Content-Encoding", "identity"); // Prevent compression buffering
-
-      try {
-        // @performance - Use streaming implementation
-        const result = await processChatRequest(
-          userId,
-          input,
-          input.threadId,
-          true
-        );
-
-        if ("stream" in result) {
-          // @performance - Pipe the stream directly to response
-          const reader = result.stream.getReader();
-
-          try {
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-
-              res.write(value);
-            }
-          } finally {
-            reader.releaseLock();
-          }
-        }
-
-        res.end();
-        return;
-      } catch (streamError) {
-        console.error("Streaming error:", streamError);
-        res.write(`data: ${JSON.stringify({ error: "Streaming failed" })}\n\n`);
-        res.end();
-        return;
-      }
-    }
-
-    // @clydra-core Process chat request (non-streaming fallback)
+    // @clydra-core Process chat request (with streaming support)
     // @threads - Pass threadId if provided
     const result = await processChatRequest(
       userId,
       input,
       input.threadId,
-      false
+      stream
     );
 
+    // Handle streaming response
+    if (stream && "stream" in result) {
+      // @performance - Set up streaming headers
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache, no-transform");
+      res.setHeader("Connection", "keep-alive");
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Headers", "Cache-Control");
+
+      try {
+        // @performance - Pipe the stream directly to response
+        const reader = result.stream.getReader();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          res.write(value);
+        }
+
+        reader.releaseLock();
+        res.end();
+        return;
+      } catch (streamError) {
+        console.error("Streaming error:", streamError);
+        if (!res.headersSent) {
+          res.status(500).json({ error: "Streaming failed" });
+        }
+        return;
+      }
+    }
+
+    // Handle regular response
     return res.status(200).json(result);
   } catch (error) {
     console.error("Chat API error:", error);
