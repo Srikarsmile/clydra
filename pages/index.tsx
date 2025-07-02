@@ -1,8 +1,37 @@
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PageTransition from "../components/PageTransition";
 
 export default function Home() {
+  const [currentMessage, setCurrentMessage] = useState(0);
+  const [isTyping, setIsTyping] = useState(false);
+
+  const demoMessages = [
+    { type: "user", text: "help me write a fire Instagram caption 🔥" },
+    { type: "ai", text: "Say less! ✨ How about: 'Living my best life, no cap 💯 Main character energy activated 🌟'" },
+    { type: "user", text: "that's actually lowkey perfect ngl" },
+    { type: "ai", text: "I got you! That's what I'm here for 😎" }
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (currentMessage < demoMessages.length - 1) {
+        setIsTyping(true);
+        setTimeout(() => {
+          setCurrentMessage(prev => prev + 1);
+          setIsTyping(false);
+        }, 1000);
+      } else {
+        // Reset after showing all messages
+        setTimeout(() => {
+          setCurrentMessage(0);
+        }, 3000);
+      }
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [currentMessage]);
+
   const features = [
     {
       title: "Multiple AI Models",
@@ -99,49 +128,136 @@ export default function Home() {
         </nav>
 
         {/* Hero Section */}
-        <section className="relative pt-20 pb-32">
-          <div className="max-w-6xl mx-auto px-6 lg:px-8 text-center">
-            {/* Main Logo/Title */}
-            <div className="mb-8">
-              <h1 className="text-8xl md:text-9xl lg:text-[12rem] font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent tracking-tight leading-none animate-fade-in-up">
-                Clydra
-              </h1>
-              <p className="text-2xl md:text-3xl text-slate-600 font-light mt-4 animate-fade-in-up animation-delay-200">
-                Next-Generation AI Chat Platform
-              </p>
-            </div>
-
-            {/* Subtitle */}
-            <div className="max-w-3xl mx-auto mb-12 animate-fade-in-up animation-delay-300">
-              <p className="text-xl md:text-2xl text-slate-700 leading-relaxed font-light">
-                Experience the future of conversation with multiple AI models in one beautiful interface
-              </p>
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fade-in-up animation-delay-400">
-              <Link href="/sign-up" className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-2xl font-semibold text-lg overflow-hidden hover:shadow-2xl hover:shadow-purple-500/25 transform hover:scale-105 transition-all duration-500">
-                <span className="relative z-10 flex items-center">
-                  Start Chatting Free
-                  <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              </Link>
+        <section className="relative pt-12 pb-24">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               
-              <Link href="#models" className="px-8 py-4 bg-white/80 backdrop-blur-sm text-slate-700 rounded-2xl font-semibold text-lg border border-slate-200/50 hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 transform hover:scale-105 transition-all duration-300">
-                Explore Models
-              </Link>
-            </div>
+              {/* Left Side - Content */}
+              <div className="text-left">
+                <div className="mb-6">
+                  <span className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full text-purple-700 font-medium text-sm border border-purple-200/50 backdrop-blur-sm mb-6">
+                    ✨ AI that actually gets you
+                  </span>
+                  <h1 className="text-6xl md:text-7xl font-black text-slate-900 tracking-tight leading-none mb-6">
+                    Chat with AI
+                    <span className="block bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                      that speaks
+                    </span>
+                    <span className="block text-slate-900">your vibe</span>
+                  </h1>
+                </div>
 
-            {/* Trust Indicators */}
-            <div className="mt-16 animate-fade-in-up animation-delay-500">
-              <p className="text-sm text-slate-500 mb-6">Trusted by thousands of users worldwide</p>
-              <div className="flex justify-center items-center space-x-8 opacity-60">
-                <div className="text-2xl font-bold text-slate-400">GPT-4o</div>
-                <div className="text-2xl font-bold text-slate-400">Claude</div>
-                <div className="text-2xl font-bold text-slate-400">Gemini</div>
+                <p className="text-xl text-slate-600 leading-relaxed mb-8 max-w-lg">
+                  No cap, this is the AI platform you've been waiting for. GPT-4o, Claude, and Gemini all in one place. Free to start, premium when you need it. 
+                </p>
+
+                {/* CTA Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                  <Link href="/sign-up" className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-2xl font-bold text-lg overflow-hidden hover:shadow-2xl hover:shadow-purple-500/25 transform hover:scale-105 transition-all duration-500">
+                    <span className="relative z-10 flex items-center">
+                      Start chatting free
+                      <span className="ml-2 text-xl">🚀</span>
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  </Link>
+                  
+                  <Link href="#models" className="px-8 py-4 bg-white/80 backdrop-blur-sm text-slate-700 rounded-2xl font-bold text-lg border border-slate-200/50 hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 transform hover:scale-105 transition-all duration-300">
+                    See what's possible
+                  </Link>
+                </div>
+
+                {/* Social Proof */}
+                <div className="flex items-center space-x-4 text-sm text-slate-500">
+                  <div className="flex -space-x-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full border-2 border-white"></div>
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full border-2 border-white"></div>
+                    <div className="w-8 h-8 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full border-2 border-white"></div>
+                  </div>
+                  <span>1000+ students already vibing with AI</span>
+                </div>
+              </div>
+
+              {/* Right Side - Interactive Chat Demo */}
+              <div className="relative">
+                <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-6 max-w-md mx-auto lg:mx-0">
+                  {/* Chat Header */}
+                  <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200/50">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">AI</span>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-slate-800">Clydra AI</div>
+                        <div className="flex items-center space-x-1">
+                          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                          <span className="text-xs text-slate-500">Online</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-2xl">💫</div>
+                  </div>
+
+                  {/* Chat Messages */}
+                  <div className="space-y-4 h-64 overflow-hidden">
+                    {demoMessages.slice(0, currentMessage + 1).map((message, index) => (
+                      <div
+                        key={index}
+                        className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}
+                      >
+                        <div
+                          className={`max-w-[80%] px-4 py-3 rounded-2xl ${
+                            message.type === 'user'
+                              ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white'
+                              : 'bg-slate-100 text-slate-800'
+                          }`}
+                        >
+                          <p className="text-sm">{message.text}</p>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {/* Typing Indicator */}
+                    {isTyping && (
+                      <div className="flex justify-start animate-fade-in-up">
+                        <div className="bg-slate-100 px-4 py-3 rounded-2xl">
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce animation-delay-100"></div>
+                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce animation-delay-200"></div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Chat Input */}
+                  <div className="mt-6 pt-4 border-t border-slate-200/50">
+                    <div className="flex items-center space-x-3 bg-slate-50 rounded-2xl px-4 py-3">
+                      <input
+                        type="text"
+                        placeholder="Type your message..."
+                        className="flex-1 bg-transparent text-slate-600 placeholder-slate-400 text-sm outline-none"
+                        disabled
+                      />
+                      <button className="p-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl text-white hover:shadow-lg transition-all duration-300">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Floating Elements around chat */}
+                <div className="absolute -top-6 -right-6 w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center shadow-lg animate-float">
+                  <span className="text-xl">⚡</span>
+                </div>
+                <div className="absolute -bottom-4 -left-4 w-10 h-10 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full flex items-center justify-center shadow-lg animate-float animation-delay-300">
+                  <span className="text-lg">🔥</span>
+                </div>
+                <div className="absolute top-1/2 -right-8 w-8 h-8 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full flex items-center justify-center shadow-lg animate-float animation-delay-500">
+                  <span className="text-sm">✨</span>
+                </div>
               </div>
             </div>
           </div>
