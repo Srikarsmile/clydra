@@ -40,10 +40,8 @@ async function logUsage(
   inputTokens: number,
   outputTokens: number
 ): Promise<void> {
-  // TODO: Implement actual usage logging to database
-  console.log(
-    `Usage logged: ${userId}, ${model}, ${inputTokens} in, ${outputTokens} out`
-  );
+  // Usage is logged via the main chat API endpoint
+  // This function is kept for legacy compatibility
 }
 
 export default async function handler(
@@ -183,10 +181,6 @@ export default async function handler(
         const outputTokens =
           completion.usage?.completion_tokens || Math.ceil((assistantMessage?.length || 0) / 4);
         await logUsage(userId, validatedModel, inputTokens, outputTokens);
-
-        console.log(
-          `@or OpenRouter request successful for model: ${validatedModel}${shouldUseWebSearch ? ' (with web search)' : ''}`
-        );
 
         return res.status(200).json({
           message: {

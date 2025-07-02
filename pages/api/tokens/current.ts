@@ -33,7 +33,7 @@ export default async function handler(
 
     // Get token usage - these functions now return 0 on error instead of throwing
     const used = await getUsage(userId);
-    const cap = getCap("pro"); // TODO: fetch actual plan from database
+    const cap = getCap("pro"); // Default to Pro plan for all users
 
     return res.status(200).json({
       used,

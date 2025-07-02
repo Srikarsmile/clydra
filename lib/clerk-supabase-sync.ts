@@ -47,7 +47,8 @@ export function handleClerkWebhook(event: WebhookEvent) {
       break;
 
     default:
-      console.log(`Unhandled webhook event type: ${event.type}`);
+      // Unhandled webhook event type - no action needed
+      break;
   }
 
   return { success: true };

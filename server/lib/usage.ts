@@ -120,9 +120,7 @@ export async function incChatCount(
     // For now, we don't need to do anything here as messages
     // are tracked via the chat_history table
 
-    console.log(
-      `Chat count incremented for user ${userId}: +${messageCount} messages`
-    );
+    // Chat count tracking is handled via chat_history table
   } catch (error) {
     console.error("Error incrementing chat count:", error);
   }

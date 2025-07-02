@@ -18,9 +18,8 @@ export default function UpgradeCTA({
   compact = false,
 }: UpgradeCTAProps) {
   const handleUpgradeClick = () => {
-    // TODO: Integrate with Stripe payment link
-    // For now, redirect to a placeholder or services page
-    window.open("#TODO-stripe-payment-link", "_blank");
+    // Redirect to services page for upgrade information
+    window.open("/services", "_blank");
   };
 
   if (compact) {

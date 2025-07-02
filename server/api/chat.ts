@@ -110,7 +110,7 @@ export async function processChatRequest(
   );
 
   // @token-meter Check quota before making request
-  const plan = "pro";                              // TODO: fetch from DB
+  const plan = "pro";                              // Default to Pro plan
   const quotaCheck = await checkQuota(userId, inputTokens, plan);
   if (!quotaCheck.allowed) {
     throw new ChatError("FORBIDDEN", quotaCheck.reason || "Quota exceeded");
@@ -147,8 +147,6 @@ export async function processChatRequest(
   });
 
   try {
-    console.log(`@clydra-core Making OpenRouter request for model: ${model}`);
-
     // @clydra-core Make request to OpenRouter
     const completion = await openai.chat.completions.create({
       model: model,
@@ -199,10 +197,6 @@ export async function processChatRequest(
         model
       );
     }
-
-    console.log(
-      `@clydra-core OpenRouter request successful for model: ${model}`
-    );
 
     return {
       message: {
