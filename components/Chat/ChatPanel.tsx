@@ -31,7 +31,76 @@ interface ChatResponse {
   };
 }
 
-// SWR fetcher for sending messages
+// @performance - Streaming message sender for reduced latency
+const sendStreamingMessage = async (
+  url: string,
+  { arg }: { arg: { messages: Message[]; model: ChatModel; threadId?: string; enableWebSearch?: boolean } },
+  onChunk: (content: string) => void
+) => {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...arg, stream: true }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Server error: ${response.status} ${response.statusText}`);
+  }
+
+  if (!response.body) {
+    throw new Error("Response body is null");
+  }
+
+  const reader = response.body.getReader();
+  let fullMessage = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = new TextDecoder().decode(value);
+      const lines = chunk.split("\n");
+
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          const data = line.slice(6);
+          if (data === "[DONE]") {
+            break;
+          }
+          
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.content) {
+              fullMessage += parsed.content;
+              onChunk(parsed.content);
+            } else if (parsed.error) {
+              throw new Error(parsed.error);
+            }
+          } catch (e) {
+            // Skip invalid JSON lines
+          }
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  return {
+    message: {
+      role: "assistant" as const,
+      content: fullMessage,
+    },
+    usage: {
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+    }
+  };
+};
+
+// Fallback non-streaming fetcher
 const sendMessage = async (
   url: string,
   { arg }: { arg: { messages: Message[]; model: ChatModel; threadId?: string; enableWebSearch?: boolean } }
@@ -39,7 +108,7 @@ const sendMessage = async (
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(arg),
+    body: JSON.stringify({ ...arg, stream: false }),
   });
 
   if (!response.ok) {
@@ -76,6 +145,8 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   const [enableWebSearch] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
+  const [streamingMessage, setStreamingMessage] = useState<string>(""); // @performance - For live streaming
+  const [isStreaming, setIsStreaming] = useState(false); // @performance - Track streaming state
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -172,7 +243,85 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
     return () => observer.disconnect();
   }, [isAutoScrolling]);
 
-  // SWR mutation for sending messages
+  // @performance - Streaming-first approach with fallback
+  const handleSubmit = useCallback(async () => {
+    if (!input.trim() || isStreaming || !user) return;
+
+    const userMessage: Message = {
+      role: "user",
+      content: input.trim(),
+      id: Date.now().toString(),
+    };
+
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+    setInput("");
+    setIsStreaming(true);
+    setStreamingMessage("");
+
+    // Immediate scroll for user message
+    requestAnimationFrame(() => scrollToBottom(true));
+
+    try {
+      // @performance - Try streaming first for better UX
+      const result = await sendStreamingMessage(
+        "/api/chat/proxy",
+        { arg: { messages: newMessages, model, threadId, enableWebSearch } },
+        (content: string) => {
+          setStreamingMessage((prev) => prev + content);
+          // Scroll as content streams in
+          requestAnimationFrame(() => scrollToBottom(false));
+        }
+      );
+
+      // Add the complete streamed message
+      setMessages((prev) => [...prev, {
+        ...result.message,
+        id: (Date.now() + 1).toString(),
+      }]);
+      setStreamingMessage("");
+      setShowUpgrade(false);
+    } catch (error) {
+      console.error("Streaming failed, falling back to regular request:", error);
+      
+      // @performance - Fallback to non-streaming if streaming fails
+      try {
+        const response = await fetch("/api/chat/proxy", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            messages: newMessages, 
+            model, 
+            threadId, 
+            enableWebSearch,
+            stream: false 
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setMessages((prev) => [...prev, {
+          ...data.message,
+          id: (Date.now() + 1).toString(),
+        }]);
+        setShowUpgrade(false);
+      } catch (fallbackError) {
+        console.error("Both streaming and fallback failed:", fallbackError);
+        if (fallbackError instanceof Error && fallbackError.message.includes("Daily message limit exceeded")) {
+          setShowUpgrade(true);
+        }
+      }
+      
+      setStreamingMessage("");
+    } finally {
+      setIsStreaming(false);
+    }
+  }, [input, isStreaming, user, messages, model, threadId, enableWebSearch, scrollToBottom]);
+
+  // Legacy SWR mutation for compatibility (not used in main flow)
   const { trigger, isMutating } = useSWRMutation(
     "/api/chat/proxy",
     sendMessage,
@@ -189,35 +338,6 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
       }, []),
     }
   );
-
-  // Handle form submission with smooth UX
-  const handleSubmit = useCallback(async () => {
-    if (!input.trim() || isMutating || !user) return;
-
-    const userMessage: Message = {
-      role: "user",
-      content: input.trim(),
-      id: Date.now().toString(),
-    };
-
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-    setInput("");
-
-    // Immediate scroll for user message
-    requestAnimationFrame(() => scrollToBottom(true));
-
-    try {
-      await trigger({
-        messages: newMessages,
-        model,
-        threadId,
-        enableWebSearch,
-      });
-    } catch (error) {
-      console.error("Failed to send message:", error);
-    }
-  }, [input, isMutating, user, messages, model, threadId, enableWebSearch, trigger, scrollToBottom]);
 
   // @dashboard-redesign - Retry last message with different model
   const handleRetryWithModel = useCallback(async (newModel: ChatModel) => {
@@ -411,8 +531,29 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                   </div>
                 ))}
 
-                {/* @fluid-scroll - Loading indicator with smooth animation */}
-                {isMutating && (
+                {/* @performance - Real-time streaming message display */}
+                {streamingMessage && (
+                  <div className="flex justify-start animate-fade-in-up">
+                    <div className="max-w-xs sm:max-w-sm md:max-w-md lg:max-w-2xl xl:max-w-4xl bg-surface text-text-main shadow-md rounded-2xl px-6 py-4 relative">
+                      <ChatMessage
+                        content={streamingMessage}
+                        role="assistant"
+                        timestamp={new Date()}
+                      />
+                      {/* @performance - Streaming indicator */}
+                      <div className="absolute bottom-2 right-4">
+                        <div className="flex gap-1">
+                          <div className="w-1 h-1 bg-brand-500 rounded-full animate-pulse"></div>
+                          <div className="w-1 h-1 bg-brand-500 rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-1 h-1 bg-brand-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* @fluid-scroll - Loading indicator for non-streaming requests */}
+                {(isStreaming && !streamingMessage) && (
                   <div className="flex justify-start animate-fade-in-up">
                     <div className="bg-surface border border-gray-200 rounded-2xl px-6 py-4 flex items-center gap-3 shadow-md">
                       <Loader2 className="w-5 h-5 animate-spin text-brand-500" />
@@ -438,8 +579,8 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
         value={input}
         onChange={setInput}
         onSubmit={handleSubmit}
-        disabled={isMutating}
-        placeholder="Type your message..."
+        disabled={isStreaming || isMutating} // @performance - Disable during streaming
+        placeholder={isStreaming ? "AI is responding..." : "Type your message..."}
         selectedModel={model}
         onModelChange={handleModelChange}
         userPlan="pro"

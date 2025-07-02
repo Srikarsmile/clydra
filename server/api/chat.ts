@@ -61,6 +61,16 @@ export interface ChatResponse {
   };
 }
 
+// Add streaming response interface
+export interface StreamingChatResponse {
+  stream: ReadableStream;
+  usage?: {
+    inputTokens: number;
+    outputTokens: number; 
+    totalTokens: number;
+  };
+}
+
 export class ChatError extends Error {
   public code: string;
 
@@ -74,12 +84,14 @@ export class ChatError extends Error {
 /**
  * @clydra-core Process chat request with OpenRouter
  * @threads - Updated to support threadId for message persistence
+ * @performance - Added streaming support for reduced latency
  */
 export async function processChatRequest(
   clerkUserId: string, // Clerk user ID from auth
   input: ChatInput,
-  threadId?: string // @threads - Add threadId parameter
-): Promise<ChatResponse> {
+  threadId?: string, // @threads - Add threadId parameter
+  enableStreaming?: boolean // @performance - Add streaming option
+): Promise<ChatResponse | StreamingChatResponse> {
   // Convert Clerk ID to Supabase UUID
   const userResult = await getOrCreateUser(clerkUserId);
   if (!userResult.success || !userResult.user) {
@@ -109,15 +121,17 @@ export async function processChatRequest(
     model
   );
 
-  // @token-meter Check quota before making request
+  // @performance - Parallel quota and limit checks to reduce latency
   const plan = "pro";                              // Default to Pro plan
-  const quotaCheck = await checkQuota(userId, inputTokens, plan);
+  const [quotaCheck, hasExceeded] = await Promise.all([
+    checkQuota(userId, inputTokens, plan),
+    hasExceededDailyLimit(userId)
+  ]);
+
   if (!quotaCheck.allowed) {
     throw new ChatError("FORBIDDEN", quotaCheck.reason || "Quota exceeded");
   }
 
-  // @clydra-core Check daily message limit (legacy)
-  const hasExceeded = await hasExceededDailyLimit(userId);
   if (hasExceeded) {
     throw new ChatError(
       "TOO_MANY_REQUESTS",
@@ -147,68 +161,124 @@ export async function processChatRequest(
   });
 
   try {
-    // @clydra-core Make request to OpenRouter
-    const completion = await openai.chat.completions.create({
-      model: model,
-      messages: validatedInput.messages,
-      temperature: 0.7,
-      max_tokens: 4000,
-      top_p: 0.95,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-    });
+    // @performance - Streaming vs Non-streaming logic
+    if (enableStreaming) {
+      // @performance - Streaming implementation for reduced latency
+      const completion = await openai.chat.completions.create({
+        model: model,
+        messages: validatedInput.messages,
+        temperature: 0.7,
+        max_tokens: 4000,
+        top_p: 0.95,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+        stream: true,
+      });
 
-    if (!completion.choices[0]?.message?.content) {
-      throw new ChatError(
-        "INTERNAL_SERVER_ERROR",
-        "Invalid response from OpenRouter"
-      );
-    }
+      let fullMessage = "";
+      let totalTokens = 0;
 
-    const assistantMessage = completion.choices[0].message.content;
+      // Create a readable stream to pipe the response
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const chunk of completion) {
+              const content = chunk.choices[0]?.delta?.content || "";
+              if (content) {
+                fullMessage += content;
+                // Send chunk to client
+                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content })}\n\n`));
+              }
 
-    // @clydra-core Calculate token usage and costs
-    const outputTokens =
-      completion.usage?.completion_tokens ||
-      Math.ceil(assistantMessage.length / 4);
-    const totalTokens = inputTokens + outputTokens;
+              // Track token usage from the stream
+              if (chunk.usage) {
+                totalTokens = chunk.usage.total_tokens || totalTokens;
+              }
+            }
 
-    // @token-meter Update token usage meter
-    await addTokens(userId, completion.usage?.total_tokens || totalTokens);
+            // @performance - Async database operations (don't block response)
+            // Fire and forget - these operations don't need to block the stream
+            Promise.all([
+              addTokens(userId, totalTokens || Math.ceil(fullMessage.length / 4)),
+              updateUsageMeter(userId, totalTokens || Math.ceil(fullMessage.length / 4)),
+              threadId || input.threadId
+                ? saveMessagesToThread(userId, threadId || input.threadId!, validatedInput.messages, fullMessage)
+                : saveChatToHistory(userId, validatedInput.messages, fullMessage, model)
+            ]).catch((error) => {
+              console.error("Background database operations failed:", error);
+            });
 
-    // @clydra-core Update legacy usage meter 
-    await updateUsageMeter(userId, totalTokens);
+            controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
+            controller.close();
+          } catch (error) {
+            controller.error(error);
+          }
+        }
+      });
 
-    // @clydra-core Save chat to history
-    if (threadId || input.threadId) {
-      // @threads - Save to thread-based messages
-      await saveMessagesToThread(
-        userId, // Already converted to Supabase UUID
-        threadId || input.threadId!,
-        validatedInput.messages,
-        assistantMessage
-      );
+      return {
+        stream,
+        usage: {
+          inputTokens,
+          outputTokens: Math.ceil(fullMessage.length / 4),
+          totalTokens: inputTokens + Math.ceil(fullMessage.length / 4),
+        }
+      };
     } else {
-      // @clydra-core Legacy chat history (fallback)
-      await saveChatToHistory(
-        userId, // Already converted to Supabase UUID
-        validatedInput.messages,
-        assistantMessage,
-        model
-      );
-    }
+      // @clydra-core Non-streaming implementation (legacy)
+      const completion = await openai.chat.completions.create({
+        model: model,
+        messages: validatedInput.messages,
+        temperature: 0.7,
+        max_tokens: 4000,
+        top_p: 0.95,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+      });
 
-    return {
-      message: {
-        role: "assistant",
-        content: assistantMessage,
-      },
-      usage: {
-        inputTokens: completion.usage?.prompt_tokens || inputTokens,
-        outputTokens: completion.usage?.completion_tokens || outputTokens,
-        totalTokens: completion.usage?.total_tokens || totalTokens,
-      },
-    };
+      if (!completion.choices[0]?.message?.content) {
+        throw new ChatError(
+          "INTERNAL_SERVER_ERROR",
+          "Invalid response from OpenRouter"
+        );
+      }
+
+      const assistantMessage = completion.choices[0].message.content;
+
+      // @clydra-core Calculate token usage and costs
+      const outputTokens =
+        completion.usage?.completion_tokens ||
+        Math.ceil(assistantMessage.length / 4);
+      const totalTokens = inputTokens + outputTokens;
+
+      // @performance - Parallel database operations to reduce latency
+      await Promise.all([
+        addTokens(userId, completion.usage?.total_tokens || totalTokens),
+        updateUsageMeter(userId, totalTokens)
+      ]);
+
+      // @clydra-core Save chat to history (can be async)
+      const saveOperation = threadId || input.threadId
+        ? saveMessagesToThread(userId, threadId || input.threadId!, validatedInput.messages, assistantMessage)
+        : saveChatToHistory(userId, validatedInput.messages, assistantMessage, model);
+
+      // Don't wait for save operation to complete
+      saveOperation.catch((error) => {
+        console.error("Chat save operation failed:", error);
+      });
+
+      return {
+        message: {
+          role: "assistant",
+          content: assistantMessage,
+        },
+        usage: {
+          inputTokens: completion.usage?.prompt_tokens || inputTokens,
+          outputTokens: completion.usage?.completion_tokens || outputTokens,
+          totalTokens: completion.usage?.total_tokens || totalTokens,
+        },
+      };
+    }
   } catch (error) {
     console.error("@clydra-core OpenRouter API error:", error);
 

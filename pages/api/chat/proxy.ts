@@ -29,10 +29,49 @@ export default async function handler(
     }
 
     const input: ChatInput = req.body;
+    const { stream = true } = req.body; // @performance - Default to streaming for better UX
 
-    // @clydra-core Process chat request
+    // @performance - Set up streaming headers if requested
+    if (stream) {
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Headers", "Cache-Control");
+
+      try {
+        // @performance - Use streaming implementation
+        const result = await processChatRequest(userId, input, input.threadId, true);
+
+        if ("stream" in result) {
+          // @performance - Pipe the stream directly to response
+          const reader = result.stream.getReader();
+          
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              
+              res.write(value);
+            }
+          } finally {
+            reader.releaseLock();
+          }
+        }
+
+        res.end();
+        return;
+      } catch (streamError) {
+        console.error("Streaming error:", streamError);
+        res.write(`data: ${JSON.stringify({ error: "Streaming failed" })}\n\n`);
+        res.end();
+        return;
+      }
+    }
+
+    // @clydra-core Process chat request (non-streaming fallback)
     // @threads - Pass threadId if provided
-    const result = await processChatRequest(userId, input, input.threadId);
+    const result = await processChatRequest(userId, input, input.threadId, false);
 
     return res.status(200).json(result);
   } catch (error) {
