@@ -551,13 +551,22 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
     <div className="flex flex-col h-full bg-white relative overflow-hidden">
       {/* @dashboard-redesign - Chat container expanded to full width */}
       <div className="flex-1 flex flex-col w-full px-6 pb-32 min-h-0">
-        {/* @dashboard-redesign - Single model badge in top-right corner */}
-        <div className="sticky top-2 self-end z-10 mb-4">
-                      <span className="inline-flex items-center gap-2 rounded-full bg-white/80 backdrop-blur-md border border-gray-300/50 text-gray-700 px-4 py-2 text-sm shadow-sm transition-all duration-300">
-              <span className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" />
-            Using {MODEL_ALIASES[model]}
+        {/* @dashboard-redesign - Clydra logo header */}
+        <div className="flex items-center justify-between py-4 border-b border-gray-100 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">C</span>
+            </div>
+            <span className="text-xl font-bold text-gray-900">Clydra</span>
+          </div>
+          {/* @dashboard-redesign - Model badge in header */}
+          <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 border border-gray-200 text-gray-700 px-3 py-1.5 text-sm">
+            <span className="w-2 h-2 rounded-full bg-gray-400" />
+            {MODEL_ALIASES[model]}
           </span>
         </div>
+        
+
 
         {/* @fluid-scroll - Enhanced messages area with smooth scrolling */}
         <div
