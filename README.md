@@ -9,12 +9,8 @@ Clydra provides cutting-edge conversational AI through an intuitive web interfac
 - **Multi-Model Chat**: Access GPT-4o, Claude Sonnet, Gemini Pro, and more through one interface
 - **Real-time Streaming**: Natural, conversational interactions with live response streaming  
 - **Smart Token Management**: Monthly quota system with real-time usage tracking and warnings
-- **Thread Management**: Organize conversations with persistent chat history
+- **Thread Management**: Organise conversations with persistent chat history
 - **Premium UI**: Beautiful glassmorphism design with smooth animations
-
-## 🚀 Live Demo
-
-Visit [your-domain.com](https://your-domain.com) to try Clydra.
 
 ## 🛠️ Technology Stack
 
@@ -37,37 +33,6 @@ The application supports multiple AI models through OpenRouter integration:
 ### Free Plan Models  
 - **Gemini 2.5 Flash** - Google's fast and efficient model
 
-### Model Integration
-
-The application uses OpenRouter API with the following configuration for all models including Grok-3 Beta:
-
-```typescript
-const openai = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY,
-  defaultHeaders: {
-    "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL,
-    "X-Title": "Rivo Chat",
-  },
-});
-
-// Example request to Grok-3 Beta
-const completion = await openai.chat.completions.create({
-  model: "x-ai/grok-3-beta",
-  messages: [
-    {
-      role: "user", 
-      content: "What is the meaning of life?"
-    }
-  ],
-  temperature: 0.7,
-  max_tokens: 4000,
-  top_p: 0.95,
-  frequency_penalty: 0,
-  presence_penalty: 0,
-});
-```
-
 ### Model Features
 
 - **Smart Model Switching**: Switch between models mid-conversation with context preservation options
@@ -86,13 +51,4 @@ const completion = await openai.chat.completions.create({
 
 - **Secure Authentication**: Enterprise-grade user management with Clerk
 - **Data Protection**: All conversations are encrypted and secured
-- **Row-level Security**: Database access control with Supabase RLS
-
-## 📞 Support
-
-- **Email**: support@clydra.com
-- **Documentation**: Built-in usage tracking and clear UI
-
----
-
-**Built with ❤️ for conversational AI**
+- **Row-level Security**: Database access control with Supabase RLS.
