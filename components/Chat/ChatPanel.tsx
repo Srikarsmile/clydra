@@ -5,7 +5,6 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useUser } from "@clerk/nextjs";
-import { Loader2 } from "lucide-react";
 import useSWRMutation from "swr/mutation";
 import { Button } from "../ui/button";
 import { ChatModel, MODEL_ALIASES, getModelsByPlan } from "@/types/chatModels";
@@ -34,7 +33,16 @@ interface ChatResponse {
 // @performance - Streaming message sender for reduced latency
 const sendStreamingMessage = async (
   url: string,
-  { arg }: { arg: { messages: Message[]; model: ChatModel; threadId?: string; enableWebSearch?: boolean } },
+  {
+    arg,
+  }: {
+    arg: {
+      messages: Message[];
+      model: ChatModel;
+      threadId?: string;
+      enableWebSearch?: boolean;
+    };
+  },
   onChunk: (content: string) => void
 ) => {
   const response = await fetch(url, {
@@ -68,7 +76,7 @@ const sendStreamingMessage = async (
           if (data === "[DONE]") {
             break;
           }
-          
+
           try {
             const parsed = JSON.parse(data);
             if (parsed.content) {
@@ -77,7 +85,7 @@ const sendStreamingMessage = async (
             } else if (parsed.error) {
               throw new Error(parsed.error);
             }
-          } catch (e) {
+          } catch {
             // Skip invalid JSON lines
           }
         }
@@ -96,14 +104,23 @@ const sendStreamingMessage = async (
       inputTokens: 0,
       outputTokens: 0,
       totalTokens: 0,
-    }
+    },
   };
 };
 
 // Fallback non-streaming fetcher
 const sendMessage = async (
   url: string,
-  { arg }: { arg: { messages: Message[]; model: ChatModel; threadId?: string; enableWebSearch?: boolean } }
+  {
+    arg,
+  }: {
+    arg: {
+      messages: Message[];
+      model: ChatModel;
+      threadId?: string;
+      enableWebSearch?: boolean;
+    };
+  }
 ) => {
   const response = await fetch(url, {
     method: "POST",
@@ -118,10 +135,14 @@ const sendMessage = async (
         const error = await response.json();
         throw new Error(error.message || "Failed to send message");
       } catch {
-        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Server error: ${response.status} ${response.statusText}`
+        );
       }
     } else {
-      throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Server error: ${response.status} ${response.statusText}`
+      );
     }
   }
 
@@ -155,17 +176,19 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   // @dashboard-redesign - Load messages when threadId changes
   useEffect(() => {
     if (!threadId || !user) return;
-    
+
     const loadMessages = async () => {
       try {
         const response = await fetch(`/api/messages/${threadId}`);
         if (response.ok) {
           const data = await response.json();
-          const formattedMessages: Message[] = data.map((msg: { role: string; content: string; id?: number }) => ({
-            role: msg.role,
-            content: msg.content,
-            id: msg.id?.toString(),
-          }));
+          const formattedMessages: Message[] = data.map(
+            (msg: { role: string; content: string; id?: number }) => ({
+              role: msg.role,
+              content: msg.content,
+              id: msg.id?.toString(),
+            })
+          );
           setMessages(formattedMessages);
         }
       } catch (error) {
@@ -188,19 +211,21 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
     if (!messagesEndRef.current || !scrollContainerRef.current) return;
 
     const container = scrollContainerRef.current;
-    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-    
+    const isNearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      100;
+
     // Only auto-scroll if user is near bottom or if forced (new message)
     if (force || isNearBottom) {
       setIsAutoScrolling(true);
-      
+
       // Use requestAnimationFrame for smooth performance
       requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ 
+        messagesEndRef.current?.scrollIntoView({
           behavior: "smooth",
-          block: "end"
+          block: "end",
         });
-        
+
         // Reset auto-scroll flag after animation
         setTimeout(() => setIsAutoScrolling(false), 300);
       });
@@ -210,12 +235,12 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   // @fluid-scroll - Smart auto-scroll logic
   useEffect(() => {
     const currentLength = messages.length;
-    
+
     if (currentLength > previousMessagesLength.current) {
       // New message added, scroll to bottom
       scrollToBottom(true);
     }
-    
+
     previousMessagesLength.current = currentLength;
   }, [messages, scrollToBottom]);
 
@@ -232,9 +257,9 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
           }
         });
       },
-      { 
+      {
         root: scrollContainerRef.current,
-        threshold: 0.1 
+        threshold: 0.1,
       }
     );
 
@@ -275,26 +300,32 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
       );
 
       // Add the complete streamed message
-      setMessages((prev) => [...prev, {
-        ...result.message,
-        id: (Date.now() + 1).toString(),
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          ...result.message,
+          id: (Date.now() + 1).toString(),
+        },
+      ]);
       setStreamingMessage("");
       setShowUpgrade(false);
     } catch (error) {
-      console.error("Streaming failed, falling back to regular request:", error);
-      
+      console.error(
+        "Streaming failed, falling back to regular request:",
+        error
+      );
+
       // @performance - Fallback to non-streaming if streaming fails
       try {
         const response = await fetch("/api/chat/proxy", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            messages: newMessages, 
-            model, 
-            threadId, 
+          body: JSON.stringify({
+            messages: newMessages,
+            model,
+            threadId,
             enableWebSearch,
-            stream: false 
+            stream: false,
           }),
         });
 
@@ -303,23 +334,38 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
         }
 
         const data = await response.json();
-        setMessages((prev) => [...prev, {
-          ...data.message,
-          id: (Date.now() + 1).toString(),
-        }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            ...data.message,
+            id: (Date.now() + 1).toString(),
+          },
+        ]);
         setShowUpgrade(false);
       } catch (fallbackError) {
         console.error("Both streaming and fallback failed:", fallbackError);
-        if (fallbackError instanceof Error && fallbackError.message.includes("Daily message limit exceeded")) {
+        if (
+          fallbackError instanceof Error &&
+          fallbackError.message.includes("Daily message limit exceeded")
+        ) {
           setShowUpgrade(true);
         }
       }
-      
+
       setStreamingMessage("");
     } finally {
       setIsStreaming(false);
     }
-  }, [input, isStreaming, user, messages, model, threadId, enableWebSearch, scrollToBottom]);
+  }, [
+    input,
+    isStreaming,
+    user,
+    messages,
+    model,
+    threadId,
+    enableWebSearch,
+    scrollToBottom,
+  ]);
 
   // Legacy SWR mutation for compatibility (not used in main flow)
   const { trigger, isMutating } = useSWRMutation(
@@ -340,78 +386,89 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   );
 
   // @dashboard-redesign - Retry last message with different model
-  const handleRetryWithModel = useCallback(async (newModel: ChatModel) => {
-    if (isMutating || !user || messages.length === 0) return;
+  const handleRetryWithModel = useCallback(
+    async (newModel: ChatModel) => {
+      if (isMutating || !user || messages.length === 0) return;
 
-    // Find the last user message
-    const lastUserMessageIndex = messages.findLastIndex(msg => msg.role === 'user');
-    if (lastUserMessageIndex === -1) return;
+      // Find the last user message
+      const lastUserMessageIndex = messages.findLastIndex(
+        (msg) => msg.role === "user"
+      );
+      if (lastUserMessageIndex === -1) return;
 
-    // Get messages up to and including the last user message (exclude any AI responses after it)
-    const messagesToSend = messages.slice(0, lastUserMessageIndex + 1);
-    
-    // Remove any AI responses after the last user message
-    setMessages(messagesToSend);
-    
-    // Set the new model
-    setModel(newModel);
+      // Get messages up to and including the last user message (exclude any AI responses after it)
+      const messagesToSend = messages.slice(0, lastUserMessageIndex + 1);
 
-    try {
-      await trigger({
-        messages: messagesToSend,
-        model: newModel,
-        threadId,
-        enableWebSearch,
-      });
-    } catch (error) {
-      console.error("Failed to retry with new model:", error);
-    }
-  }, [isMutating, user, messages, threadId, enableWebSearch, trigger]);
+      // Remove any AI responses after the last user message
+      setMessages(messagesToSend);
+
+      // Set the new model
+      setModel(newModel);
+
+      try {
+        await trigger({
+          messages: messagesToSend,
+          model: newModel,
+          threadId,
+          enableWebSearch,
+        });
+      } catch (error) {
+        console.error("Failed to retry with new model:", error);
+      }
+    },
+    [isMutating, user, messages, threadId, enableWebSearch, trigger]
+  );
 
   // @dashboard-redesign - Clear conversation when switching models
-  const handleModelChange = useCallback((newModel: ChatModel) => {
-    if (newModel !== model && messages.length > 0) {
-      // If there are messages, ask user if they want to retry with new model or start fresh
-      const shouldRetry = window.confirm(
-        `Switch to ${MODEL_ALIASES[newModel]}?\n\n` +
-        `• "OK" to retry your last question with ${MODEL_ALIASES[newModel]}\n` +
-        `• "Cancel" to start a fresh conversation with ${MODEL_ALIASES[newModel]}`
-      );
-      
-      if (shouldRetry) {
-        handleRetryWithModel(newModel);
+  const handleModelChange = useCallback(
+    (newModel: ChatModel) => {
+      if (newModel !== model && messages.length > 0) {
+        // If there are messages, ask user if they want to retry with new model or start fresh
+        const shouldRetry = window.confirm(
+          `Switch to ${MODEL_ALIASES[newModel]}?\n\n` +
+            `• "OK" to retry your last question with ${MODEL_ALIASES[newModel]}\n` +
+            `• "Cancel" to start a fresh conversation with ${MODEL_ALIASES[newModel]}`
+        );
+
+        if (shouldRetry) {
+          handleRetryWithModel(newModel);
+        } else {
+          setMessages([]);
+          setModel(newModel);
+        }
       } else {
-        setMessages([]);
         setModel(newModel);
       }
-    } else {
-      setModel(newModel);
-    }
-  }, [model, messages.length, handleRetryWithModel]);
+    },
+    [model, messages.length, handleRetryWithModel]
+  );
 
   // @dashboard-redesign - Suggestions for empty state
-  const suggestions = useMemo(() => [
-    {
-      icon: "✨",
-      title: "Creative Writing",
-      description: "Help me write a story or poem",
-    },
-    {
-      icon: "🧠",
-      title: "Problem Solving", 
-      description: "Analyze and solve complex problems",
-    },
-    {
-      icon: "💻",
-      title: "Code Review",
-      description: "Review and improve my code",
-    },
-    {
-      icon: "📊",
-      title: "Data Analysis",
-      description: "Help analyze data and insights",
-    },
-  ], []);
+  const suggestions = useMemo(
+    () => [
+      {
+        icon: "✨",
+        title: "Creative Writing",
+        description: "Help me write a story or poem",
+      },
+      {
+        icon: "🧠",
+        title: "Problem Solving",
+        description: "Analyze and solve complex problems",
+      },
+      {
+        icon: "💻",
+        title: "Code Review",
+        description: "Review and improve my code",
+      },
+      {
+        icon: "📊",
+        title: "Data Analysis",
+        description: "Help analyze data and insights",
+      },
+    ],
+    []
+  );
 
   if (!user) {
     return (
@@ -443,28 +500,28 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30 relative overflow-hidden">
       {/* @dashboard-redesign - Chat container expanded to full width */}
-      <div className="flex-1 flex flex-col w-full px-6 pb-20 min-h-0">
-        
+      <div className="flex-1 flex flex-col w-full px-6 pb-32 min-h-0">
         {/* @dashboard-redesign - Single model badge in top-right corner */}
         <div className="sticky top-2 self-end z-10 mb-4">
           <span className="inline-flex items-center gap-2 rounded-full bg-surface/80 backdrop-blur-md border border-brand-500/20 text-brand-500 px-4 py-2 text-sm shadow-sm transition-all duration-300">
-            <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" /> 
+            <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
             Using {MODEL_ALIASES[model]}
           </span>
         </div>
 
         {/* @fluid-scroll - Enhanced messages area with smooth scrolling */}
-        <div 
+        <div
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto min-h-0 chat-scroll scroll-smooth"
-          style={{ height: '100%', overflowY: 'auto' }}
+          style={{ height: "100%", overflowY: "auto" }}
         >
           <div className="space-y-6 py-4 pb-6 min-h-full">
             {messages.length === 0 ? (
               // @dashboard-redesign - Empty state with smooth animations
               <div className="flex flex-col items-center space-y-6 py-16 animate-fade-in-up">
                 <h1 className="text-4xl font-bold text-center">
-                  Hello <span className="text-brand-500">{user?.firstName}!</span>
+                  Hello{" "}
+                  <span className="text-brand-500">{user?.firstName}!</span>
                 </h1>
                 <p className="text-xl text-text-muted text-center">
                   How can I assist you today?
@@ -473,16 +530,22 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                 {/* @dashboard-redesign - 4 suggestion cards with stagger animation */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl w-full mt-8 animate-stagger">
                   {suggestions.map((suggestion, index) => (
-                    <button 
+                    <button
                       key={index}
                       onClick={() => setInput(suggestion.description)}
                       className="group p-4 bg-surface border border-gray-200 rounded-xl hover:border-brand-300 hover:shadow-lg transition-all duration-300 text-left transform hover:scale-105 hover:-translate-y-1"
                     >
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="text-xl transition-transform duration-300 group-hover:scale-110">{suggestion.icon}</div>
-                        <div className="font-medium text-text-main">{suggestion.title}</div>
+                        <div className="text-xl transition-transform duration-300 group-hover:scale-110">
+                          {suggestion.icon}
+                        </div>
+                        <div className="font-medium text-text-main">
+                          {suggestion.title}
+                        </div>
                       </div>
-                      <div className="text-sm text-text-muted">{suggestion.description}</div>
+                      <div className="text-sm text-text-muted">
+                        {suggestion.description}
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -493,19 +556,21 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                 {messages.map((message, index) => (
                   <div
                     key={message.id || index}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}
+                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-fade-in-up`}
                     style={{
                       animationDelay: `${Math.min(index * 50, 500)}ms`,
-                      animationFillMode: 'both'
+                      animationFillMode: "both",
                     }}
                   >
-                    <div className={`max-w-xs sm:max-w-sm md:max-w-md lg:max-w-2xl xl:max-w-4xl ${
-                      message.role === 'assistant' 
-                        ? 'bg-surface text-text-main shadow-md' 
-                        : 'bg-brand-50 text-brand-600 shadow-sm'
-                    } rounded-2xl px-6 py-4 relative group transition-all duration-300 hover:shadow-lg transform hover:scale-[1.02]`}>
+                    <div
+                      className={`max-w-xs sm:max-w-sm md:max-w-md lg:max-w-2xl xl:max-w-4xl ${
+                        message.role === "assistant"
+                          ? "bg-surface text-text-main shadow-md"
+                          : "bg-brand-50 text-brand-600 shadow-sm"
+                      } rounded-2xl px-6 py-4 relative group transition-all duration-300 hover:shadow-lg transform hover:scale-[1.02]`}
+                    >
                       {/* Show model name for assistant messages */}
-                      {message.role === 'assistant' && (
+                      {message.role === "assistant" && (
                         <div className="flex items-center gap-2 mb-2 text-xs text-brand-500">
                           <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
                           {MODEL_ALIASES[model]}
@@ -516,24 +581,30 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                         role={message.role as "user" | "assistant"}
                         timestamp={new Date()}
                       />
-                      
+
                       {/* @dashboard-redesign - Retry button for assistant messages */}
-                      {message.role === 'assistant' && index === messages.length - 1 && (
-                        <div className="absolute -bottom-12 left-0 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                          <div className="flex gap-2 text-xs">
-                            {getModelsByPlan("pro").filter((m: ChatModel) => m !== model).slice(0, 3).map((altModel: ChatModel) => (
-                              <button
-                                key={altModel}
-                                onClick={() => handleRetryWithModel(altModel)}
-                                disabled={isMutating}
-                                className="px-3 py-1.5 bg-white hover:bg-gray-50 rounded-lg text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 disabled:opacity-50 transform hover:scale-105"
-                              >
-                                Retry with {MODEL_ALIASES[altModel]}
-                              </button>
-                            ))}
+                      {message.role === "assistant" &&
+                        index === messages.length - 1 && (
+                          <div className="absolute -bottom-12 left-0 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                            <div className="flex gap-2 text-xs">
+                              {getModelsByPlan("pro")
+                                .filter((m: ChatModel) => m !== model)
+                                .slice(0, 3)
+                                .map((altModel: ChatModel) => (
+                                  <button
+                                    key={altModel}
+                                    onClick={() =>
+                                      handleRetryWithModel(altModel)
+                                    }
+                                    disabled={isMutating}
+                                    className="px-3 py-1.5 bg-white hover:bg-gray-50 rounded-lg text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 disabled:opacity-50 transform hover:scale-105"
+                                  >
+                                    Retry with {MODEL_ALIASES[altModel]}
+                                  </button>
+                                ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
                     </div>
                   </div>
                 ))}
@@ -555,8 +626,6 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                     </div>
                   </div>
                 )}
-
-
 
                 <div ref={messagesEndRef} className="h-8" />
               </>
