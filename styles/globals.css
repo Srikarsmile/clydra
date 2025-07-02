@@ -24,42 +24,50 @@ html {
 
 /* Clydra Core Design Tokens */
 :root {
+  /* Option 3 Color Palette - Purple/Blue/Turquoise Theme */
+  --primary-purple: #5E35B1;
+  --electric-blue: #2196F3;
+  --turquoise: #00BFA5;
+  --snow-white: #FFFFFF;
+  --dark-gray: #212121;
+  --bright-orange: #FF5722;
+
   /* Enhanced transition variables */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
   
-  /* Professional shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  /* Professional shadows with new color theme */
+  --shadow-sm: 0 1px 2px 0 rgba(94, 53, 177, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(94, 53, 177, 0.1), 0 2px 4px -1px rgba(94, 53, 177, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(94, 53, 177, 0.1), 0 4px 6px -2px rgba(94, 53, 177, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(94, 53, 177, 0.1), 0 10px 10px -5px rgba(94, 53, 177, 0.04);
   
-  /* Clydra brand colors */
-  --clydra-primary: #0BA5EC;
-  --clydra-primary-light: rgba(11, 165, 236, 0.1);
-  --clydra-primary-dark: #0891D4;
+  /* Clydra brand colors updated to new theme */
+  --clydra-primary: var(--primary-purple);
+  --clydra-primary-light: rgba(94, 53, 177, 0.1);
+  --clydra-primary-dark: #4A148C;
   
   /* Surface colors for glassmorphism */
   --surface-glass: rgba(255, 255, 255, 0.8);
   --surface-glass-dark: rgba(255, 255, 255, 0.05);
-  --border-glass: rgba(255, 255, 255, 0.2);
+  --border-glass: rgba(94, 53, 177, 0.2);
 
-  /* Clydra Core Design Tokens */
-  --clr-teal: #0ba5ec;
+  /* Updated core design tokens */
+  --clr-teal: var(--turquoise);
   --clr-bg: #f8f9fb;
-  --clr-surface: #fff;
+  --clr-surface: var(--snow-white);
   --clr-border: #e2e8f0;
   --radius-lg: 1.25rem;
 
-  /* Neo-Wave Tech Color System - Light Mode */
-  --color-primary: #003e5f; /* Deep Ocean Blue - trust & depth */
-  --color-secondary: #5be7a9; /* Fresh Emerald - freshness & growth */
-  --color-accent: #ff6b35; /* Burnt Orange - urgency & action */
-  --color-bg-base: #f8fafc; /* Soft White */
-  --color-surface: #ffffff;
-  --color-text-main: #1b1b1e;
+  /* Modern Color System - Light Mode */
+  --color-primary: var(--primary-purple);
+  --color-secondary: var(--turquoise);
+  --color-accent: var(--bright-orange);
+  --color-bg-base: #f8fafc;
+  --color-surface: var(--snow-white);
+  --color-text-main: var(--dark-gray);
   --color-text-muted: #64748b;
   --color-border: #e2e8f0;
 
@@ -94,17 +102,23 @@ html {
 
 /* Dark Mode Variables */
 .dark {
-  --color-primary: #0090b7; /* Brighter Cyan-Blue for visibility */
-  --color-secondary: #3ad6a0; /* Bright Emerald */
-  --color-accent: #ff874f; /* Softer Orange */
+  --color-primary: #7C4DFF; /* Brighter Purple for visibility */
+  --color-secondary: #1DE9B6; /* Bright Turquoise */
+  --color-accent: #FF6D40; /* Vibrant Orange */
   --color-bg-base: #1b1b1e; /* Deep Charcoal */
   --color-surface: #26272c; /* Card surfaces */
   --color-text-main: #f2f4f8; /* Light text */
   --color-text-muted: #a6adbf; /* Muted text */
   --color-border: #33363d; /* Subtle borders */
 
+  /* Updated shadow with purple theme */
   --shadow-primary:
-    0 0 0 1px rgba(0, 144, 183, 0.15), 0 0 25px rgba(0, 144, 183, 0.1);
+    0 0 0 1px rgba(124, 77, 255, 0.15), 0 0 25px rgba(124, 77, 255, 0.1);
+    
+  /* Dark mode overrides for new palette */
+  --clydra-primary: #7C4DFF;
+  --clydra-primary-light: rgba(124, 77, 255, 0.1);
+  --border-glass: rgba(124, 77, 255, 0.2);
 }
 
 @layer base {
@@ -133,22 +147,22 @@ html {
       color var(--transition-base),
       background-color var(--transition-base);
     background-image: 
-      /* Ocean wave pattern */
+      /* Purple wave pattern */
       radial-gradient(
         circle at 25% 25%,
-        rgba(0, 62, 95, 0.03) 0%,
+        rgba(94, 53, 177, 0.03) 0%,
         transparent 50%
       ),
       radial-gradient(
         circle at 75% 75%,
-        rgba(91, 231, 169, 0.03) 0%,
+        rgba(0, 191, 165, 0.03) 0%,
         transparent 50%
       ),
-      /* Subtle gradient overlay */
+      /* Subtle gradient overlay with new colors */
         linear-gradient(
           135deg,
-          rgba(0, 62, 95, 0.01) 0%,
-          rgba(91, 231, 169, 0.01) 100%
+          rgba(94, 53, 177, 0.01) 0%,
+          rgba(0, 191, 165, 0.01) 100%
         );
   }
 
@@ -158,18 +172,18 @@ html {
     background-image:
       radial-gradient(
         circle at 25% 25%,
-        rgba(0, 144, 183, 0.05) 0%,
+        rgba(124, 77, 255, 0.05) 0%,
         transparent 50%
       ),
       radial-gradient(
         circle at 75% 75%,
-        rgba(58, 214, 160, 0.05) 0%,
+        rgba(29, 233, 182, 0.05) 0%,
         transparent 50%
       ),
       linear-gradient(
         135deg,
-        rgba(0, 144, 183, 0.02) 0%,
-        rgba(58, 214, 160, 0.02) 100%
+        rgba(124, 77, 255, 0.02) 0%,
+        rgba(29, 233, 182, 0.02) 100%
       );
   }
 
@@ -178,7 +192,7 @@ html {
     outline: none;
     box-shadow:
       0 0 0 2px var(--color-primary),
-      0 0 0 4px rgba(0, 62, 95, 0.1);
+      0 0 0 4px rgba(94, 53, 177, 0.1);
     transition: box-shadow var(--transition-fast);
     border-radius: var(--radius-sm);
   }
@@ -186,7 +200,7 @@ html {
   .dark *:focus-visible {
     box-shadow:
       0 0 0 2px var(--color-primary),
-      0 0 0 4px rgba(0, 144, 183, 0.15);
+      0 0 0 4px rgba(124, 77, 255, 0.15);
   }
 
   /* Improved Scrollbars */
@@ -1216,4 +1230,48 @@ html, body {
 
 .scroll-indicator.hidden {
   opacity: 0;
+}
+
+/* Custom cursor styles for Option 3 color palette */
+* {
+  cursor: default;
+}
+
+/* For clickable elements */
+a, button, [role="button"] {
+  cursor: pointer;
+}
+
+/* For text input areas */
+input[type="text"], textarea, input[type="email"], input[type="password"] {
+  cursor: text;
+}
+
+/* For loading states */
+.loading {
+  cursor: wait;
+}
+
+/* For draggable elements */
+.draggable {
+  cursor: move;
+}
+
+/* For disabled elements */
+.disabled, :disabled {
+  cursor: not-allowed;
+}
+
+/* For resizable elements */
+.resizable {
+  cursor: nw-resize;
+}
+
+/* For grab interactions */
+.grabbable {
+  cursor: grab;
+}
+
+.grabbable:active {
+  cursor: grabbing;
 }
