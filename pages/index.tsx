@@ -37,19 +37,16 @@ export default function Home() {
       title: "Multiple AI Models",
       description: "Access GPT-4o, Claude Sonnet, and Gemini all in one place",
       icon: "🧠",
-      bgColor: "bg-purple-50"
     },
     {
       title: "Real-time Streaming",
       description: "Get instant responses with our optimized streaming technology",
       icon: "⚡",
-      bgColor: "bg-blue-50"
     },
     {
       title: "Smart Usage Tracking",
       description: "Built-in token monitoring with transparent pricing",
       icon: "📊",
-      bgColor: "bg-cyan-50"
     },
   ];
 
@@ -58,36 +55,32 @@ export default function Home() {
       name: "GPT-3.5 Turbo",
       status: "Free",
       description: "Perfect for everyday conversations and quick tasks",
-      color: "bg-green-500"
     },
     {
       name: "GPT-4o",
       status: "Pro",
       description: "Advanced reasoning for complex problem solving",
-      color: "bg-purple-500"
     },
     {
       name: "Claude Sonnet",
       status: "Pro", 
       description: "Superior writing and creative capabilities",
-      color: "bg-blue-500"
     },
     {
       name: "Gemini Pro",
       status: "Pro",
       description: "Multimodal AI with vision understanding",
-      color: "bg-cyan-500"
     },
   ];
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50 relative overflow-hidden">
+      <div className="min-h-screen bg-white relative overflow-hidden">
         {/* Animated Background Elements */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-100 rounded-full blur-3xl animate-float"></div>
-          <div className="absolute top-1/3 -left-20 w-60 h-60 bg-blue-100 rounded-full blur-2xl animate-float animation-delay-200"></div>
-          <div className="absolute bottom-20 right-1/4 w-40 h-40 bg-cyan-100 rounded-full blur-xl animate-float animation-delay-400"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gray-100 rounded-full blur-3xl animate-float opacity-30"></div>
+          <div className="absolute top-1/3 -left-20 w-60 h-60 bg-black rounded-full blur-2xl animate-float animation-delay-200 opacity-10"></div>
+          <div className="absolute bottom-20 right-1/4 w-40 h-40 bg-gray-200 rounded-full blur-xl animate-float animation-delay-400 opacity-40"></div>
         </div>
 
         {/* Navigation */}
@@ -96,30 +89,30 @@ export default function Home() {
             <div className="flex justify-between items-center h-16">
               {/* Logo */}
               <div className="flex items-center">
-                <div className="text-3xl font-bold text-purple-600">
+                <div className="text-3xl font-bold text-black">
                   Clydra
                 </div>
               </div>
 
               {/* Desktop Navigation */}
               <div className="hidden md:flex items-center space-x-8">
-                <Link href="#features" className="text-gray-600 hover:text-purple-600 transition-colors duration-300 font-medium">
+                <Link href="#features" className="text-gray-600 hover:text-black transition-colors duration-300 font-medium">
                   Features
                 </Link>
-                <Link href="#models" className="text-gray-600 hover:text-purple-600 transition-colors duration-300 font-medium">
+                <Link href="#models" className="text-gray-600 hover:text-black transition-colors duration-300 font-medium">
                   Models
                 </Link>
-                <Link href="#pricing" className="text-gray-600 hover:text-purple-600 transition-colors duration-300 font-medium">
+                <Link href="#pricing" className="text-gray-600 hover:text-black transition-colors duration-300 font-medium">
                   Pricing
                 </Link>
               </div>
 
               {/* Auth Buttons */}
               <div className="flex items-center space-x-4">
-                <Link href="/sign-in" className="text-gray-600 hover:text-gray-900 font-medium transition-colors duration-300">
+                <Link href="/sign-in" className="text-gray-600 hover:text-black font-medium transition-colors duration-300">
                   Sign In
                 </Link>
-                <Link href="/sign-up" className="px-6 py-2.5 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                <Link href="/sign-up" className="px-6 py-2.5 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 hover:shadow-lg transform hover:scale-105 transition-all duration-300">
                   Get Started
                 </Link>
               </div>
@@ -135,15 +128,15 @@ export default function Home() {
               {/* Left Side - Content */}
               <div className="text-left">
                 <div className="mb-6">
-                  <span className="inline-flex items-center px-4 py-2 bg-purple-100 rounded-full text-purple-700 font-medium text-sm border border-purple-200 backdrop-blur-sm mb-6">
+                  <span className="inline-flex items-center px-4 py-2 bg-gray-100 rounded-full text-gray-800 font-medium text-sm border border-gray-200 backdrop-blur-sm mb-6">
                     ✨ AI that actually gets you
                   </span>
-                  <h1 className="text-6xl md:text-7xl font-black text-gray-900 tracking-tight leading-none mb-6">
+                  <h1 className="text-6xl md:text-7xl font-black text-black tracking-tight leading-none mb-6">
                     Chat with AI
-                    <span className="block text-purple-600">
+                    <span className="block text-gray-600">
                       that speaks
                     </span>
-                    <span className="block text-gray-900">your vibe</span>
+                    <span className="block text-black">your vibe</span>
                   </h1>
                 </div>
 
@@ -153,7 +146,7 @@ export default function Home() {
 
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                  <Link href="/sign-up" className="group relative px-8 py-4 bg-purple-600 text-white rounded-2xl font-bold text-lg hover:bg-purple-700 hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
+                  <Link href="/sign-up" className="group relative px-8 py-4 bg-black text-white rounded-2xl font-bold text-lg hover:bg-gray-800 hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
                     <span className="flex items-center">
                       Start chatting free
                       <span className="ml-2 text-xl">🚀</span>
@@ -168,9 +161,9 @@ export default function Home() {
                 {/* Social Proof */}
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
                   <div className="flex -space-x-2">
-                    <div className="w-8 h-8 bg-purple-500 rounded-full border-2 border-white"></div>
-                    <div className="w-8 h-8 bg-blue-500 rounded-full border-2 border-white"></div>
-                    <div className="w-8 h-8 bg-cyan-500 rounded-full border-2 border-white"></div>
+                    <div className="w-8 h-8 bg-black rounded-full border-2 border-white"></div>
+                    <div className="w-8 h-8 bg-gray-700 rounded-full border-2 border-white"></div>
+                    <div className="w-8 h-8 bg-gray-500 rounded-full border-2 border-white"></div>
                   </div>
                   <span>1000+ students already vibing with AI</span>
                 </div>
@@ -182,7 +175,7 @@ export default function Home() {
                   {/* Chat Header */}
                   <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center">
                         <span className="text-white font-bold text-sm">AI</span>
                       </div>
                       <div>
@@ -206,7 +199,7 @@ export default function Home() {
                         <div
                           className={`max-w-[80%] px-4 py-3 rounded-2xl ${
                             message.type === 'user'
-                              ? 'bg-purple-600 text-white'
+                              ? 'bg-black text-white'
                               : 'bg-gray-100 text-gray-800'
                           }`}
                         >
@@ -238,7 +231,7 @@ export default function Home() {
                         className="flex-1 bg-transparent text-gray-600 placeholder-gray-400 text-sm outline-none"
                         disabled
                       />
-                      <button className="p-2 bg-purple-600 rounded-xl text-white hover:bg-purple-700 hover:shadow-lg transition-all duration-300">
+                      <button className="p-2 bg-black rounded-xl text-white hover:bg-gray-800 hover:shadow-lg transition-all duration-300">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                         </svg>
@@ -248,13 +241,13 @@ export default function Home() {
                 </div>
 
                 {/* Floating Elements around chat */}
-                <div className="absolute -top-6 -right-6 w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg animate-float">
+                <div className="absolute -top-6 -right-6 w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center shadow-lg animate-float">
                   <span className="text-xl">⚡</span>
                 </div>
-                <div className="absolute -bottom-4 -left-4 w-10 h-10 bg-pink-400 rounded-full flex items-center justify-center shadow-lg animate-float animation-delay-300">
+                <div className="absolute -bottom-4 -left-4 w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center shadow-lg animate-float animation-delay-300">
                   <span className="text-lg">🔥</span>
                 </div>
-                <div className="absolute top-1/2 -right-8 w-8 h-8 bg-cyan-400 rounded-full flex items-center justify-center shadow-lg animate-float animation-delay-500">
+                <div className="absolute top-1/2 -right-8 w-8 h-8 bg-black rounded-full flex items-center justify-center shadow-lg animate-float animation-delay-500">
                   <span className="text-sm">✨</span>
                 </div>
               </div>
@@ -263,12 +256,12 @@ export default function Home() {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="py-24 relative">
+        <section id="features" className="py-24 bg-gray-50 relative">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="text-center mb-20">
-              <h2 className="text-5xl md:text-6xl font-bold text-gray-800 mb-6 tracking-tight">
+              <h2 className="text-5xl md:text-6xl font-bold text-black mb-6 tracking-tight">
                 Why Choose 
-                <span className="text-purple-600"> Clydra</span>
+                <span className="text-gray-600"> Clydra</span>
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto font-light">
                 Experience the perfect blend of power, simplicity, and innovation
@@ -279,10 +272,10 @@ export default function Home() {
               {features.map((feature, index) => (
                 <div
                   key={index}
-                  className={`group relative p-8 rounded-3xl ${feature.bgColor} border border-white hover:shadow-2xl transition-all duration-500 hover:transform hover:scale-105 animate-fade-in-up animation-delay-${(index + 2) * 100}`}
+                  className={`group relative p-8 rounded-3xl bg-white border border-gray-200 hover:shadow-2xl transition-all duration-500 hover:transform hover:scale-105 animate-fade-in-up animation-delay-${(index + 2) * 100}`}
                 >
                   <div className="text-4xl mb-6">{feature.icon}</div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                  <h3 className="text-2xl font-bold text-black mb-4">
                     {feature.title}
                   </h3>
                   <p className="text-gray-600 leading-relaxed">
@@ -298,9 +291,9 @@ export default function Home() {
         <section id="models" className="py-24 bg-white">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="text-center mb-20">
-              <h2 className="text-5xl md:text-6xl font-bold text-gray-800 mb-6 tracking-tight">
+              <h2 className="text-5xl md:text-6xl font-bold text-black mb-6 tracking-tight">
                 Powerful 
-                <span className="text-blue-600"> AI Models</span>
+                <span className="text-gray-600"> AI Models</span>
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto font-light">
                 Access the world's most advanced AI models through one unified interface
@@ -314,17 +307,21 @@ export default function Home() {
                   className={`group relative p-6 rounded-2xl bg-gray-50 border border-gray-200 hover:shadow-xl transition-all duration-500 hover:transform hover:scale-105 animate-fade-in-up animation-delay-${(index + 2) * 100}`}
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-800">
+                    <h3 className="text-lg font-bold text-black">
                       {model.name}
                     </h3>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${model.color}`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      model.status === "Free" ? "bg-green-500 text-white" : "bg-black text-white"
+                    }`}>
                       {model.status}
                     </span>
                   </div>
                   <p className="text-gray-600 text-sm leading-relaxed">
                     {model.description}
                   </p>
-                  <div className={`absolute bottom-0 left-0 right-0 h-1 ${model.color} rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                  <div className={`absolute bottom-0 left-0 right-0 h-1 ${
+                    model.status === "Free" ? "bg-green-500" : "bg-black"
+                  } rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
                 </div>
               ))}
             </div>
@@ -335,9 +332,9 @@ export default function Home() {
         <section id="pricing" className="py-24 bg-gray-50">
           <div className="max-w-6xl mx-auto px-6 lg:px-8">
             <div className="text-center mb-20">
-              <h2 className="text-5xl md:text-6xl font-bold text-gray-800 mb-6 tracking-tight">
+              <h2 className="text-5xl md:text-6xl font-bold text-black mb-6 tracking-tight">
                 Simple 
-                <span className="text-purple-600"> Pricing</span>
+                <span className="text-gray-600"> Pricing</span>
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto font-light">
                 Start free, upgrade when you need more power
@@ -348,8 +345,8 @@ export default function Home() {
               {/* Free Plan */}
               <div className="group relative p-8 rounded-3xl bg-white border border-gray-200 hover:shadow-xl transition-all duration-500 hover:transform hover:scale-105">
                 <div className="relative z-10">
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Free</h3>
-                  <div className="text-4xl font-bold text-gray-800 mb-6">
+                  <h3 className="text-2xl font-bold text-black mb-2">Free</h3>
+                  <div className="text-4xl font-bold text-black mb-6">
                     ₹0
                     <span className="text-lg text-gray-500 font-normal">/month</span>
                   </div>
@@ -386,21 +383,21 @@ export default function Home() {
               </div>
 
               {/* Pro Plan */}
-              <div className="group relative p-8 rounded-3xl bg-purple-50 border-2 border-purple-200 hover:shadow-2xl transition-all duration-500 hover:transform hover:scale-105">
+              <div className="group relative p-8 rounded-3xl bg-gray-50 border-2 border-black hover:shadow-2xl transition-all duration-500 hover:transform hover:scale-105">
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+                  <span className="bg-black text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
                     Most Popular
                   </span>
                 </div>
                 <div className="relative z-10">
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Pro</h3>
-                  <div className="text-4xl font-bold text-gray-800 mb-6">
+                  <h3 className="text-2xl font-bold text-black mb-2">Pro</h3>
+                  <div className="text-4xl font-bold text-black mb-6">
                     ₹799
                     <span className="text-lg text-gray-500 font-normal">/month</span>
                   </div>
                   <ul className="space-y-4 mb-8">
                     <li className="flex items-center space-x-3">
-                      <div className="w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center">
+                      <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center">
                         <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
@@ -408,7 +405,7 @@ export default function Home() {
                       <span className="text-gray-700">Unlimited messages</span>
                     </li>
                     <li className="flex items-center space-x-3">
-                      <div className="w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center">
+                      <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center">
                         <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
@@ -416,7 +413,7 @@ export default function Home() {
                       <span className="text-gray-700">All premium AI models</span>
                     </li>
                     <li className="flex items-center space-x-3">
-                      <div className="w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center">
+                      <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center">
                         <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
@@ -424,7 +421,7 @@ export default function Home() {
                       <span className="text-gray-700">Priority support</span>
                     </li>
                     <li className="flex items-center space-x-3">
-                      <div className="w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center">
+                      <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center">
                         <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
@@ -432,7 +429,7 @@ export default function Home() {
                       <span className="text-gray-700">Advanced features</span>
                     </li>
                   </ul>
-                  <Link href="/sign-up" className="w-full inline-block text-center px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                  <Link href="/sign-up" className="w-full inline-block text-center px-6 py-3 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 hover:shadow-lg transform hover:scale-105 transition-all duration-300">
                     Upgrade to Pro
                   </Link>
                 </div>
@@ -442,20 +439,20 @@ export default function Home() {
         </section>
 
         {/* Final CTA Section */}
-        <section className="py-24 bg-purple-600">
+        <section className="py-24 bg-black">
           <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
             <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">
               Ready to Experience
-              <span className="block text-cyan-300"> Clydra</span>?
+              <span className="block text-gray-300"> Clydra</span>?
             </h2>
-            <p className="text-xl text-purple-100 mb-12 max-w-2xl mx-auto font-light leading-relaxed">
+            <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto font-light leading-relaxed">
               Join thousands of users already having amazing conversations with AI
             </p>
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <Link href="/sign-up" className="px-10 py-4 bg-white text-purple-600 rounded-2xl font-semibold text-lg hover:bg-gray-100 hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
+              <Link href="/sign-up" className="px-10 py-4 bg-white text-black rounded-2xl font-semibold text-lg hover:bg-gray-100 hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
                 Start Free Today
               </Link>
-              <Link href="#features" className="px-10 py-4 bg-purple-700 text-white rounded-2xl font-semibold text-lg border border-purple-500 hover:bg-purple-800 hover:shadow-lg transition-all duration-300">
+              <Link href="#features" className="px-10 py-4 bg-gray-800 text-white rounded-2xl font-semibold text-lg border border-gray-700 hover:bg-gray-700 hover:shadow-lg transition-all duration-300">
                 Learn More
               </Link>
             </div>
@@ -467,7 +464,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
               <div className="col-span-1 md:col-span-2">
-                <div className="text-3xl font-bold text-purple-400 mb-4">
+                <div className="text-3xl font-bold text-white mb-4">
                   Clydra
                 </div>
                 <p className="text-gray-300 max-w-md leading-relaxed">

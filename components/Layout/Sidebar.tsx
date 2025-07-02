@@ -34,13 +34,13 @@ function ProfileChip({ collapsed }: { collapsed: boolean }) {
           className="w-8 h-8 rounded-full"
         />
       ) : (
-        <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center">
-          <User size={16} className="text-brand-600" />
+        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+          <User size={16} className="text-gray-600" />
         </div>
       )}
       {!collapsed && (
         <div className="flex-1 min-w-0">
-          <span className="text-sm font-medium text-gray-700 truncate block">
+          <span className="text-sm font-medium text-gray-800 truncate block">
             {user?.fullName || user?.firstName || "User"}
           </span>
         </div>
@@ -48,7 +48,7 @@ function ProfileChip({ collapsed }: { collapsed: boolean }) {
       {!collapsed && (
         <button
           onClick={handleSignOut}
-          className="p-1 rounded-md hover:bg-gray-100 text-gray-500 hover:text-gray-700"
+          className="p-1 rounded-md hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
           title="Sign out"
         >
           <LogOut size={16} />
@@ -104,53 +104,57 @@ export default function Sidebar({ planType = "free" }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col h-full transition-width duration-300",
+        "flex flex-col h-full transition-all duration-300",
         // @dashboard-redesign - Updated width from w-64 to w-60, collapsed from w-16
         collapsed ? "w-16" : "w-60",
-        // @dashboard-redesign - Updated gradient background
-        "bg-gradient-to-b from-sidebar-from to-sidebar-to",
-        "border-r border-gray-200 dark:border-[#2A2A2E]"
+        // @dashboard-redesign - Clean white background instead of gradient
+        "bg-white",
+        "border-r border-gray-200"
       )}
     >
       {/* top controls */}
-      <div className="flex items-center gap-2 px-3 py-4">
+      <div className="flex items-center gap-2 px-3 py-4 border-b border-gray-100">
         <button
           onClick={toggleCollapse}
-          className="p-1 rounded-md hover:bg-brand-50"
+          className="p-1 rounded-md hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-colors"
         >
           {collapsed ? <Menu size={18} /> : <ChevronLeft size={18} />}
         </button>
 
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-brand to-brand/70 rounded-lg flex items-center justify-center shadow-sm">
+            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center shadow-sm">
               <span className="text-white font-bold text-sm">C</span>
             </div>
-            <span className="text-sm font-semibold tracking-tight">Clydra</span>
+            <span className="text-sm font-semibold tracking-tight text-gray-900">Clydra</span>
           </div>
         )}
       </div>
 
-      {/* @dashboard-redesign - New Chat button with brand-500 */}
-      <button
-        onClick={createThread}
-        className={cn(
-          "mx-3 mb-3 rounded-md bg-brand-500 py-2 text-white text-sm font-medium",
-          "hover:bg-brand-600 transition",
-          collapsed && "mx-2 px-2"
-        )}
-      >
-        {collapsed ? "+" : "+ New Chat"}
-      </button>
+      {/* @dashboard-redesign - New Chat button with black styling */}
+      <div className="p-3 border-b border-gray-100">
+        <button
+          onClick={createThread}
+          className={cn(
+            "w-full rounded-lg bg-black py-2.5 text-white text-sm font-medium",
+            "hover:bg-gray-800 transition-colors",
+            "flex items-center justify-center gap-2",
+            collapsed && "px-2"
+          )}
+        >
+          <span className="text-lg leading-none">+</span>
+          {!collapsed && "New Chat"}
+        </button>
+      </div>
 
       {/* search + thread list */}
-      <div className="flex-1 overflow-y-auto px-3 space-y-3">
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
         {!collapsed && <ThreadSearch />}
         {!collapsed && <ThreadList activeThread={threadId} />}
       </div>
 
       {/* @dashboard-redesign - bottom cluster with TokenGauge and ProfileChip */}
-      <div className="px-3 py-4 border-t border-gray-200 dark:border-[#2A2A2E]">
+      <div className="px-3 py-4 border-t border-gray-200">
         {!collapsed && (
           <div className="mb-3 space-y-3">
             <TokenGauge />

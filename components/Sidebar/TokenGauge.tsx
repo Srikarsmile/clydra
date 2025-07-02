@@ -77,8 +77,8 @@ export function TokenGauge() {
 
   if (error) {
     return (
-      <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-700">
-        <p className="text-sm text-red-600 dark:text-red-400">
+      <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+        <p className="text-sm text-red-600">
           Failed to load token usage
         </p>
       </div>
@@ -87,25 +87,25 @@ export function TokenGauge() {
 
   if (!data) {
     return (
-      <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+      <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
-          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
-          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+          <div className="h-4 bg-gray-200 rounded mb-2"></div>
+          <div className="h-2 bg-gray-200 rounded mb-2"></div>
+          <div className="h-3 bg-gray-200 rounded w-3/4"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+    <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
       <div className="space-y-3">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+          <h3 className="text-sm font-medium text-gray-900">
             Token Usage
           </h3>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-xs text-gray-500">
             This month
           </span>
         </div>
@@ -113,10 +113,10 @@ export function TokenGauge() {
         {/* Usage Numbers */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-gray-600">
               {formatNumber(used)} / {formatNumber(cap)} tokens
             </span>
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-gray-600">
               {percentage.toFixed(1)}%
             </span>
           </div>
@@ -128,19 +128,19 @@ export function TokenGauge() {
         {/* Status Message */}
         <div className="text-xs">
           {percentage >= 100 ? (
-            <span className="text-red-600 dark:text-red-400 font-medium">
+            <span className="text-red-600 font-medium">
               ⚠️ Monthly limit exceeded
             </span>
           ) : percentage >= 95 ? (
-            <span className="text-red-600 dark:text-red-400 font-medium">
+            <span className="text-red-600 font-medium">
               ⚠️ 95% of limit used
             </span>
           ) : percentage >= 80 ? (
-            <span className="text-amber-600 dark:text-amber-400 font-medium">
+            <span className="text-amber-600 font-medium">
               ⚡ 80% of limit used
             </span>
           ) : (
-            <span className="text-green-600 dark:text-green-400">
+            <span className="text-green-600">
               ✅ {(100 - percentage).toFixed(1)}% remaining
             </span>
           )}

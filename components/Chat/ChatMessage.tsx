@@ -24,9 +24,8 @@ const ChatMessage: React.FC<ChatMessageProps> = memo(
                     <pre
                       className={cn(
                         "overflow-x-auto rounded-xl border p-4 text-sm my-4",
-                        "bg-gray-50/80 backdrop-blur-sm border-gray-200/50 text-gray-900",
-                        "dark:bg-gray-800/80 dark:border-gray-600/50 dark:text-gray-100",
-                        "transition-all duration-200 hover:bg-gray-50",
+                        "bg-gray-50 border-gray-200 text-gray-900",
+                        "transition-all duration-200 hover:bg-gray-100",
                         "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
                       )}
                     >
@@ -38,8 +37,7 @@ const ChatMessage: React.FC<ChatMessageProps> = memo(
                     <code
                       className={cn(
                         "rounded-md px-2 py-1 text-sm font-mono",
-                        "bg-gray-100/80 text-gray-900 border border-gray-200/50",
-                        "dark:bg-gray-700/80 dark:text-gray-200 dark:border-gray-600/50",
+                        "bg-gray-100 text-gray-900 border border-gray-200",
                         "transition-colors duration-150"
                       )}
                       {...props}
@@ -50,9 +48,9 @@ const ChatMessage: React.FC<ChatMessageProps> = memo(
                 },
                 table({ children, ...props }) {
                   return (
-                    <div className="overflow-x-auto my-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="overflow-x-auto my-6 rounded-lg border border-gray-200">
                       <table
-                        className="min-w-full divide-y divide-gray-200 dark:divide-gray-700"
+                        className="min-w-full divide-y divide-gray-200"
                         {...props}
                       >
                         {children}
@@ -65,8 +63,7 @@ const ChatMessage: React.FC<ChatMessageProps> = memo(
                     <blockquote
                       className={cn(
                         "border-l-4 pl-6 py-3 my-6 italic rounded-r-lg",
-                        "border-brand-300 bg-brand-50/50 text-gray-700",
-                        "dark:border-brand-400 dark:bg-brand-900/20 dark:text-gray-300",
+                        "border-gray-300 bg-gray-50 text-gray-700",
                         "transition-colors duration-200"
                       )}
                       {...props}
@@ -110,7 +107,7 @@ const ChatMessage: React.FC<ChatMessageProps> = memo(
           </div>
 
           {timestamp && (
-            <p className="mt-2 text-xs text-gray-400 transition-opacity duration-200 opacity-60 hover:opacity-100">
+            <p className="mt-2 text-xs text-gray-500 transition-opacity duration-200 opacity-60 hover:opacity-100">
               {timestamp.toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",

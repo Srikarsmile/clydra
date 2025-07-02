@@ -161,21 +161,21 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
             {/* @ui-polish - Enhanced thread item with message count and delete functionality */}
             <div
               className={cn(
-                "group flex items-center justify-between rounded-md transition-colors hover:bg-gray-100",
-                thread.id === activeThread && "bg-brand/10"
+                "group flex items-center justify-between rounded-lg transition-colors hover:bg-gray-50",
+                thread.id === activeThread && "bg-gray-100"
               )}
             >
               {/* Conditional rendering: button for active thread, Link for others */}
               {thread.id === activeThread ? (
                 <div
                   className={cn(
-                    "flex items-center justify-between flex-1 px-2 py-1 text-sm cursor-default",
-                    "bg-brand-50 text-brand-600 font-medium"
+                    "flex items-center justify-between flex-1 px-3 py-2 text-sm cursor-default",
+                    "bg-gray-100 text-gray-900 font-medium rounded-lg"
                   )}
                 >
                   <span className="truncate">{thread.title}</span>
                   {thread.msg_count && thread.msg_count > 0 && (
-                    <span className="ml-2 text-[10px] rounded bg-gray-200 px-1">
+                    <span className="ml-2 text-[10px] rounded bg-gray-200 px-1.5 py-0.5 text-gray-600">
                       {thread.msg_count}
                     </span>
                   )}
@@ -185,42 +185,42 @@ export default function ThreadList({ activeThread }: ThreadListProps) {
                   href={`/dashboard?thread=${thread.id}`}
                   onClick={(e) => handleThreadClick(thread.id, e)}
                   className={cn(
-                    "flex items-center justify-between flex-1 px-2 py-1 text-sm transition-colors",
-                    "hover:bg-brand-50/50"
+                    "flex items-center justify-between flex-1 px-3 py-2 text-sm transition-colors",
+                    "hover:bg-gray-50 text-gray-700 hover:text-gray-900 rounded-lg"
                   )}
                 >
                   <span className="truncate">{thread.title}</span>
                   {thread.msg_count && thread.msg_count > 0 && (
-                    <span className="ml-2 text-[10px] rounded bg-gray-200 px-1">
+                    <span className="ml-2 text-[10px] rounded bg-gray-100 px-1.5 py-0.5 text-gray-500">
                       {thread.msg_count}
                     </span>
                   )}
                 </Link>
               )}
 
+              {/* @ux-refresh - Delete button with loading state */}
               <button
                 onClick={(e) => deleteThread(thread.id, e)}
                 disabled={deletingId === thread.id}
                 className={cn(
-                  "opacity-0 group-hover:opacity-100 p-1 mr-1 rounded transition-all",
-                  "hover:bg-red-100 hover:text-red-600 text-gray-400",
-                  deletingId === thread.id && "opacity-100 cursor-not-allowed"
+                  "opacity-0 group-hover:opacity-100 p-1 rounded transition-opacity",
+                  "hover:bg-gray-200 text-gray-400 hover:text-gray-600",
+                  deletingId === thread.id && "opacity-100 animate-pulse"
                 )}
                 title="Delete chat"
               >
-                {deletingId === thread.id ? (
-                  <div className="w-3 h-3 border border-red-300 border-t-red-600 rounded-full animate-spin" />
-                ) : (
-                  <Trash2 size={12} />
-                )}
+                <Trash2 size={14} />
               </button>
             </div>
-            {/* @ui-polish - End enhanced thread item */}
           </li>
         ))}
-        {threads?.length === 0 && (
-          <li className="text-sm text-gray-500 px-2 py-1">
-            No conversations yet
+
+        {/* @threads - Empty state */}
+        {threads.length === 0 && (
+          <li className="px-3 py-8 text-center text-gray-500 text-sm">
+            No conversations yet.
+            <br />
+            Start a new chat to begin!
           </li>
         )}
       </ul>
