@@ -553,10 +553,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
       <div className="flex-1 flex flex-col w-full px-6 pb-32 min-h-0">
         {/* @dashboard-redesign - Clydra logo header */}
         <div className="flex items-center justify-between py-4 border-b border-gray-100 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">C</span>
-            </div>
+          <div className="flex items-center">
             <span className="text-xl font-bold text-gray-900">Clydra</span>
           </div>
           {/* @dashboard-redesign - Model badge in header */}
