@@ -34,10 +34,13 @@ export default async function handler(
     // @performance - Set up streaming headers if requested
     if (stream) {
       res.setHeader("Content-Type", "text/event-stream");
-      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Cache-Control", "no-cache, no-transform");
       res.setHeader("Connection", "keep-alive");
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Access-Control-Allow-Headers", "Cache-Control");
+      // @performance - Additional headers for optimized streaming
+      res.setHeader("X-Accel-Buffering", "no"); // Disable Nginx buffering
+      res.setHeader("Content-Encoding", "identity"); // Prevent compression buffering
 
       try {
         // @performance - Use streaming implementation

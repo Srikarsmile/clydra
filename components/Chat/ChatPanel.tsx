@@ -288,28 +288,91 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
     requestAnimationFrame(() => scrollToBottom(true));
 
     try {
-      // @performance - Try streaming first for better UX
-      const result = await sendStreamingMessage(
-        "/api/chat/proxy",
-        { arg: { messages: newMessages, model, threadId, enableWebSearch } },
-        (content: string) => {
-          setStreamingMessage((prev) => prev + content);
-          // Scroll as content streams in
-          requestAnimationFrame(() => scrollToBottom(false));
+      // @performance - Optimized streaming with keepalive and priority hints
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+      const response = await fetch("/api/chat/proxy", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          // @performance - Connection optimization hints
+          "Connection": "keep-alive",
+          "Keep-Alive": "timeout=5, max=1000",
+        },
+        body: JSON.stringify({ 
+          messages: newMessages, 
+          model, 
+          threadId, 
+          enableWebSearch, 
+          stream: true 
+        }),
+        signal: controller.signal,
+        // @performance - Browser optimization hints
+        cache: "no-cache",
+        priority: "high",
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      if (!response.body) {
+        throw new Error("Response body is null");
+      }
+
+      const reader = response.body.getReader();
+      let fullMessage = "";
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = new TextDecoder().decode(value);
+          const lines = chunk.split("\n");
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const data = line.slice(6);
+              if (data === "[DONE]") {
+                break;
+              }
+              
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.content) {
+                  fullMessage += parsed.content;
+                  setStreamingMessage(fullMessage);
+                  // @performance - Throttled scrolling for better performance
+                  requestAnimationFrame(() => scrollToBottom(false));
+                } else if (parsed.error) {
+                  throw new Error(parsed.error);
+                }
+              } catch {
+                // Skip invalid JSON lines
+              }
+            }
+          }
         }
-      );
+      } finally {
+        reader.releaseLock();
+      }
 
       // Add the complete streamed message
       setMessages((prev) => [
         ...prev,
         {
-          ...result.message,
+          role: "assistant" as const,
+          content: fullMessage,
           id: (Date.now() + 1).toString(),
         },
       ]);
       setStreamingMessage("");
       setShowUpgrade(false);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(
         "Streaming failed, falling back to regular request:",
         error
