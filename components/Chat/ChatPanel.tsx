@@ -419,28 +419,15 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
     [isMutating, user, messages, threadId, enableWebSearch, trigger]
   );
 
-  // @dashboard-redesign - Clear conversation when switching models
+  // @dashboard-redesign - Switch model and continue conversation
   const handleModelChange = useCallback(
     (newModel: ChatModel) => {
-      if (newModel !== model && messages.length > 0) {
-        // If there are messages, ask user if they want to retry with new model or start fresh
-        const shouldRetry = window.confirm(
-          `Switch to ${MODEL_ALIASES[newModel]}?\n\n` +
-            `• "OK" to retry your last question with ${MODEL_ALIASES[newModel]}\n` +
-            `• "Cancel" to start a fresh conversation with ${MODEL_ALIASES[newModel]}`
-        );
-
-        if (shouldRetry) {
-          handleRetryWithModel(newModel);
-        } else {
-          setMessages([]);
-          setModel(newModel);
-        }
-      } else {
+      if (newModel !== model) {
+        // Simply switch to the new model and continue the conversation
         setModel(newModel);
       }
     },
-    [model, messages.length, handleRetryWithModel]
+    [model]
   );
 
   // @dashboard-redesign - Suggestions for empty state
