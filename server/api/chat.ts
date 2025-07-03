@@ -13,7 +13,7 @@ import { estimateConversationTokens } from "../lib/chatTokens";
 import { updateUsageMeter } from "../lib/usage";
 import { getRemainingDailyTokens, consumeDailyTokens } from "../lib/grantDailyTokens"; // @grant-40k
 import { addTokens } from "../lib/tokens"; // @model-multiplier - Import token tracking with multipliers
-import { effectiveTokens, MODEL_MULTIPLIER, WEB_SEARCH_MULTIPLIER } from "../lib/tokens"; // @margin-patch - Import token multiplier system
+import { computeEffectiveTokens, MODEL_MULTIPLIER, WEB_SEARCH_MULTIPLIER } from "../lib/tokens"; // @margin-patch - Import token multiplier system
 import { supabaseAdmin } from "../../lib/supabase";
 import { getOrCreateUser } from "../../lib/user-utils";
 import { MODEL_ALIASES, ChatModel, MODELS_WITH_WEB_SEARCH } from "../../types/chatModels";
@@ -184,7 +184,7 @@ export async function processChatRequest(
           // @performance - Streaming vs Non-streaming logic
       if (enableStreaming) {
         // @margin-patch - Calculate effective tokens with model multiplier
-        const effectiveInputTokens = await effectiveTokens(model, inputTokens, shouldUseWebSearch);
+        const effectiveInputTokens = await computeEffectiveTokens(model, inputTokens, shouldUseWebSearch);
         
         // @performance - Optimized streaming implementation
         // Consume input tokens immediately, output tokens after completion
@@ -321,7 +321,7 @@ export async function processChatRequest(
       const totalTokens = inputTokens + outputTokens;
 
       // @margin-patch - Calculate effective tokens with model multiplier
-      const effectiveTotalTokens = await effectiveTokens(model, completion.usage?.total_tokens || totalTokens, shouldUseWebSearch);
+      const effectiveTotalTokens = await computeEffectiveTokens(model, completion.usage?.total_tokens || totalTokens, shouldUseWebSearch);
 
       // Log token calculation for debugging
       console.log(`Token calculation: ${completion.usage?.total_tokens || totalTokens} × ${MODEL_MULTIPLIER[model] || 1.0} (model) × ${shouldUseWebSearch ? WEB_SEARCH_MULTIPLIER : 1.0} (web search) = ${effectiveTotalTokens}`);

@@ -35,7 +35,7 @@ export const WEB_SEARCH_MULTIPLIER = 1.3;
  * @param webSearchEnabled - Whether web search was used (adds 30% overhead)
  * @returns The effective token count after applying multipliers
  */
-export async function effectiveTokens(
+export async function computeEffectiveTokens( // @fix-name - Renamed to avoid TDZ error
   modelKey: string,
   rawTokens: number,
   webSearchEnabled: boolean = false
@@ -89,8 +89,8 @@ export async function addTokens(
   const monthStr = month.toISOString().split("T")[0]; // YYYY-MM-DD format
 
   // @model-multiplier - Calculate effective tokens based on model and web search usage
-  const effectiveTokens = model 
-    ? await effectiveTokens(model, tokens, usedWebSearch)
+  const effectiveTokenCount = model 
+    ? await computeEffectiveTokens(model, tokens, usedWebSearch)
     : tokens; // Fallback to raw tokens if model not specified
 
   try {
@@ -114,7 +114,7 @@ export async function addTokens(
       const { error } = await supabaseAdmin
         .from("token_usage")
         .update({
-          tokens_used: existing.tokens_used + effectiveTokens,
+          tokens_used: existing.tokens_used + effectiveTokenCount,
         })
         .eq("user_id", supabaseUserId)
         .eq("month_start", monthStr);
@@ -129,7 +129,7 @@ export async function addTokens(
       const { error } = await supabaseAdmin.from("token_usage").insert({
         user_id: supabaseUserId,
         month_start: monthStr,
-        tokens_used: effectiveTokens,
+        tokens_used: effectiveTokenCount,
       });
 
       if (error) {
@@ -207,7 +207,7 @@ export async function checkQuota(
 
     // @model-multiplier - Calculate effective tokens for the request
     const effectiveRequestTokens = model 
-      ? await effectiveTokens(model, requestTokens, usedWebSearch)
+      ? await computeEffectiveTokens(model, requestTokens, usedWebSearch)
       : requestTokens;
 
     if (used + effectiveRequestTokens > cap) {
