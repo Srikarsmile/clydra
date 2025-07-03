@@ -74,6 +74,9 @@ export interface ChatResponse {
     totalTokens: number;
   };
   webSearchUsed?: boolean; // @web-search - Indicate if web search was used
+  timing?: {
+    openRouterDuration: number; // @performance - Add timing information
+  };
 }
 
 // Add streaming response interface
@@ -288,6 +291,7 @@ export async function processChatRequest(
       return { stream };
     } else {
       // @clydra-core Non-streaming implementation (legacy)
+      const t0 = performance.now();
       const completion = await openai.chat.completions.create({
         model: openRouterModel, // @web-search - Use model with :online suffix if web search enabled
         messages: validatedInput.messages,
@@ -304,6 +308,7 @@ export async function processChatRequest(
           },
         }),
       });
+      const t1 = performance.now();
 
       if (!completion.choices[0]?.message?.content) {
         throw new ChatError(
@@ -369,6 +374,9 @@ export async function processChatRequest(
           totalTokens: completion.usage?.total_tokens || totalTokens,
         },
         webSearchUsed: shouldUseWebSearch, // @web-search - Indicate if web search was used
+        timing: {
+          openRouterDuration: t1 - t0, // @performance - Add timing information
+        },
       };
     }
   } catch (error) {

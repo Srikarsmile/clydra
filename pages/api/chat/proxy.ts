@@ -73,6 +73,9 @@ export default async function handler(
     }
 
     // Handle regular response
+    if (result && typeof result === 'object' && 'timing' in result && result.timing) {
+      res.setHeader("Server-Timing", `openrouter;dur=${result.timing.openRouterDuration.toFixed()}`);
+    }
     return res.status(200).json(result);
   } catch (error) {
     console.error("Chat API error:", error);
