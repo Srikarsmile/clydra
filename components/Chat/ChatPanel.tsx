@@ -48,7 +48,7 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
   const router = useRouter(); // @persistence-fix - Add router for URL updates
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [model, setModel] = useState<ChatModel>("google/gemini-2.5-flash");
+  const [model, setModel] = useState<ChatModel>("google/gemini-2.0-flash-001"); // Updated to use correct free tier model
   const [enableWebSearch, setEnableWebSearch] = useState(false); // @web-search - Enable web search state management
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
@@ -259,7 +259,18 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+          // Get detailed error information
+          let errorMessage = `HTTP ${response.status}`;
+          try {
+            const errorData = await response.json();
+            if (errorData.error) {
+              errorMessage += `: ${errorData.error}`;
+            }
+          } catch (e) {
+            // If we can't parse JSON, use the status text
+            errorMessage += `: ${response.statusText}`;
+          }
+          throw new Error(errorMessage);
         }
 
         if (!response.body) {

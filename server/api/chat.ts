@@ -28,23 +28,22 @@ const chatInputSchema = z.object({
   ),
   model: z
     .enum([
-      // @dashboard-redesign - Models matching the design brief
-      "google/gemini-2.5-flash", // Free model
+      // @dashboard-redesign - Models matching the design brief with correct OpenRouter identifiers
+      "google/gemini-2.0-flash-001", // Free model
       "openai/gpt-4o",
-      "anthropic/claude-sonnet-4", // Updated to new Claude Sonnet 4
-      "google/gemini-2.5-pro",
+      "anthropic/claude-3.5-sonnet", // Updated to correct OpenRouter identifier
+      "x-ai/grok-beta", // Updated to correct OpenRouter identifier
+      "google/gemini-2.5-pro-exp-03-25", // Updated to correct OpenRouter identifier
       // Legacy models for compatibility
       "openai/gpt-4o-mini",
       "deepseek/deepseek-r1",
-      "x-ai/grok-3-beta",
       "google/gemini-2.5-flash-preview",
-      "anthropic/claude-opus-4",
+      "anthropic/claude-3-opus-20240229",
       "anthropic/claude-3-sonnet-20240229",
       "google/gemini-1.5-pro",
-      "anthropic/claude-3-opus-20240229",
       "meta-llama/llama-3-70b-instruct",
     ] as const)
-    .default("google/gemini-2.5-flash"), // @dashboard-redesign - Default to free Gemini 2.5 Flash
+    .default("google/gemini-2.0-flash-001"), // @dashboard-redesign - Default to free Gemini 2.0 Flash
   threadId: z.string().optional(), // @threads - Add threadId support
   enableWebSearch: z.boolean().optional().default(false), // @web-search - Add web search toggle
   webSearchContextSize: z.enum(["low", "medium", "high"]).optional().default("medium"), // @web-search - Search context size
@@ -126,7 +125,7 @@ export async function processChatRequest(
   // @clydra-core Validate incoming model against MODEL_ALIASES
   const model: ChatModel = MODEL_ALIASES[validatedInput.model as ChatModel]
     ? (validatedInput.model as ChatModel)
-    : "openai/gpt-4o";
+    : "google/gemini-2.0-flash-001";
 
   // @web-search - Check if web search should be enabled
   const shouldUseWebSearch = validatedInput.enableWebSearch && 
@@ -192,6 +191,17 @@ export async function processChatRequest(
         // @performance - Optimized streaming implementation
         // Consume input tokens immediately, output tokens after completion
         await consumeDailyTokens(userId, effectiveInputTokens);
+
+      // @debug - Log request details before API call
+      console.log("🔍 OpenRouter API Call Details:", {
+        model: openRouterModel,
+        originalModel: model,
+        shouldUseWebSearch,
+        messagesCount: validatedInput.messages.length,
+        temperature: 0.7,
+        max_tokens: 2000,
+        stream: true,
+      });
 
       const completion = await openai.chat.completions.create({
         model: openRouterModel, // @web-search - Use model with :online suffix if web search enabled
@@ -292,6 +302,18 @@ export async function processChatRequest(
     } else {
       // @clydra-core Non-streaming implementation (legacy)
       const t0 = performance.now();
+      
+      // @debug - Log request details before API call
+      console.log("🔍 OpenRouter API Call Details (non-streaming):", {
+        model: openRouterModel,
+        originalModel: model,
+        shouldUseWebSearch,
+        messagesCount: validatedInput.messages.length,
+        temperature: 0.5,
+        max_tokens: 3000,
+        stream: false,
+      });
+      
       const completion = await openai.chat.completions.create({
         model: openRouterModel, // @web-search - Use model with :online suffix if web search enabled
         messages: validatedInput.messages,

@@ -6,22 +6,21 @@ import { ChatModel } from "../../types/chatModels";
 // @margin-patch - Token multiplier system for different models
 export const MODEL_MULTIPLIER: Record<string, number> = {
   // Free Plan Models (50% cheaper)
-  "google/gemini-2.5-flash": 0.5, // Free model with 0.5x multiplier
+  "google/gemini-2.0-flash-001": 0.5, // Free model with 0.5x multiplier
 
   // Pro Plan Models
   "openai/gpt-4o": 1.0, // Base model with 1.0x multiplier
-  "anthropic/claude-sonnet-4": 1.5, // Premium model with 1.5x multiplier
-  "x-ai/grok-3-beta": 1.5, // Premium model with 1.5x multiplier
-  "google/gemini-2.5-pro": 1.0, // Standard pro model with 1.0x multiplier
+  "anthropic/claude-3.5-sonnet": 1.5, // Premium model with 1.5x multiplier
+  "x-ai/grok-beta": 1.5, // Premium model with 1.5x multiplier
+  "google/gemini-2.5-pro-exp-03-25": 1.0, // Standard pro model with 1.0x multiplier
 
   // Legacy models (kept for compatibility)
   "openai/gpt-4o-mini": 0.75,
   "deepseek/deepseek-r1": 1.0,
   "google/gemini-2.5-flash-preview": 0.5,
-  "anthropic/claude-opus-4": 2.0,
+  "anthropic/claude-3-opus-20240229": 2.0,
   "anthropic/claude-3-sonnet-20240229": 1.5,
   "google/gemini-1.5-pro": 1.0,
-  "anthropic/claude-3-opus-20240229": 2.0,
   "meta-llama/llama-3-70b-instruct": 1.0,
 };
 
