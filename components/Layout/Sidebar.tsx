@@ -160,8 +160,6 @@ export default function Sidebar({ planType = "free" }: SidebarProps) {
             ) : (
               <ChevronLeft size={16} className="hidden md:block sm:w-[18px] sm:h-[18px]" />
             )}
-            {/* Always show close button on mobile when menu is open */}
-            {mobileMenuOpen && <X size={16} className="md:hidden" />}
           </button>
 
           {(!collapsed || mobileMenuOpen) && (
