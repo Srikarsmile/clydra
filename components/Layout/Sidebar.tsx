@@ -58,9 +58,79 @@ function ProfileChip({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+// @dashboard-redesign - Upgrade modal component
+function UpgradeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl max-w-md w-full mx-auto shadow-2xl border border-gray-200">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-semibold text-gray-900">Upgrade to Pro</h3>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X size={20} className="text-gray-500" />
+            </button>
+          </div>
+          
+          <div className="mb-6">
+            <p className="text-gray-600 mb-4">
+              Unlock unlimited messages, faster responses, and access to premium models like GPT-4o, Claude Sonnet 4, and web search.
+            </p>
+            
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <div className="text-2xl font-bold text-black mb-2">
+                ₹799 <span className="text-sm font-normal text-gray-500">/ month</span>
+              </div>
+              <div className="text-sm text-gray-600">
+                or $15 / month
+              </div>
+            </div>
+
+            <div className="space-y-2 text-sm text-gray-600">
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-black rounded-full mr-3"></div>
+                Unlimited messages
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-black rounded-full mr-3"></div>
+                GPT-4o, Claude Sonnet 4 & Grok 3 access
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-black rounded-full mr-3"></div>
+                🌐 Web Search on all models
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-black rounded-full mr-3"></div>
+                Priority support
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <button className="w-full bg-black hover:bg-gray-800 text-white font-medium py-3 rounded-xl transition-all duration-300">
+              Coming Soon - Upgrade to Pro
+            </button>
+            <button
+              onClick={onClose}
+              className="w-full text-gray-500 hover:text-gray-700 py-2 transition-colors"
+            >
+              Continue with Free Plan
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Sidebar({ planType = "free" }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const router = useRouter();
 
   // @dashboard-redesign - Listen for hamburger menu toggle from chat header
@@ -116,11 +186,13 @@ export default function Sidebar({ planType = "free" }: SidebarProps) {
     setMobileMenuOpen((prev) => !prev);
   }, []);
 
-  // Navigation to services - optimized with useCallback
-  const navigateToServices = useCallback(() => {
-    router.push("/services");
+  // Handle plan badge click - show upgrade modal instead of navigating away
+  const handlePlanBadgeClick = useCallback(() => {
+    if (planType === "free") {
+      setShowUpgradeModal(true);
+    }
     setMobileMenuOpen(false);
-  }, [router]);
+  }, [planType]);
 
   return (
     <>
@@ -199,13 +271,19 @@ export default function Sidebar({ planType = "free" }: SidebarProps) {
               <TokenGauge />
               <PlanBadge
                 plan={planType as "free" | "pro" | "max"}
-                onClick={navigateToServices}
+                onClick={handlePlanBadgeClick}
               />
             </div>
           )}
           <ProfileChip collapsed={collapsed && !mobileMenuOpen} />
         </div>
       </aside>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal 
+        isOpen={showUpgradeModal} 
+        onClose={() => setShowUpgradeModal(false)} 
+      />
     </>
   );
 }
