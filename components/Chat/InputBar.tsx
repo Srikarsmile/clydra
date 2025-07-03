@@ -109,9 +109,7 @@ export default function InputBar({
                 >
                   {availableModels.map((model) => (
                     <option key={model} value={model}>
-                      {/* Show very short names on mobile */}
-                      <span className="sm:hidden">{MODEL_ALIASES[model].split(' ')[0].slice(0, 6)}</span>
-                      <span className="hidden sm:inline">{MODEL_ALIASES[model]}</span>
+                      {MODEL_ALIASES[model]}
                     </option>
                   ))}
                 </select>
