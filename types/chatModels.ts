@@ -12,7 +12,7 @@ export const MODEL_ALIASES = {
   // Legacy models (kept for compatibility)
   "openai/gpt-4o-mini": "GPT-4o Mini",
   "deepseek/deepseek-r1": "DeepSeek R1",
-  "google/gemini-2.5-flash-preview": "Gemini 2.5 Flash",
+  "google/gemini-2.5-flash-preview": "Gemini 2.5 Flash Preview",
   "anthropic/claude-opus-4": "Claude 4 Opus",
   "anthropic/claude-3-sonnet-20240229": "Claude 3 Sonnet",
   "google/gemini-1.5-pro": "Gemini 1.5 Pro",
