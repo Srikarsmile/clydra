@@ -10,8 +10,9 @@ import { z } from "zod";
 import OpenAI from "openai";
 import { useOpenRouter } from "../lib/useOpenRouter";
 import { estimateConversationTokens } from "../lib/chatTokens";
-import { hasExceededDailyLimit, updateUsageMeter } from "../lib/usage";
+import { updateUsageMeter } from "../lib/usage";
 import { getRemainingDailyTokens, consumeDailyTokens } from "../lib/grantDailyTokens"; // @grant-40k
+import { addTokens } from "../lib/tokens"; // @model-multiplier - Import token tracking with multipliers
 import { supabaseAdmin } from "../../lib/supabase";
 import { getOrCreateUser } from "../../lib/user-utils";
 import { MODEL_ALIASES, ChatModel, MODELS_WITH_WEB_SEARCH } from "../../types/chatModels";
@@ -235,6 +236,8 @@ export async function processChatRequest(
             await Promise.all([
               consumeDailyTokens(userId, outputTokens),
               updateUsageMeter(userId, inputTokens + outputTokens),
+              // @model-multiplier - Track effective tokens with model multipliers and web search cost
+              addTokens(userId, inputTokens + outputTokens, model, shouldUseWebSearch),
             ]).catch(error => {
               console.error("Token consumption failed:", error);
             });
@@ -317,6 +320,8 @@ export async function processChatRequest(
       await Promise.all([
         consumeDailyTokens(userId, completion.usage?.total_tokens || totalTokens),
         updateUsageMeter(userId, totalTokens),
+        // @model-multiplier - Track effective tokens with model multipliers and web search cost
+        addTokens(userId, completion.usage?.total_tokens || totalTokens, model, shouldUseWebSearch),
       ]);
 
       // @multi-model - Save chat and get message IDs
