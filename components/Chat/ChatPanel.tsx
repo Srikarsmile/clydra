@@ -12,6 +12,7 @@ import ChatMessage from "./ChatMessage";
 import InputBar from "./InputBar"; // @dashboard-redesign
 import MultiModelResponse from "./MultiModelResponse"; // @multi-model
 import { Menu } from "lucide-react";
+import { useRouter } from "next/router"; // @persistence-fix - Add router for URL updates
 
 interface Message {
   role: "user" | "assistant" | "system";
@@ -43,6 +44,7 @@ interface ChatPanelProps {
 
 export default function ChatPanel({ threadId }: ChatPanelProps) {
   const { user } = useUser();
+  const router = useRouter(); // @persistence-fix - Add router for URL updates
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [model, setModel] = useState<ChatModel>("google/gemini-2.5-flash");
@@ -51,6 +53,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [currentThreadId, setCurrentThreadId] = useState<string | undefined>(threadId); // @persistence-fix - Track current thread
 
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -90,6 +93,38 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
       setMessages([]);
     }
   }, [threadId]);
+
+  // @persistence-fix - Sync current thread ID with prop changes
+  useEffect(() => {
+    setCurrentThreadId(threadId);
+  }, [threadId]);
+
+  // @persistence-fix - Create new thread when starting a fresh chat
+  const createNewThread = async (): Promise<string | null> => {
+    try {
+      const response = await fetch("/api/threads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const newThreadId = data.id;
+        setCurrentThreadId(newThreadId);
+        
+        // Update URL to include the new thread ID so messages persist after refresh
+        router.push(`/dashboard?thread=${newThreadId}`);
+        
+        return newThreadId;
+      } else {
+        console.error("Failed to create new thread:", response.status);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error creating new thread:", error);
+      return null;
+    }
+  };
 
   // @fluid-scroll - Enhanced smooth scroll with proper timing and user intent detection
   const scrollToBottom = useCallback((force = false) => {
@@ -178,6 +213,18 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
         setIsStreaming(true);
         setStreamingMessage("");
 
+        // @persistence-fix - Create new thread if this is a fresh chat
+        let threadIdToUse = currentThreadId;
+        if (!threadIdToUse) {
+          console.log("🆕 Creating new thread for fresh chat...");
+          const newThreadId = await createNewThread();
+          if (!newThreadId) {
+            throw new Error("Failed to create new thread");
+          }
+          threadIdToUse = newThreadId;
+          console.log(`✅ New thread created: ${threadIdToUse}`);
+        }
+
         // Add empty assistant message placeholder
         const assistantMessage: Message = {
           role: "assistant",
@@ -203,7 +250,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
           body: JSON.stringify({
             messages: [...messages, userMessage],
             model,
-            threadId,
+            threadId: threadIdToUse, // @persistence-fix - Use the current or newly created thread ID
             stream: true,
             enableWebSearch,
           }),
@@ -312,6 +359,8 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
     threadId,
     enableWebSearch,
     scrollToBottom,
+    currentThreadId,
+    createNewThread,
   ]);
 
 
