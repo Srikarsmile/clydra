@@ -75,9 +75,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_projects_updated_at ON projects;
 CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -88,41 +90,52 @@ ALTER TABLE api_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
 
 -- Users can only access their own data
+DROP POLICY IF EXISTS "Users can view own data" ON users;
 CREATE POLICY "Users can view own data" ON users
-  FOR ALL USING (clerk_id = auth.jwt() ->> 'sub');
+  FOR ALL USING (clerk_id = (auth.jwt() ->> 'sub'));
 
 -- Projects policies
+DROP POLICY IF EXISTS "Users can view own projects" ON projects;
 CREATE POLICY "Users can view own projects" ON projects
-  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
+DROP POLICY IF EXISTS "Users can create own projects" ON projects;
 CREATE POLICY "Users can create own projects" ON projects
-  FOR INSERT WITH CHECK (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR INSERT WITH CHECK (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
+DROP POLICY IF EXISTS "Users can update own projects" ON projects;
 CREATE POLICY "Users can update own projects" ON projects
-  FOR UPDATE USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR UPDATE USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
+DROP POLICY IF EXISTS "Users can delete own projects" ON projects;
 CREATE POLICY "Users can delete own projects" ON projects
-  FOR DELETE USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR DELETE USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
 -- API requests policies
+DROP POLICY IF EXISTS "Users can view own api requests" ON api_requests;
 CREATE POLICY "Users can view own api requests" ON api_requests
-  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
+DROP POLICY IF EXISTS "Users can create own api requests" ON api_requests;
 CREATE POLICY "Users can create own api requests" ON api_requests
-  FOR INSERT WITH CHECK (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR INSERT WITH CHECK (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
 -- API keys policies
+DROP POLICY IF EXISTS "Users can view own api keys" ON api_keys;
 CREATE POLICY "Users can view own api keys" ON api_keys
-  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
+DROP POLICY IF EXISTS "Users can create own api keys" ON api_keys;
 CREATE POLICY "Users can create own api keys" ON api_keys
-  FOR INSERT WITH CHECK (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR INSERT WITH CHECK (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
+DROP POLICY IF EXISTS "Users can update own api keys" ON api_keys;
 CREATE POLICY "Users can update own api keys" ON api_keys
-  FOR UPDATE USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR UPDATE USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
+DROP POLICY IF EXISTS "Users can delete own api keys" ON api_keys;
 CREATE POLICY "Users can delete own api keys" ON api_keys
-  FOR DELETE USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR DELETE USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
 -- Create a function to automatically create user record when first accessed
 CREATE OR REPLACE FUNCTION create_user_if_not_exists(clerk_user_id TEXT, user_email TEXT, user_first_name TEXT, user_last_name TEXT)
@@ -171,13 +184,16 @@ CREATE INDEX IF NOT EXISTS idx_usage_meter_reset_date ON usage_meter(reset_date)
 ALTER TABLE usage_meter ENABLE ROW LEVEL SECURITY;
 
 -- Usage meter policies
+DROP POLICY IF EXISTS "Users can view own usage" ON usage_meter;
 CREATE POLICY "Users can view own usage" ON usage_meter
-  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
+DROP POLICY IF EXISTS "Users can update own usage" ON usage_meter;
 CREATE POLICY "Users can update own usage" ON usage_meter
-  FOR ALL USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR ALL USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
 -- Add trigger for usage_meter updated_at
+DROP TRIGGER IF EXISTS update_usage_meter_updated_at ON usage_meter;
 CREATE TRIGGER update_usage_meter_updated_at BEFORE UPDATE ON usage_meter
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -217,19 +233,24 @@ CREATE INDEX IF NOT EXISTS idx_chat_history_last_message_at ON chat_history(last
 ALTER TABLE chat_history ENABLE ROW LEVEL SECURITY;
 
 -- Chat history policies
+DROP POLICY IF EXISTS "Users can view own chat history" ON chat_history;
 CREATE POLICY "Users can view own chat history" ON chat_history
-  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
+DROP POLICY IF EXISTS "Users can create own chat history" ON chat_history;
 CREATE POLICY "Users can create own chat history" ON chat_history
-  FOR INSERT WITH CHECK (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR INSERT WITH CHECK (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
+DROP POLICY IF EXISTS "Users can update own chat history" ON chat_history;
 CREATE POLICY "Users can update own chat history" ON chat_history
-  FOR UPDATE USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR UPDATE USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
+DROP POLICY IF EXISTS "Users can delete own chat history" ON chat_history;
 CREATE POLICY "Users can delete own chat history" ON chat_history
-  FOR DELETE USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR DELETE USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
 -- Add trigger for chat_history updated_at
+DROP TRIGGER IF EXISTS update_chat_history_updated_at ON chat_history;
 CREATE TRIGGER update_chat_history_updated_at BEFORE UPDATE ON chat_history
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -252,57 +273,104 @@ CREATE TABLE IF NOT EXISTS messages (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- @multi-model - Multiple responses table for model switching feature
+CREATE TABLE IF NOT EXISTS message_responses (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  message_id BIGINT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+  model TEXT NOT NULL, -- The model that generated this response
+  content TEXT NOT NULL,
+  tokens_used INTEGER DEFAULT 0,
+  is_primary BOOLEAN DEFAULT false, -- Which response is currently shown
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- @threads - Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_threads_user_id ON threads(user_id);
 CREATE INDEX IF NOT EXISTS idx_threads_created_at ON threads(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_messages_thread_id ON messages(thread_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
 
+-- @multi-model - Indexes for message responses
+CREATE INDEX IF NOT EXISTS idx_message_responses_message_id ON message_responses(message_id);
+CREATE INDEX IF NOT EXISTS idx_message_responses_model ON message_responses(model);
+CREATE INDEX IF NOT EXISTS idx_message_responses_primary ON message_responses(is_primary);
+
 -- @threads - Enable RLS for new tables
 ALTER TABLE threads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 
--- @threads - Thread policies
+-- @multi-model - Enable RLS for message responses
+ALTER TABLE message_responses ENABLE ROW LEVEL SECURITY;
+
+-- @threads - Thread policies (with proper error handling)
+DROP POLICY IF EXISTS "Users can view own threads" ON threads;
 CREATE POLICY "Users can view own threads" ON threads
-  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
+DROP POLICY IF EXISTS "Users can create own threads" ON threads;
 CREATE POLICY "Users can create own threads" ON threads
-  FOR INSERT WITH CHECK (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR INSERT WITH CHECK (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
+DROP POLICY IF EXISTS "Users can update own threads" ON threads;
 CREATE POLICY "Users can update own threads" ON threads
-  FOR UPDATE USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR UPDATE USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
+DROP POLICY IF EXISTS "Users can delete own threads" ON threads;
 CREATE POLICY "Users can delete own threads" ON threads
-  FOR DELETE USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR DELETE USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
--- @threads - Message policies
+-- @threads - Message policies (with proper error handling)
+DROP POLICY IF EXISTS "Users can view own messages" ON messages;
 CREATE POLICY "Users can view own messages" ON messages
-  FOR SELECT USING (thread_id IN (SELECT id FROM threads WHERE user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub')));
+  FOR SELECT USING (thread_id IN (SELECT id FROM threads WHERE user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub'))));
 
+DROP POLICY IF EXISTS "Users can create own messages" ON messages;
 CREATE POLICY "Users can create own messages" ON messages
-  FOR INSERT WITH CHECK (thread_id IN (SELECT id FROM threads WHERE user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub')));
+  FOR INSERT WITH CHECK (thread_id IN (SELECT id FROM threads WHERE user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub'))));
 
+DROP POLICY IF EXISTS "Users can update own messages" ON messages;
 CREATE POLICY "Users can update own messages" ON messages
-  FOR UPDATE USING (thread_id IN (SELECT id FROM threads WHERE user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub')));
+  FOR UPDATE USING (thread_id IN (SELECT id FROM threads WHERE user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub'))));
 
+DROP POLICY IF EXISTS "Users can delete own messages" ON messages;
 CREATE POLICY "Users can delete own messages" ON messages
-  FOR DELETE USING (thread_id IN (SELECT id FROM threads WHERE user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub')));
+  FOR DELETE USING (thread_id IN (SELECT id FROM threads WHERE user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub'))));
 
--- @threads - Grant permissions for new tables
-GRANT ALL ON threads TO anon, authenticated;
-GRANT ALL ON messages TO anon, authenticated;
+-- @multi-model - Message response policies (with proper error handling)
+DROP POLICY IF EXISTS "Users can view own message responses" ON message_responses;
+CREATE POLICY "Users can view own message responses" ON message_responses
+  FOR SELECT USING (message_id IN (
+    SELECT m.id FROM messages m 
+    JOIN threads t ON m.thread_id = t.id 
+    WHERE t.user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub'))
+  ));
 
--- @threads - Function to update thread title if it's still "New Chat"
-CREATE OR REPLACE FUNCTION update_thread_title_if_new(
-  p_thread_id UUID,
-  p_new_title TEXT
-) RETURNS void AS $$
-BEGIN
-  UPDATE threads 
-  SET title = LEFT(p_new_title, 50)
-  WHERE id = p_thread_id AND title = 'New Chat';
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER; 
+DROP POLICY IF EXISTS "Users can create own message responses" ON message_responses;
+CREATE POLICY "Users can create own message responses" ON message_responses
+  FOR INSERT WITH CHECK (message_id IN (
+    SELECT m.id FROM messages m 
+    JOIN threads t ON m.thread_id = t.id 
+    WHERE t.user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub'))
+  ));
+
+DROP POLICY IF EXISTS "Users can update own message responses" ON message_responses;
+CREATE POLICY "Users can update own message responses" ON message_responses
+  FOR UPDATE USING (message_id IN (
+    SELECT m.id FROM messages m 
+    JOIN threads t ON m.thread_id = t.id 
+    WHERE t.user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub'))
+  ));
+
+DROP POLICY IF EXISTS "Users can delete own message responses" ON message_responses;
+CREATE POLICY "Users can delete own message responses" ON message_responses
+  FOR DELETE USING (message_id IN (
+    SELECT m.id FROM messages m 
+    JOIN threads t ON m.thread_id = t.id 
+    WHERE t.user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub'))
+  ));
+
+-- Grant permissions for new table
+GRANT ALL ON message_responses TO anon, authenticated;
 
 -- @token-meter - Token usage table for monthly tracking
 CREATE TABLE IF NOT EXISTS token_usage (
@@ -320,11 +388,13 @@ CREATE INDEX IF NOT EXISTS idx_token_usage_month_start ON token_usage(month_star
 ALTER TABLE token_usage ENABLE ROW LEVEL SECURITY;
 
 -- @token-meter - Token usage policies
+DROP POLICY IF EXISTS "Users can view own token usage" ON token_usage;
 CREATE POLICY "Users can view own token usage" ON token_usage
-  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR SELECT USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
+DROP POLICY IF EXISTS "Users can update own token usage" ON token_usage;
 CREATE POLICY "Users can update own token usage" ON token_usage
-  FOR ALL USING (user_id IN (SELECT id FROM users WHERE clerk_id = auth.jwt() ->> 'sub'));
+  FOR ALL USING (user_id IN (SELECT id FROM users WHERE clerk_id = (auth.jwt() ->> 'sub')));
 
 -- @token-meter - Grant permissions for token_usage table
 GRANT ALL ON token_usage TO anon, authenticated; 

@@ -11,6 +11,7 @@ import { ChatModel, MODEL_ALIASES, getModelsByPlan } from "@/types/chatModels";
 import UpgradeCTA from "../UpgradeCTA";
 import ChatMessage from "./ChatMessage";
 import InputBar from "./InputBar"; // @dashboard-redesign
+import MultiModelResponse from "./MultiModelResponse"; // @multi-model
 import { Menu } from "lucide-react";
 
 interface Message {
@@ -170,6 +171,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState<string>(""); // @performance - For live streaming
   const [isStreaming, setIsStreaming] = useState(false); // @performance - Track streaming state
+  const [streamingMessageId, setStreamingMessageId] = useState<number | null>(null); // @multi-model - Store streaming message ID
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -278,7 +280,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
     const userMessage: Message = {
       role: "user",
       content: input.trim(),
-      id: Date.now().toString(),
+      id: Date.now().toString(), // Temporary ID, will be updated after saving
     };
 
     const newMessages = [...messages, userMessage];
@@ -351,6 +353,9 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                   setStreamingMessage(fullMessage);
                   // @performance - Throttled scrolling for better performance
                   requestAnimationFrame(() => scrollToBottom(false));
+                } else if (parsed.messageId) {
+                  // @multi-model - Store message ID for later use
+                  setStreamingMessageId(parsed.messageId);
                 } else if (parsed.error) {
                   throw new Error(parsed.error);
                 }
@@ -370,11 +375,12 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
         {
           role: "assistant" as const,
           content: fullMessage,
-          id: (Date.now() + 1).toString(),
+          id: streamingMessageId?.toString() || (Date.now() + 1).toString(), // Use database ID if available
           model: model, // Store which model generated this message
         },
       ]);
       setStreamingMessage("");
+      setStreamingMessageId(null); // Reset for next message
       setShowUpgrade(false);
     } catch (error: unknown) {
       console.error(
@@ -405,7 +411,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
           ...prev,
           {
             ...data.message,
-            id: (Date.now() + 1).toString(),
+            id: data.message.id?.toString() || (Date.now() + 1).toString(),
             model: model, // Store which model generated this message
           },
         ]);
@@ -421,6 +427,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
       }
 
       setStreamingMessage("");
+      setStreamingMessageId(null); // Reset for next message
     } finally {
       setIsStreaming(false);
     }
@@ -496,6 +503,53 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
       }
     },
     [model]
+  );
+
+  // @multi-model - Try multiple models for the last user message
+  const handleTryMultipleModels = useCallback(
+    async () => {
+      if (isMutating || !user || messages.length === 0) return;
+
+      // Find the last user message
+      const lastUserMessageIndex = messages.findLastIndex(
+        (msg) => msg.role === "user"
+      );
+      if (lastUserMessageIndex === -1) return;
+
+      // Get messages up to and including the last user message
+      const messagesToSend = messages.slice(0, lastUserMessageIndex + 1);
+
+      // Get popular models to try (excluding current model)
+      const modelsToTry = getModelsByPlan("pro")
+        .filter((m: ChatModel) => m !== model)
+        .slice(0, 3); // Try top 3 alternative models
+
+      try {
+        const response = await fetch("/api/chat/multi-response", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: messagesToSend,
+            models: [model, ...modelsToTry], // Include current model + alternatives
+            threadId,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Multi-model responses generated:", data.responses.length);
+          
+          // The last assistant message should now have multiple responses available
+          // Force re-render by updating a state (this will trigger the MultiModelResponse component)
+          setMessages(prev => [...prev]); // Trigger re-render
+        } else {
+          console.error("Failed to generate multi-model responses");
+        }
+      } catch (error) {
+        console.error("Failed to try multiple models:", error);
+      }
+    },
+    [isMutating, user, messages, threadId, model]
   );
 
   // @dashboard-redesign - Suggestions for empty state
@@ -639,29 +693,67 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                           : "bg-gray-100 text-gray-900 shadow-sm"
                       } rounded-2xl px-3 sm:px-6 py-3 sm:py-4 relative group transition-all duration-300 hover:shadow-lg transform hover:scale-[1.01] sm:hover:scale-[1.02]`}
                     >
-                      {/* Show model name for assistant messages - mobile optimized */}
-                      {message.role === "assistant" && (
-                        <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 text-xs text-gray-600">
-                          <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-                          <span className="hidden xs:inline">
-                            {message.model ? MODEL_ALIASES[message.model] : MODEL_ALIASES[model]}
-                          </span>
-                          <span className="xs:hidden">
-                            {message.model ? MODEL_ALIASES[message.model].split(' ')[0] : MODEL_ALIASES[model].split(' ')[0]}
-                          </span>
-                        </div>
+                      {/* @multi-model - Use MultiModelResponse for assistant messages, regular ChatMessage for user messages */}
+                      {message.role === "assistant" ? (
+                        message.id ? (
+                          <MultiModelResponse
+                            messageId={message.id}
+                            initialContent={message.content}
+                            onResponseSwitch={(newContent, newModel) => {
+                              // Update the message in state when user switches responses
+                              setMessages(prev => prev.map(msg => 
+                                msg.id === message.id 
+                                  ? { ...msg, content: newContent, model: newModel as ChatModel }
+                                  : msg
+                              ));
+                            }}
+                          />
+                        ) : (
+                          // Fallback for messages without ID
+                          <>
+                            <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 text-xs text-gray-600">
+                              <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                              <span className="hidden xs:inline">
+                                {message.model ? MODEL_ALIASES[message.model] : MODEL_ALIASES[model]}
+                              </span>
+                              <span className="xs:hidden">
+                                {message.model ? MODEL_ALIASES[message.model].split(' ')[0] : MODEL_ALIASES[model].split(' ')[0]}
+                              </span>
+                            </div>
+                            <ChatMessage
+                              content={message.content}
+                              role="assistant"
+                              timestamp={new Date()}
+                            />
+                          </>
+                        )
+                      ) : (
+                        <ChatMessage
+                          content={message.content}
+                          role="user"
+                          timestamp={new Date()}
+                        />
                       )}
-                      <ChatMessage
-                        content={message.content}
-                        role={message.role as "user" | "assistant"}
-                        timestamp={new Date()}
-                      />
 
-                      {/* @dashboard-redesign - Better positioned retry buttons for visibility with proper spacing */}
+                      {/* @multi-model - Try multiple models button for latest assistant message */}
                       {message.role === "assistant" &&
                         index === messages.length - 1 && (
-                          <div className="mt-6 pt-4 border-t border-gray-100 space-y-2">
-                            <div className="text-center text-xs text-gray-500 mb-3">Try with different models</div>
+                          <div className="mt-6 pt-4 border-t border-gray-100 space-y-3">
+                            <div className="text-center text-xs text-gray-500 mb-3">Get responses from multiple models</div>
+                            
+                            {/* Try multiple models button */}
+                            <div className="flex justify-center">
+                              <button
+                                onClick={() => handleTryMultipleModels()}
+                                disabled={isMutating}
+                                className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 transform hover:scale-105 active:scale-95 font-medium text-sm"
+                              >
+                                🎯 Try Multiple Models
+                              </button>
+                            </div>
+                            
+                            {/* Individual retry buttons */}
+                            <div className="text-center text-xs text-gray-400 mb-2">Or retry with single model:</div>
                             <div className="flex gap-2 text-xs flex-wrap justify-center">
                               {getModelsByPlan("pro")
                                 .filter((m: ChatModel) => m !== (message.model || model))

@@ -2,8 +2,11 @@
 import { supabaseAdmin } from "../../lib/supabase";
 import { startOfMonth } from "date-fns";
 
-const CAP_PRO = 1_500_000; // 1.5 M / month
-const CAP_FREE_DAILY = 40_000; // 40k / day for free tier
+// @pro-cap
+export const PLAN_CAP = {
+  free : 40_000,          // daily
+  pro  : 1_000_000,       // monthly  (was 1_500_000)
+} as const;
 
 // Helper function to get Supabase user ID from Clerk ID
 async function getSupabaseUserId(clerkUserId: string): Promise<string | null> {
@@ -135,7 +138,7 @@ export async function getUsage(userId: string): Promise<number> {
 }
 
 export function getCap(plan: "free" | "pro"): number {
-  return plan === "pro" ? CAP_PRO : CAP_FREE_DAILY; // free = 40k / day handled elsewhere
+  return PLAN_CAP[plan]; // free = 40k / day, pro = 1M / month
 }
 
 // @token-meter - Check if user has exceeded quota before making request

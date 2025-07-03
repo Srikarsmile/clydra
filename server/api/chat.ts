@@ -11,7 +11,7 @@ import OpenAI from "openai";
 import { useOpenRouter } from "../lib/useOpenRouter";
 import { estimateConversationTokens } from "../lib/chatTokens";
 import { hasExceededDailyLimit, updateUsageMeter } from "../lib/usage";
-import { addTokens, getUsage, getCap, checkQuota } from "../lib/tokens"; // @token-meter
+import { getRemainingDailyTokens, consumeDailyTokens } from "../lib/grantDailyTokens"; // @grant-40k
 import { supabaseAdmin } from "../../lib/supabase";
 import { getOrCreateUser } from "../../lib/user-utils";
 import { MODEL_ALIASES, ChatModel } from "../../types/chatModels";
@@ -52,6 +52,7 @@ export interface ChatResponse {
   message: {
     role: "assistant";
     content: string;
+    id?: number; // @multi-model - Add message ID for database reference
   };
   usage: {
     inputTokens: number;
@@ -123,15 +124,14 @@ export async function processChatRequest(
     model
   );
 
-  // @performance - Parallel quota and limit checks to reduce latency
-  const plan = "pro"; // Default to Pro plan
-  const [quotaCheck, hasExceeded] = await Promise.all([
-    checkQuota(userId, inputTokens, plan),
+  // @grant-40k - Check daily token quota
+  const [remainingTokens, hasExceeded] = await Promise.all([
+    getRemainingDailyTokens(userId),
     hasExceededDailyLimit(userId),
   ]);
 
-  if (!quotaCheck.allowed) {
-    throw new ChatError("FORBIDDEN", quotaCheck.reason || "Quota exceeded");
+  if (remainingTokens < inputTokens) {
+    throw new ChatError("FORBIDDEN", `Insufficient daily tokens. Need ${inputTokens}, have ${remainingTokens}.`);
   }
 
   if (hasExceeded) {
@@ -206,33 +206,48 @@ export async function processChatRequest(
               }
             }
 
-            // @performance - Async database operations (don't block response)
-            // Fire and forget - these operations don't need to block the stream
-            Promise.all([
-              addTokens(
-                userId,
-                totalTokens || Math.ceil(fullMessage.length / 4)
-              ),
-              updateUsageMeter(
-                userId,
-                totalTokens || Math.ceil(fullMessage.length / 4)
-              ),
-              threadId || input.threadId
-                ? saveMessagesToThread(
-                    userId,
-                    threadId || input.threadId!,
-                    validatedInput.messages,
-                    fullMessage
-                  )
-                : saveChatToHistory(
-                    userId,
-                    validatedInput.messages,
-                    fullMessage,
-                    model
-                  ),
-            ]).catch((error) => {
+            // @multi-model - Save message and get ID for streaming
+            let messageId: number | undefined;
+            
+            try {
+              await Promise.all([
+                consumeDailyTokens(
+                  userId,
+                  totalTokens || Math.ceil(fullMessage.length / 4)
+                ),
+                updateUsageMeter(
+                  userId,
+                  totalTokens || Math.ceil(fullMessage.length / 4)
+                ),
+              ]);
+
+              // Save to database and wait for message ID
+              if (threadId || input.threadId) {
+                const saveResult = await saveMessagesToThread(
+                  userId,
+                  threadId || input.threadId!,
+                  validatedInput.messages,
+                  fullMessage
+                );
+                messageId = saveResult.assistantMessageId;
+              } else {
+                await saveChatToHistory(
+                  userId,
+                  validatedInput.messages,
+                  fullMessage,
+                  model
+                );
+              }
+
+              // Send final chunk with message ID
+              controller.enqueue(
+                new TextEncoder().encode(
+                  `data: ${JSON.stringify({ messageId, content: null })}\n\n`
+                )
+              );
+            } catch (error) {
               console.error("Background database operations failed:", error);
-            });
+            }
 
             controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
             controller.close();
@@ -279,37 +294,40 @@ export async function processChatRequest(
         Math.ceil(assistantMessage.length / 4);
       const totalTokens = inputTokens + outputTokens;
 
-      // @performance - Parallel database operations to reduce latency
+      // @grant-40k - Consume daily tokens and update usage meter
       await Promise.all([
-        addTokens(userId, completion.usage?.total_tokens || totalTokens),
+        consumeDailyTokens(userId, completion.usage?.total_tokens || totalTokens),
         updateUsageMeter(userId, totalTokens),
       ]);
 
-      // @clydra-core Save chat to history (can be async)
-      const saveOperation =
-        threadId || input.threadId
-          ? saveMessagesToThread(
-              userId,
-              threadId || input.threadId!,
-              validatedInput.messages,
-              assistantMessage
-            )
-          : saveChatToHistory(
-              userId,
-              validatedInput.messages,
-              assistantMessage,
-              model
-            );
-
-      // Don't wait for save operation to complete
-      saveOperation.catch((error) => {
-        console.error("Chat save operation failed:", error);
-      });
+      // @multi-model - Save chat and wait for message IDs
+      let messageId: number | undefined;
+      
+      if (threadId || input.threadId) {
+        const saveResult = await saveMessagesToThread(
+          userId,
+          threadId || input.threadId!,
+          validatedInput.messages,
+          assistantMessage
+        );
+        messageId = saveResult.assistantMessageId;
+      } else {
+        // For non-thread chats, still save to history but no message ID
+        saveChatToHistory(
+          userId,
+          validatedInput.messages,
+          assistantMessage,
+          model
+        ).catch((error) => {
+          console.error("Chat save operation failed:", error);
+        });
+      }
 
       return {
         message: {
           role: "assistant",
           content: assistantMessage,
+          id: messageId, // @multi-model - Include database message ID
         },
         usage: {
           inputTokens: completion.usage?.prompt_tokens || inputTokens,
@@ -342,7 +360,7 @@ async function saveMessagesToThread(
   threadId: string,
   userMessages: Array<{ role: string; content: string }>,
   assistantResponse: string
-): Promise<void> {
+): Promise<{ userMessageId?: number; assistantMessageId?: number }> {
   try {
     // userId is already a Supabase UUID, no need to convert
 
@@ -352,8 +370,8 @@ async function saveMessagesToThread(
       throw new Error("Invalid message format");
     }
 
-    // Insert both user and assistant messages
-    const { error } = await supabaseAdmin.from("messages").insert([
+    // Insert both user and assistant messages and return IDs
+    const { data, error } = await supabaseAdmin.from("messages").insert([
       {
         thread_id: threadId,
         role: "user",
@@ -364,11 +382,11 @@ async function saveMessagesToThread(
         role: "assistant",
         content: assistantResponse,
       },
-    ]);
+    ]).select('id, role');
 
     if (error) {
       console.error("Error saving messages to thread:", error);
-      return;
+      return {};
     }
 
     // @ui-polish - Auto-title on first user message
@@ -379,8 +397,15 @@ async function saveMessagesToThread(
       })
       .eq("id", threadId)
       .eq("title", "New Chat");
+
+    // Return the message IDs
+    const userMessageId = data?.find(msg => msg.role === 'user')?.id;
+    const assistantMessageId = data?.find(msg => msg.role === 'assistant')?.id;
+    
+    return { userMessageId, assistantMessageId };
   } catch (error) {
     console.error("Error saving messages to thread:", error);
+    return {};
   }
 }
 
