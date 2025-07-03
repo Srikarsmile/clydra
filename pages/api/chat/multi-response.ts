@@ -78,40 +78,71 @@ export default async function handler(
       userMessageId = insertedMessage.id;
     }
 
-    // Generate responses from all requested models
-    const responses: ModelResponse[] = [];
-    const errors: string[] = [];
-
-    for (const model of models) {
+    // @performance - Generate responses from all models in parallel
+    const modelPromises = models.map(async (model): Promise<ModelResponse | null> => {
       try {
+        console.log(`Starting request for model: ${model}`);
+        const startTime = Date.now();
+        
         const response = await processChatRequest(
           clerkUserId,
-          { messages, model },
+          { 
+            messages, 
+            model,
+            enableWebSearch: false, // @web-search - Disable web search for multi-response (performance)
+            webSearchContextSize: "medium" // @web-search - Default context size
+          },
           undefined, // Don't save to thread yet
           false // No streaming for multi-response
         );
 
+        const endTime = Date.now();
+        console.log(`Model ${model} completed in ${endTime - startTime}ms`);
+
         if ("message" in response) {
-          responses.push({
+          return {
             model,
             content: response.message.content,
             tokens: response.usage.totalTokens,
-          });
-
-          // Save response to database if we have a message ID
-          if (userMessageId) {
-            await supabaseAdmin.from("message_responses").insert({
-              message_id: userMessageId,
-              model,
-              content: response.message.content,
-              tokens_used: response.usage.totalTokens,
-              is_primary: responses.length === 1, // First response is primary
-            });
-          }
+          };
         }
+        return null;
       } catch (error) {
         console.error(`Error with model ${model}:`, error);
-        errors.push(`${model}: ${error instanceof Error ? error.message : "Unknown error"}`);
+        return {
+          model,
+          content: "",
+          tokens: 0,
+          error: error instanceof Error ? error.message : "Unknown error",
+        };
+      }
+    });
+
+    // Wait for all models to complete (or timeout after 30 seconds)
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("Request timeout")), 30000);
+    });
+
+    const results = await Promise.race([
+      Promise.allSettled(modelPromises),
+      timeoutPromise
+    ]);
+
+    // Process results
+    const responses: ModelResponse[] = [];
+    const errors: string[] = [];
+
+    if (Array.isArray(results)) {
+      for (const result of results) {
+        if (result.status === "fulfilled" && result.value) {
+          if (result.value.error) {
+            errors.push(`${result.value.model}: ${result.value.error}`);
+          } else {
+            responses.push(result.value);
+          }
+        } else if (result.status === "rejected") {
+          errors.push(`Model failed: ${result.reason}`);
+        }
       }
     }
 
@@ -122,14 +153,39 @@ export default async function handler(
       });
     }
 
-    // Create assistant message entry if we have responses and threadId
-    if (threadId && responses.length > 0) {
+    // @performance - Save all responses to database in parallel
+    if (userMessageId && responses.length > 0) {
+      // Save responses in parallel (don't wait for completion)
+      (async () => {
+        try {
+          const savePromises = responses.map((response, index) =>
+            supabaseAdmin.from("message_responses").insert({
+              message_id: userMessageId,
+              model: response.model,
+              content: response.content,
+              tokens_used: response.tokens,
+              is_primary: index === 0, // First successful response is primary
+            })
+          );
+          await Promise.allSettled(savePromises);
+        } catch (error: any) {
+          console.error("Error saving responses to database:", error);
+        }
+      })();
+
+      // Create assistant message entry with primary response (don't wait)
       const primaryResponse = responses[0];
-      await supabaseAdmin.from("messages").insert({
-        thread_id: threadId,
-        role: "assistant", 
-        content: primaryResponse.content,
-      });
+      (async () => {
+        try {
+          await supabaseAdmin.from("messages").insert({
+            thread_id: threadId,
+            role: "assistant", 
+            content: primaryResponse.content,
+          });
+        } catch (error: any) {
+          console.error("Error saving assistant message:", error);
+        }
+      })();
     }
 
     return res.status(200).json({

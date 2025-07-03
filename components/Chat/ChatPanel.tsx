@@ -5,9 +5,8 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useUser } from "@clerk/nextjs";
-import useSWRMutation from "swr/mutation";
 import { Button } from "../ui/button";
-import { ChatModel, MODEL_ALIASES, getModelsByPlan } from "@/types/chatModels";
+import { ChatModel, MODEL_ALIASES } from "@/types/chatModels";
 import UpgradeCTA from "../UpgradeCTA";
 import ChatMessage from "./ChatMessage";
 import InputBar from "./InputBar"; // @dashboard-redesign
@@ -18,144 +17,25 @@ interface Message {
   role: "user" | "assistant" | "system";
   content: string;
   id?: string;
-  model?: ChatModel; // Track which model generated this message
+  model?: ChatModel;
+  annotations?: Array<{
+    type: "url_citation";
+    url_citation: {
+      url: string;
+      title: string;
+      content?: string;
+      start_index: number;
+      end_index: number;
+    };
+  }>; // @web-search - Add web search citations
+  webSearchUsed?: boolean; // @web-search - Indicate if web search was used
 }
 
-interface ChatResponse {
-  message: {
-    role: "assistant";
-    content: string;
-  };
-  usage: {
-    inputTokens: number;
-    outputTokens: number;
-    totalTokens: number;
-  };
-}
 
-// @performance - Streaming message sender for reduced latency
-const sendStreamingMessage = async (
-  url: string,
-  {
-    arg,
-  }: {
-    arg: {
-      messages: Message[];
-      model: ChatModel;
-      threadId?: string;
-      enableWebSearch?: boolean;
-    };
-  },
-  onChunk: (content: string) => void
-) => {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...arg, stream: true }),
-  });
 
-  if (!response.ok) {
-    throw new Error(`Server error: ${response.status} ${response.statusText}`);
-  }
 
-  if (!response.body) {
-    throw new Error("Response body is null");
-  }
 
-  const reader = response.body.getReader();
-  let fullMessage = "";
 
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunk = new TextDecoder().decode(value);
-      const lines = chunk.split("\n");
-
-      for (const line of lines) {
-        if (line.startsWith("data: ")) {
-          const data = line.slice(6);
-          if (data === "[DONE]") {
-            break;
-          }
-
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.content) {
-              fullMessage += parsed.content;
-              onChunk(parsed.content);
-            } else if (parsed.error) {
-              throw new Error(parsed.error);
-            }
-          } catch {
-            // Skip invalid JSON lines
-          }
-        }
-      }
-    }
-  } finally {
-    reader.releaseLock();
-  }
-
-  return {
-    message: {
-      role: "assistant" as const,
-      content: fullMessage,
-    },
-    usage: {
-      inputTokens: 0,
-      outputTokens: 0,
-      totalTokens: 0,
-    },
-  };
-};
-
-// Fallback non-streaming fetcher
-const sendMessage = async (
-  url: string,
-  {
-    arg,
-  }: {
-    arg: {
-      messages: Message[];
-      model: ChatModel;
-      threadId?: string;
-      enableWebSearch?: boolean;
-    };
-  }
-) => {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...arg, stream: false }),
-  });
-
-  if (!response.ok) {
-    const contentType = response.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-      try {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to send message");
-      } catch {
-        throw new Error(
-          `Server error: ${response.status} ${response.statusText}`
-        );
-      }
-    } else {
-      throw new Error(
-        `Server error: ${response.status} ${response.statusText}`
-      );
-    }
-  }
-
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
-    return response.json();
-  } else {
-    throw new Error("Server returned non-JSON response");
-  }
-};
 
 interface ChatPanelProps {
   threadId?: string;
@@ -166,12 +46,12 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [model, setModel] = useState<ChatModel>("google/gemini-2.5-flash");
-  const [enableWebSearch] = useState(false);
+  const [enableWebSearch, setEnableWebSearch] = useState(false); // @web-search - Enable web search state management
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
-  const [streamingMessage, setStreamingMessage] = useState<string>(""); // @performance - For live streaming
-  const [isStreaming, setIsStreaming] = useState(false); // @performance - Track streaming state
-  const [streamingMessageId, setStreamingMessageId] = useState<number | null>(null); // @multi-model - Store streaming message ID
+  const [streamingMessage, setStreamingMessage] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -187,11 +67,11 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
         if (response.ok) {
           const data = await response.json();
           const formattedMessages: Message[] = data.map(
-            (msg: { role: string; content: string; id?: number }) => ({
+            (msg: { role: string; content: string; id?: number; model?: string }) => ({
               role: msg.role,
               content: msg.content,
               id: msg.id?.toString(),
-              model: undefined, // Legacy messages don't have model info
+              model: msg.model || undefined, // Include model info when available
             })
           );
           setMessages(formattedMessages);
@@ -273,168 +153,160 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
     return () => observer.disconnect();
   }, [isAutoScrolling]);
 
-  // @performance - Streaming-first approach with fallback
-  const handleSubmit = useCallback(async () => {
-    if (!input.trim() || isStreaming || !user) return;
+  // @performance - Simplified and robust streaming implementation
+  const handleSubmit = useCallback(() => {
+    if (isStreaming || !user || !input.trim()) return;
 
+    const userMessageContent = input.trim();
+    setInput(""); // Clear input immediately
+
+    // Add user message
     const userMessage: Message = {
       role: "user",
-      content: input.trim(),
-      id: Date.now().toString(), // Temporary ID, will be updated after saving
+      content: userMessageContent,
+      id: `user-${Date.now()}`,
     };
 
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-    setInput("");
-    setIsStreaming(true);
-    setStreamingMessage("");
+    setMessages((prev) => [...prev, userMessage]);
+    scrollToBottom();
 
-    // Immediate scroll for user message
-    requestAnimationFrame(() => scrollToBottom(true));
-
-    try {
-      // @performance - Optimized streaming with keepalive and priority hints
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
-
-      const response = await fetch("/api/chat/proxy", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          // @performance - Connection optimization hints
-          "Connection": "keep-alive",
-          "Keep-Alive": "timeout=5, max=1000",
-        },
-        body: JSON.stringify({ 
-          messages: newMessages, 
-          model, 
-          threadId, 
-          enableWebSearch, 
-          stream: true 
-        }),
-        signal: controller.signal,
-        // @performance - Browser optimization hints
-        cache: "no-cache",
-        priority: "high",
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-
-      if (!response.body) {
-        throw new Error("Response body is null");
-      }
-
-      const reader = response.body.getReader();
-      let fullMessage = "";
-
+    // Process chat response
+    const processChat = async () => {
+      const assistantMessageId = `assistant-${Date.now()}`;
+      
       try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        setIsStreaming(true);
+        setStreamingMessage("");
 
-          const chunk = new TextDecoder().decode(value);
-          const lines = chunk.split("\n");
+        // Add empty assistant message placeholder
+        const assistantMessage: Message = {
+          role: "assistant",
+          content: "",
+          id: assistantMessageId,
+          model,
+        };
 
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const data = line.slice(6);
-              if (data === "[DONE]") {
-                break;
-              }
-              
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.content) {
-                  fullMessage += parsed.content;
-                  setStreamingMessage(fullMessage);
-                  // @performance - Throttled scrolling for better performance
-                  requestAnimationFrame(() => scrollToBottom(false));
-                } else if (parsed.messageId) {
-                  // @multi-model - Store message ID for later use
-                  setStreamingMessageId(parsed.messageId);
-                } else if (parsed.error) {
-                  throw new Error(parsed.error);
-                }
-              } catch {
-                // Skip invalid JSON lines
-              }
-            }
-          }
-        }
-      } finally {
-        reader.releaseLock();
-      }
+        console.log('Creating assistant message with model:', {
+          model,
+          modelType: typeof model,
+          assistantMessageId,
+          modelAlias: model ? MODEL_ALIASES[model] : 'undefined'
+        });
+        
+        setMessages((prev) => [...prev, assistantMessage]);
 
-      // Add the complete streamed message
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant" as const,
-          content: fullMessage,
-          id: streamingMessageId?.toString() || (Date.now() + 1).toString(), // Use database ID if available
-          model: model, // Store which model generated this message
-        },
-      ]);
-      setStreamingMessage("");
-      setStreamingMessageId(null); // Reset for next message
-      setShowUpgrade(false);
-    } catch (error: unknown) {
-      console.error(
-        "Streaming failed, falling back to regular request:",
-        error
-      );
-
-      // @performance - Fallback to non-streaming if streaming fails
-      try {
         const response = await fetch("/api/chat/proxy", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
-            messages: newMessages,
+            messages: [...messages, userMessage],
             model,
             threadId,
+            stream: true,
             enableWebSearch,
-            stream: false,
           }),
         });
 
         if (!response.ok) {
-          throw new Error(`Server error: ${response.status}`);
+          throw new Error(`HTTP ${response.status}`);
         }
 
-        const data = await response.json();
-        setMessages((prev) => [
-          ...prev,
-          {
-            ...data.message,
-            id: data.message.id?.toString() || (Date.now() + 1).toString(),
-            model: model, // Store which model generated this message
-          },
-        ]);
-        setShowUpgrade(false);
-      } catch (fallbackError) {
-        console.error("Both streaming and fallback failed:", fallbackError);
-        if (
-          fallbackError instanceof Error &&
-          fallbackError.message.includes("Daily message limit exceeded")
-        ) {
-          setShowUpgrade(true);
+        if (!response.body) {
+          throw new Error("No response body");
         }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = "";
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6).trim();
+                if (data === '[DONE]') continue;
+                
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.content) {
+                    fullContent += parsed.content;
+                    
+                    // Update the assistant message in real-time
+                    setMessages((prev) => {
+                      const updatedMessages = prev.map((msg) => 
+                        msg.id === assistantMessageId 
+                          ? { ...msg, content: fullContent }
+                          : msg
+                      );
+                      
+
+                      
+                      return updatedMessages;
+                    });
+                    
+                    // Auto-scroll
+                    requestAnimationFrame(() => scrollToBottom());
+                  } else if (parsed.messageId && parsed.type === "completion") {
+                    // Update the message with the database ID
+                    console.log(`🔄 Updating message ID from ${assistantMessageId} to ${parsed.messageId}`);
+                    setMessages((prev) => {
+                      const updatedMessages = prev.map((msg) => 
+                        msg.id === assistantMessageId 
+                          ? { ...msg, id: parsed.messageId.toString() }
+                          : msg
+                      );
+                      
+
+                      
+                      return updatedMessages;
+                    });
+                    console.log(`✅ Message saved to database with ID: ${parsed.messageId}`);
+                  } else {
+                    console.log('📦 Received data:', parsed);
+                  }
+                } catch {
+                  // Skip invalid JSON
+                  continue;
+                }
+              }
+            }
+          }
+        } finally {
+          reader.releaseLock();
+        }
+
+      } catch (error) {
+        console.error("Chat error:", error);
+        
+        // Remove the assistant placeholder message on error
+        setMessages((prev) => prev.filter((msg) => msg.id !== assistantMessageId));
+        
+        // Show appropriate error message
+        if (error instanceof Error) {
+          if (error.message.includes("Daily message limit exceeded") || 
+              error.message.includes("429")) {
+            setShowUpgrade(true);
+          }
+        }
+      } finally {
+        setIsStreaming(false);
+        setStreamingMessage("");
       }
+    };
 
-      setStreamingMessage("");
-      setStreamingMessageId(null); // Reset for next message
-    } finally {
-      setIsStreaming(false);
-    }
+    processChat();
   }, [
-    input,
     isStreaming,
     user,
+    input,
     messages,
     model,
     threadId,
@@ -442,57 +314,9 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
     scrollToBottom,
   ]);
 
-  // Legacy SWR mutation for compatibility (not used in main flow)
-  const { trigger, isMutating } = useSWRMutation(
-    "/api/chat/proxy",
-    sendMessage,
-    {
-      onSuccess: useCallback((data: ChatResponse) => {
-        setMessages((prev) => [...prev, data.message]);
-        setShowUpgrade(false);
-      }, []),
-      onError: useCallback((error: Error) => {
-        console.error("Chat error:", error);
-        if (error.message.includes("Daily message limit exceeded")) {
-          setShowUpgrade(true);
-        }
-      }, []),
-    }
-  );
 
-  // @dashboard-redesign - Retry last message with different model
-  const handleRetryWithModel = useCallback(
-    async (newModel: ChatModel) => {
-      if (isMutating || !user || messages.length === 0) return;
 
-      // Find the last user message
-      const lastUserMessageIndex = messages.findLastIndex(
-        (msg) => msg.role === "user"
-      );
-      if (lastUserMessageIndex === -1) return;
 
-      // Get messages up to and including the last user message (exclude any AI responses after it)
-      const messagesToSend = messages.slice(0, lastUserMessageIndex + 1);
-
-      // Remove any AI responses after the last user message
-      setMessages(messagesToSend);
-
-      // Set the new model
-      setModel(newModel);
-
-      try {
-        await trigger({
-          messages: messagesToSend,
-          model: newModel,
-          threadId,
-          enableWebSearch,
-        });
-      } catch (error) {
-        console.error("Failed to retry with new model:", error);
-      }
-    },
-    [isMutating, user, messages, threadId, enableWebSearch, trigger]
-  );
 
   // @dashboard-redesign - Switch model and continue conversation
   const handleModelChange = useCallback(
@@ -503,53 +327,6 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
       }
     },
     [model]
-  );
-
-  // @multi-model - Try multiple models for the last user message
-  const handleTryMultipleModels = useCallback(
-    async () => {
-      if (isMutating || !user || messages.length === 0) return;
-
-      // Find the last user message
-      const lastUserMessageIndex = messages.findLastIndex(
-        (msg) => msg.role === "user"
-      );
-      if (lastUserMessageIndex === -1) return;
-
-      // Get messages up to and including the last user message
-      const messagesToSend = messages.slice(0, lastUserMessageIndex + 1);
-
-      // Get popular models to try (excluding current model)
-      const modelsToTry = getModelsByPlan("pro")
-        .filter((m: ChatModel) => m !== model)
-        .slice(0, 3); // Try top 3 alternative models
-
-      try {
-        const response = await fetch("/api/chat/multi-response", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: messagesToSend,
-            models: [model, ...modelsToTry], // Include current model + alternatives
-            threadId,
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Multi-model responses generated:", data.responses.length);
-          
-          // The last assistant message should now have multiple responses available
-          // Force re-render by updating a state (this will trigger the MultiModelResponse component)
-          setMessages(prev => [...prev]); // Trigger re-render
-        } else {
-          console.error("Failed to generate multi-model responses");
-        }
-      } catch (error) {
-        console.error("Failed to try multiple models:", error);
-      }
-    },
-    [isMutating, user, messages, threadId, model]
   );
 
   // @dashboard-redesign - Suggestions for empty state
@@ -697,16 +474,8 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                       {message.role === "assistant" ? (
                         message.id ? (
                           <MultiModelResponse
-                            messageId={message.id}
                             initialContent={message.content}
-                            onResponseSwitch={(newContent, newModel) => {
-                              // Update the message in state when user switches responses
-                              setMessages(prev => prev.map(msg => 
-                                msg.id === message.id 
-                                  ? { ...msg, content: newContent, model: newModel as ChatModel }
-                                  : msg
-                              ));
-                            }}
+                            initialModel={message.model}
                           />
                         ) : (
                           // Fallback for messages without ID
@@ -735,45 +504,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                         />
                       )}
 
-                      {/* @multi-model - Try multiple models button for latest assistant message */}
-                      {message.role === "assistant" &&
-                        index === messages.length - 1 && (
-                          <div className="mt-6 pt-4 border-t border-gray-100 space-y-3">
-                            <div className="text-center text-xs text-gray-500 mb-3">Get responses from multiple models</div>
-                            
-                            {/* Try multiple models button */}
-                            <div className="flex justify-center">
-                              <button
-                                onClick={() => handleTryMultipleModels()}
-                                disabled={isMutating}
-                                className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 transform hover:scale-105 active:scale-95 font-medium text-sm"
-                              >
-                                🎯 Try Multiple Models
-                              </button>
-                            </div>
-                            
-                            {/* Individual retry buttons */}
-                            <div className="text-center text-xs text-gray-400 mb-2">Or retry with single model:</div>
-                            <div className="flex gap-2 text-xs flex-wrap justify-center">
-                              {getModelsByPlan("pro")
-                                .filter((m: ChatModel) => m !== (message.model || model))
-                                .slice(0, typeof window !== 'undefined' && window.innerWidth < 640 ? 2 : 3)
-                                .map((altModel: ChatModel) => (
-                                  <button
-                                    key={altModel}
-                                    onClick={() =>
-                                      handleRetryWithModel(altModel)
-                                    }
-                                    disabled={isMutating}
-                                    className="px-4 py-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 disabled:opacity-50 transform hover:scale-105 active:scale-95 whitespace-nowrap font-medium"
-                                  >
-                                    <span className="hidden xs:inline">Retry with </span>
-                                    {MODEL_ALIASES[altModel].split(' ')[0]}
-                                  </button>
-                                ))}
-                            </div>
-                          </div>
-                        )}
+
                     </div>
                   </div>
                 ))}
@@ -804,16 +535,18 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
         </div>
       </div>
 
-      {/* @dashboard-redesign - InputBar component remains the same for consistency */}
+      {/* @dashboard-redesign - InputBar component with web search support */}
       <InputBar
         value={input}
         onChange={setInput}
         onSubmit={handleSubmit}
-        disabled={isStreaming || isMutating}
+        disabled={isStreaming}
         placeholder="Type your message..."
         selectedModel={model}
         onModelChange={handleModelChange}
         userPlan="pro"
+        enableWebSearch={enableWebSearch} // @web-search - Pass web search state
+        onWebSearchChange={setEnableWebSearch} // @web-search - Pass web search handler
       />
     </div>
   );

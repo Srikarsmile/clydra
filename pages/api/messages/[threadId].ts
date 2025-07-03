@@ -43,7 +43,8 @@ export default async function handler(
 
   if (req.method === "GET") {
     try {
-      const { data, error } = await supabaseAdmin
+      // First get all messages
+      const { data: messages, error } = await supabaseAdmin
         .from("messages")
         .select("*")
         .eq("thread_id", threadId)
@@ -53,7 +54,36 @@ export default async function handler(
         throw error;
       }
 
-      res.status(200).json(data || []);
+      // Then get model information for assistant messages
+      const messageIds = messages?.filter(m => m.role === 'assistant').map(m => m.id) || [];
+      let modelData: any[] = [];
+      
+      if (messageIds.length > 0) {
+        const { data: responses, error: responseError } = await supabaseAdmin
+          .from("message_responses")
+          .select("message_id, model")
+          .in("message_id", messageIds)
+          .eq("is_primary", true);
+
+        if (!responseError) {
+          modelData = responses || [];
+        }
+      }
+
+      // Create a map of message_id -> model
+      const modelMap = new Map(modelData.map(r => [r.message_id, r.model]));
+
+      // Transform data to include model information
+      const messagesWithModel = (messages || []).map(message => ({
+        id: message.id,
+        thread_id: message.thread_id,
+        role: message.role,
+        content: message.content,
+        created_at: message.created_at,
+        model: message.role === 'assistant' ? modelMap.get(message.id) || null : null
+      }));
+
+      res.status(200).json(messagesWithModel);
     } catch (error) {
       console.error("Failed to fetch messages:", error);
       res.status(500).json({ error: "Failed to fetch messages" });

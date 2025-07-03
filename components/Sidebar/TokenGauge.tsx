@@ -129,7 +129,7 @@ export function TokenGauge() {
         <div className="text-xs">
           {percentage >= 100 ? (
             <span className="text-red-600 font-medium">
-              ⚠️ Monthly limit exceeded
+              ⚠️ Daily limit exceeded
             </span>
           ) : percentage >= 95 ? (
             <span className="text-red-600 font-medium">
@@ -145,6 +145,28 @@ export function TokenGauge() {
             </span>
           )}
         </div>
+
+        {/* Development Reset Button */}
+        {percentage >= 100 && (
+          <button
+            onClick={async () => {
+              try {
+                const response = await fetch('/api/tokens/reset', { method: 'POST' });
+                if (response.ok) {
+                  toast.success('Tokens reset to 40,000!');
+                  window.location.reload(); // Refresh to show updated tokens
+                } else {
+                  toast.error('Failed to reset tokens');
+                }
+              } catch (error) {
+                toast.error('Failed to reset tokens');
+              }
+            }}
+            className="w-full mt-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded-md transition-colors"
+          >
+            🔄 Reset Daily Tokens
+          </button>
+        )}
       </div>
     </div>
   );

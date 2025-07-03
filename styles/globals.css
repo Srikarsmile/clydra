@@ -1543,3 +1543,26 @@ input[type="password"] {
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* @multi-model - Response update animation */
+.response-updated {
+  animation: response-update 0.4s ease-out;
+}
+
+@keyframes response-update {
+  0% { 
+    opacity: 0.7; 
+    transform: scale(0.98) translateY(2px); 
+    filter: brightness(1.1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.01) translateY(-1px);
+    filter: brightness(1.05);
+  }
+  100% { 
+    opacity: 1; 
+    transform: scale(1) translateY(0); 
+    filter: brightness(1);
+  }
+}

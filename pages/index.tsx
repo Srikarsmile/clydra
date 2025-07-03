@@ -52,11 +52,6 @@ export default function Home() {
 
   const models = [
     {
-      name: "GPT-3.5 Turbo",
-      status: "Free",
-      description: "Perfect for everyday conversations and quick tasks",
-    },
-    {
       name: "GPT-4o",
       status: "Pro",
       description: "Advanced reasoning for complex problem solving",

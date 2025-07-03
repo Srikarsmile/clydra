@@ -2,8 +2,8 @@
 "use client";
 
 import { useRef, useEffect, KeyboardEvent, useCallback } from "react";
-import { Send, Loader2, ChevronDown } from "lucide-react";
-import { ChatModel, MODEL_ALIASES, getModelsByPlan } from "@/types/chatModels";
+import { Send, Loader2, ChevronDown, Globe } from "lucide-react";
+import { ChatModel, MODEL_ALIASES, getModelsByPlan, modelSupportsWebSearch } from "@/types/chatModels";
 import { cn } from "@/lib/utils";
 
 interface InputBarProps {
@@ -15,6 +15,8 @@ interface InputBarProps {
   selectedModel: ChatModel;
   onModelChange: (model: ChatModel) => void;
   userPlan?: "free" | "pro" | "max";
+  enableWebSearch?: boolean; // @web-search - Add web search toggle prop
+  onWebSearchChange?: (enabled: boolean) => void; // @web-search - Add web search change handler
 }
 
 export default function InputBar({
@@ -26,6 +28,8 @@ export default function InputBar({
   selectedModel,
   onModelChange,
   userPlan = "pro",
+  enableWebSearch = false, // @web-search - Default web search to false
+  onWebSearchChange,
 }: InputBarProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const availableModels = getModelsByPlan(userPlan);
@@ -66,12 +70,18 @@ export default function InputBar({
     [onSubmit]
   );
 
-  const handleModelChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      onModelChange(e.target.value as ChatModel);
-    },
-    [onModelChange]
-  );
+  const handleModelChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newModel = e.target.value as ChatModel;
+    onModelChange(newModel);
+    
+    // @web-search - Auto-disable web search if new model doesn't support it
+    if (enableWebSearch && !modelSupportsWebSearch(newModel) && onWebSearchChange) {
+      onWebSearchChange(false);
+    }
+  }, [onModelChange, enableWebSearch, onWebSearchChange]);
+
+  // @web-search - Check if current model supports web search
+  const currentModelSupportsWebSearch = modelSupportsWebSearch(selectedModel);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-30 pointer-events-none">
@@ -115,6 +125,28 @@ export default function InputBar({
                 </select>
                 <ChevronDown className="absolute right-1.5 sm:right-2 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-gray-600 pointer-events-none transition-transform duration-200" />
               </div>
+
+              {/* @web-search - Web search toggle button */}
+              {currentModelSupportsWebSearch && onWebSearchChange && (
+                <button
+                  type="button"
+                  onClick={() => onWebSearchChange(!enableWebSearch)}
+                  disabled={disabled}
+                  className={cn(
+                    "flex-shrink-0 rounded-lg sm:rounded-xl transition-all duration-200",
+                    "border-2 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-300/50",
+                    "p-2.5 sm:p-3 min-w-[40px] sm:min-w-[48px] min-h-[40px] sm:min-h-[48px]",
+                    "touch-manipulation transform-gpu will-change-transform hover:scale-105 active:scale-95",
+                    "disabled:opacity-50 disabled:cursor-not-allowed",
+                    enableWebSearch
+                      ? "bg-blue-50 border-blue-300 text-blue-600 hover:bg-blue-100"
+                      : "bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200"
+                  )}
+                  title={enableWebSearch ? "Web search enabled" : "Enable web search"}
+                >
+                  <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              )}
 
               {/* Mobile-optimized textarea - prevents zoom */}
               <div className="flex-1 relative min-w-0 max-w-none">

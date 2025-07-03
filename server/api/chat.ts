@@ -14,7 +14,7 @@ import { hasExceededDailyLimit, updateUsageMeter } from "../lib/usage";
 import { getRemainingDailyTokens, consumeDailyTokens } from "../lib/grantDailyTokens"; // @grant-40k
 import { supabaseAdmin } from "../../lib/supabase";
 import { getOrCreateUser } from "../../lib/user-utils";
-import { MODEL_ALIASES, ChatModel } from "../../types/chatModels";
+import { MODEL_ALIASES, ChatModel, MODELS_WITH_WEB_SEARCH } from "../../types/chatModels";
 
 // @dashboard-redesign - Updated input validation schema to match frontend models
 const chatInputSchema = z.object({
@@ -44,6 +44,8 @@ const chatInputSchema = z.object({
     ] as const)
     .default("google/gemini-2.5-flash"), // @dashboard-redesign - Default to free Gemini 2.5 Flash
   threadId: z.string().optional(), // @threads - Add threadId support
+  enableWebSearch: z.boolean().optional().default(false), // @web-search - Add web search toggle
+  webSearchContextSize: z.enum(["low", "medium", "high"]).optional().default("medium"), // @web-search - Search context size
 });
 
 export type ChatInput = z.infer<typeof chatInputSchema>;
@@ -52,13 +54,24 @@ export interface ChatResponse {
   message: {
     role: "assistant";
     content: string;
-    id?: number; // @multi-model - Add message ID for database reference
+    id?: string; // @multi-model - Use string ID from Supabase
+    annotations?: Array<{
+      type: "url_citation";
+      url_citation: {
+        url: string;
+        title: string;
+        content?: string;
+        start_index: number;
+        end_index: number;
+      };
+    }>; // @web-search - Add OpenRouter citation annotations
   };
   usage: {
     inputTokens: number;
     outputTokens: number;
     totalTokens: number;
   };
+  webSearchUsed?: boolean; // @web-search - Indicate if web search was used
 }
 
 // Add streaming response interface
@@ -110,6 +123,13 @@ export async function processChatRequest(
     ? (validatedInput.model as ChatModel)
     : "openai/gpt-4o";
 
+  // @web-search - Check if web search should be enabled
+  const shouldUseWebSearch = validatedInput.enableWebSearch && 
+    MODELS_WITH_WEB_SEARCH.includes(model);
+
+  // @web-search - Prepare the model string for OpenRouter (append :online for web search)
+  const openRouterModel = shouldUseWebSearch ? `${model}:online` : model;
+
   // @clydra-core Guard behind feature flag
   if (!useOpenRouter()) {
     throw new ChatError(
@@ -124,22 +144,15 @@ export async function processChatRequest(
     model
   );
 
-  // @grant-40k - Check daily token quota
-  const [remainingTokens, hasExceeded] = await Promise.all([
-    getRemainingDailyTokens(userId),
-    hasExceededDailyLimit(userId),
-  ]);
+  // @grant-40k - Check daily token quota (primary limit)
+  const remainingTokens = await getRemainingDailyTokens(userId);
 
   if (remainingTokens < inputTokens) {
     throw new ChatError("FORBIDDEN", `Insufficient daily tokens. Need ${inputTokens}, have ${remainingTokens}.`);
   }
 
-  if (hasExceeded) {
-    throw new ChatError(
-      "TOO_MANY_REQUESTS",
-      "Daily message limit exceeded. Upgrade to Pro for unlimited messages."
-    );
-  }
+  // Note: Removed legacy daily message limit check in favor of token-based system
+  // The token system (40K daily) is more sophisticated and should be the primary limit
 
   // @clydra-core Set up OpenRouter client via OpenAI SDK
   const baseURL = process.env.OPENROUTER_BASE || "https://openrouter.ai/api/v1";
@@ -168,17 +181,26 @@ export async function processChatRequest(
   try {
     // @performance - Streaming vs Non-streaming logic
     if (enableStreaming) {
-      // @performance - Streaming implementation for reduced latency
+      // @performance - Optimized streaming implementation
+      // Consume input tokens immediately, output tokens after completion
+      await consumeDailyTokens(userId, inputTokens);
+
       const completion = await openai.chat.completions.create({
-        model: model,
+        model: openRouterModel, // @web-search - Use model with :online suffix if web search enabled
         messages: validatedInput.messages,
         // @performance - Optimized parameters for lower latency
-        temperature: 0.5, // Reduced for faster, more focused responses
-        max_tokens: 3000, // Slightly reduced for faster completion
-        top_p: 0.9, // More focused sampling for speed
+        temperature: 0.7, // Balanced for speed and quality
+        max_tokens: 2000, // Reduced for faster completion
+        top_p: 0.9, // More focused sampling
         frequency_penalty: 0,
         presence_penalty: 0,
         stream: true,
+        // @web-search - Add web search options for compatible models
+        ...(shouldUseWebSearch && {
+          web_search_options: {
+            search_context_size: validatedInput.webSearchContextSize,
+          },
+        }),
       });
 
       let fullMessage = "";
@@ -192,12 +214,14 @@ export async function processChatRequest(
               const content = chunk.choices[0]?.delta?.content || "";
               if (content) {
                 fullMessage += content;
-                // Send chunk to client
+                // Send chunk to client immediately
                 controller.enqueue(
                   new TextEncoder().encode(
                     `data: ${JSON.stringify({ content })}\n\n`
                   )
                 );
+
+                // Skip intermediate saves for performance - we'll save once at the end
               }
 
               // Track token usage from the stream
@@ -206,47 +230,43 @@ export async function processChatRequest(
               }
             }
 
-            // @multi-model - Save message and get ID for streaming
-            let messageId: number | undefined;
-            
-            try {
-              await Promise.all([
-                consumeDailyTokens(
-                  userId,
-                  totalTokens || Math.ceil(fullMessage.length / 4)
-                ),
-                updateUsageMeter(
-                  userId,
-                  totalTokens || Math.ceil(fullMessage.length / 4)
-                ),
-              ]);
+            // Calculate and consume output tokens
+            const outputTokens = Math.ceil(fullMessage.length / 4); // Rough estimate
+            await Promise.all([
+              consumeDailyTokens(userId, outputTokens),
+              updateUsageMeter(userId, inputTokens + outputTokens),
+            ]).catch(error => {
+              console.error("Token consumption failed:", error);
+            });
 
-              // Save to database and wait for message ID
-              if (threadId || input.threadId) {
-                const saveResult = await saveMessagesToThread(
+            // Save final message and get database ID
+            let finalMessageId: string | undefined;
+            if (threadId || input.threadId) {
+              try {
+                console.log(`💾 Saving final message to database for thread: ${threadId || input.threadId}`);
+                const { assistantMessageId } = await saveMessagesToThread(
                   userId,
                   threadId || input.threadId!,
                   validatedInput.messages,
                   fullMessage
                 );
-                messageId = saveResult.assistantMessageId;
-              } else {
-                await saveChatToHistory(
-                  userId,
-                  validatedInput.messages,
-                  fullMessage,
-                  model
-                );
+                finalMessageId = assistantMessageId;
+                console.log(`✅ Final message saved with ID: ${finalMessageId}`);
+              } catch (error) {
+                console.error("❌ Final save failed:", error);
               }
+            }
 
-              // Send final chunk with message ID
+            // Send completion message with ID
+            if (finalMessageId) {
+              console.log(`📤 Sending completion message with ID: ${finalMessageId}`);
               controller.enqueue(
                 new TextEncoder().encode(
-                  `data: ${JSON.stringify({ messageId, content: null })}\n\n`
+                  `data: ${JSON.stringify({ messageId: finalMessageId, type: "completion" })}\n\n`
                 )
               );
-            } catch (error) {
-              console.error("Background database operations failed:", error);
+            } else {
+              console.log('⚠️ No final message ID available for completion');
             }
 
             controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
@@ -258,18 +278,11 @@ export async function processChatRequest(
         },
       });
 
-      return {
-        stream,
-        usage: {
-          inputTokens,
-          outputTokens: Math.ceil(fullMessage.length / 4),
-          totalTokens: inputTokens + Math.ceil(fullMessage.length / 4),
-        },
-      };
+      return { stream };
     } else {
       // @clydra-core Non-streaming implementation (legacy)
       const completion = await openai.chat.completions.create({
-        model: model,
+        model: openRouterModel, // @web-search - Use model with :online suffix if web search enabled
         messages: validatedInput.messages,
         // @performance - Optimized parameters for lower latency
         temperature: 0.5, // Reduced for faster, more focused responses
@@ -277,6 +290,12 @@ export async function processChatRequest(
         top_p: 0.9, // More focused sampling for speed
         frequency_penalty: 0,
         presence_penalty: 0,
+        // @web-search - Add web search options for compatible models
+        ...(shouldUseWebSearch && {
+          web_search_options: {
+            search_context_size: validatedInput.webSearchContextSize,
+          },
+        }),
       });
 
       if (!completion.choices[0]?.message?.content) {
@@ -300,20 +319,19 @@ export async function processChatRequest(
         updateUsageMeter(userId, totalTokens),
       ]);
 
-      // @multi-model - Save chat and wait for message IDs
-      let messageId: number | undefined;
-      
+      // @multi-model - Save chat and get message IDs
+      let messageId: string | undefined;
       if (threadId || input.threadId) {
-        const saveResult = await saveMessagesToThread(
+        const { assistantMessageId } = await saveMessagesToThread(
           userId,
           threadId || input.threadId!,
           validatedInput.messages,
           assistantMessage
         );
-        messageId = saveResult.assistantMessageId;
+        messageId = assistantMessageId;
       } else {
         // For non-thread chats, still save to history but no message ID
-        saveChatToHistory(
+        await saveChatToHistory(
           userId,
           validatedInput.messages,
           assistantMessage,
@@ -327,13 +345,15 @@ export async function processChatRequest(
         message: {
           role: "assistant",
           content: assistantMessage,
-          id: messageId, // @multi-model - Include database message ID
+          id: messageId, // Include message ID in response
+          annotations: completion.choices[0].message.annotations || undefined, // @web-search - Include citations
         },
         usage: {
           inputTokens: completion.usage?.prompt_tokens || inputTokens,
           outputTokens: completion.usage?.completion_tokens || outputTokens,
           totalTokens: completion.usage?.total_tokens || totalTokens,
         },
+        webSearchUsed: shouldUseWebSearch, // @web-search - Indicate if web search was used
       };
     }
   } catch (error) {
@@ -360,7 +380,7 @@ async function saveMessagesToThread(
   threadId: string,
   userMessages: Array<{ role: string; content: string }>,
   assistantResponse: string
-): Promise<{ userMessageId?: number; assistantMessageId?: number }> {
+): Promise<{ userMessageId?: string; assistantMessageId?: string }> {
   try {
     // userId is already a Supabase UUID, no need to convert
 
@@ -370,24 +390,35 @@ async function saveMessagesToThread(
       throw new Error("Invalid message format");
     }
 
-    // Insert both user and assistant messages and return IDs
-    const { data, error } = await supabaseAdmin.from("messages").insert([
-      {
-        thread_id: threadId,
-        role: "user",
-        content: lastUserMessage.content,
-      },
-      {
-        thread_id: threadId,
-        role: "assistant",
-        content: assistantResponse,
-      },
-    ]).select('id, role');
+    console.log("Inserting messages for thread:", threadId);
+
+    // Insert both user and assistant messages and get their IDs
+    const { data, error } = await supabaseAdmin
+      .from("messages")
+      .insert([
+        {
+          thread_id: threadId,
+          role: "user",
+          content: lastUserMessage.content,
+        },
+        {
+          thread_id: threadId,
+          role: "assistant",
+          content: assistantResponse,
+        },
+      ])
+      .select("id, role");
 
     if (error) {
       console.error("Error saving messages to thread:", error);
       return {};
     }
+
+    console.log("Messages saved successfully to thread:", threadId);
+
+    // Extract message IDs
+    const userMessageId = data?.find(m => m.role === "user")?.id;
+    const assistantMessageId = data?.find(m => m.role === "assistant")?.id;
 
     // @ui-polish - Auto-title on first user message
     await supabaseAdmin
@@ -398,10 +429,6 @@ async function saveMessagesToThread(
       .eq("id", threadId)
       .eq("title", "New Chat");
 
-    // Return the message IDs
-    const userMessageId = data?.find(msg => msg.role === 'user')?.id;
-    const assistantMessageId = data?.find(msg => msg.role === 'assistant')?.id;
-    
     return { userMessageId, assistantMessageId };
   } catch (error) {
     console.error("Error saving messages to thread:", error);
