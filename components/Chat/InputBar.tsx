@@ -182,7 +182,7 @@ export default function InputBar({
                 />
               </div>
 
-              {/* Compact send button */}
+              {/* Compact send button with simplified icon */}
               <button
                 type="submit"
                 disabled={disabled || !value.trim()}
@@ -192,22 +192,23 @@ export default function InputBar({
                   "hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed",
                   "focus:outline-none focus:ring-2 focus:ring-gray-300/50",
                   "transform-gpu will-change-transform hover:scale-105 active:scale-95",
-                  "p-2 sm:p-2.5", // Made slightly more compact
-                  "w-[36px] h-[36px] sm:w-[40px] sm:h-[40px]", // More compact but still touch-friendly
+                  "p-1.5 sm:p-2", // Made even more compact
+                  "w-[32px] h-[32px] sm:w-[36px] sm:h-[36px]", // Smaller than before
                   "touch-manipulation flex items-center justify-center"
                 )}
               >
+                {/* Simple arrow icon - much more compact */}
                 <svg
-                  className="w-4 h-4"
+                  className="w-3.5 h-3.5"
                   fill="none"
                   stroke="currentColor"
+                  strokeWidth={2.5}
                   viewBox="0 0 24 24"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                    d="M5 12h14m-7-7l7 7-7 7"
                   />
                 </svg>
               </button>
