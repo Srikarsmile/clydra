@@ -9,6 +9,12 @@ const DAILY_CAP = 40_000;
  */
 export async function grantDailyTokens(userId: string): Promise<void> {
   try {
+    // @grant-40k - Validate userId to prevent charCodeAt errors
+    if (!userId || typeof userId !== "string" || userId.trim().length === 0) {
+      console.warn("Invalid userId provided to grantDailyTokens:", userId);
+      return;
+    }
+
     const key = `daily_${userId}`;
     const exists = await redis.exists(key);
     if (exists) return; // returning user → nothing to do
@@ -26,6 +32,12 @@ export async function grantDailyTokens(userId: string): Promise<void> {
  */
 export async function getRemainingDailyTokens(userId: string): Promise<number> {
   try {
+    // @grant-40k - Validate userId to prevent charCodeAt errors
+    if (!userId || typeof userId !== "string" || userId.trim().length === 0) {
+      console.warn("Invalid userId provided to getRemainingDailyTokens:", userId);
+      return 0;
+    }
+
     const key = `daily_${userId}`;
     const remaining = await redis.get(key);
     return remaining ? parseInt(remaining, 10) : 0;
@@ -41,6 +53,18 @@ export async function getRemainingDailyTokens(userId: string): Promise<number> {
  */
 export async function consumeDailyTokens(userId: string, tokensUsed: number): Promise<boolean> {
   try {
+    // @grant-40k - Validate userId to prevent charCodeAt errors
+    if (!userId || typeof userId !== "string" || userId.trim().length === 0) {
+      console.warn("Invalid userId provided to consumeDailyTokens:", userId);
+      return true; // Fail open
+    }
+
+    // @grant-40k - Validate tokensUsed
+    if (!tokensUsed || tokensUsed <= 0 || !Number.isInteger(tokensUsed)) {
+      console.warn("Invalid tokensUsed provided to consumeDailyTokens:", tokensUsed);
+      return true; // Fail open
+    }
+
     const key = `daily_${userId}`;
     const remaining = await redis.get(key);
     
