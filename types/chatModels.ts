@@ -1,7 +1,7 @@
 // @fluid-ui - T3.chat model definitions with latest models organized by plan
 export const MODEL_ALIASES = {
   // Free Plan Models - as specified in design brief
-  "google/gemini-2.5-flash": "Gemini 2.5 Flash",
+  "google/gemini-2.5-flash": "Gemini Flash 2.5",
 
   // Pro Plan Models - as specified in design brief
   "openai/gpt-4o": "GPT-4o",
