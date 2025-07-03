@@ -1,9 +1,22 @@
-import Sidebar from "./Sidebar";
+import Sidebar, { SidebarRef } from "./Sidebar";
+import { forwardRef, useImperativeHandle, useRef } from "react";
 
-export function Shell({ children }: { children: React.ReactNode }) {
+export interface ShellRef {
+  refreshTokenGauge: () => void;
+}
+
+export const Shell = forwardRef<ShellRef, { children: React.ReactNode }>(function Shell({ children }, ref) {
+  const sidebarRef = useRef<SidebarRef>(null);
+
+  useImperativeHandle(ref, () => ({
+    refreshTokenGauge: () => {
+      sidebarRef.current?.refreshTokenGauge();
+    },
+  }), []);
+
   return (
     <div className="h-screen w-screen flex overflow-hidden">
-      <Sidebar /> {/* Mobile: Hidden by default, Desktop: Normal sidebar */}
+      <Sidebar ref={sidebarRef} /> {/* Mobile: Hidden by default, Desktop: Normal sidebar */}
       
       {/* Main content area - Account for mobile menu button and input bar */}
       <div className="flex-1 flex flex-col min-w-0">
@@ -16,4 +29,4 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   );
-}
+});

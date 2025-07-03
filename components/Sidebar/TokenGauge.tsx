@@ -1,7 +1,7 @@
 // @token-meter - Token usage gauge for sidebar
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useImperativeHandle, forwardRef } from "react";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -31,13 +31,28 @@ const fetcher = async (url: string): Promise<TokenUsage> => {
   }
 };
 
-export function TokenGauge() {
-  const { data, error } = useSWR<TokenUsage>("/api/tokens/current", fetcher, {
-    refreshInterval: 30000, // Refresh every 30 seconds
+export interface TokenGaugeRef {
+  refresh: () => void;
+}
+
+export const TokenGauge = forwardRef<TokenGaugeRef, {}>((props, ref) => {
+  const { data, error, mutate } = useSWR<TokenUsage>("/api/tokens/current", fetcher, {
+    refreshInterval: 0, // Disable automatic polling - we'll refresh manually after chat responses
+    revalidateOnFocus: false, // Don't refresh when tab gains focus
+    revalidateOnReconnect: false, // Don't refresh on network reconnect
   });
 
   const [hasShownWarning80, setHasShownWarning80] = useState(false);
   const [hasShownWarning95, setHasShownWarning95] = useState(false);
+
+  // Expose refresh function to parent components
+  const refresh = useCallback(() => {
+    mutate(); // Trigger a fresh fetch
+  }, [mutate]);
+
+  useImperativeHandle(ref, () => ({
+    refresh,
+  }), [refresh]);
 
   const used = data?.used || 0;
   const cap = data?.cap || 1500000;
@@ -154,7 +169,7 @@ export function TokenGauge() {
                 const response = await fetch('/api/tokens/reset', { method: 'POST' });
                 if (response.ok) {
                   toast.success('Tokens reset to 40,000!');
-                  window.location.reload(); // Refresh to show updated tokens
+                  refresh(); // Use our refresh function instead of page reload
                 } else {
                   toast.error('Failed to reset tokens');
                 }
@@ -170,4 +185,6 @@ export function TokenGauge() {
       </div>
     </div>
   );
-}
+});
+
+TokenGauge.displayName = "TokenGauge";

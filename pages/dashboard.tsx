@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
-import { Shell } from "../components/Layout/Shell";
+import { Shell, ShellRef } from "../components/Layout/Shell";
 import ChatPanel from "../components/Chat/ChatPanel"; // @dashboard-redesign
 
 interface DashboardStats {
@@ -20,6 +20,7 @@ function Dashboard() {
     totalTokens: 0,
     activeModel: "Claude 3 Sonnet",
   });
+  const shellRef = useRef<ShellRef>(null);
 
   // @dashboard-redesign - Get threadId from query params
   const threadId =
@@ -77,8 +78,11 @@ function Dashboard() {
 
   // @dashboard-redesign - Use our new ChatPanel component directly
   return (
-    <Shell>
-      <ChatPanel threadId={threadId} />
+    <Shell ref={shellRef}>
+      <ChatPanel 
+        threadId={threadId} 
+        onTokensUpdated={() => shellRef.current?.refreshTokenGauge()}
+      />
     </Shell>
   );
 }

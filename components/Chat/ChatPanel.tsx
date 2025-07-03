@@ -40,9 +40,10 @@ interface Message {
 
 interface ChatPanelProps {
   threadId?: string;
+  onTokensUpdated?: () => void; // Callback to refresh token gauge after chat responses
 }
 
-export default function ChatPanel({ threadId }: ChatPanelProps) {
+export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps) {
   const { user } = useUser();
   const router = useRouter(); // @persistence-fix - Add router for URL updates
   const [messages, setMessages] = useState<Message[]>([]);
@@ -331,6 +332,11 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
           reader.releaseLock();
         }
 
+        // @performance - Refresh token gauge after successful chat response
+        if (onTokensUpdated) {
+          onTokensUpdated();
+        }
+
     } catch (error) {
         console.error("Chat error:", error);
         
@@ -362,6 +368,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
     scrollToBottom,
     currentThreadId,
     createNewThread,
+    onTokensUpdated,
   ]);
 
 

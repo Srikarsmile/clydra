@@ -1,5 +1,5 @@
 // @fluid-ui - T3.chat sidebar component
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { useRouter } from "next/router";
 import { Menu, ChevronLeft, User, LogOut, X } from "lucide-react";
 import { useClerk, useUser } from "@clerk/nextjs";
@@ -8,10 +8,14 @@ import { cn } from "@/lib/utils";
 import ThreadList from "../Sidebar/ThreadList";
 import ThreadSearch from "../Sidebar/ThreadSearch";
 import PlanBadge from "../PlanBadge";
-import { TokenGauge } from "../Sidebar/TokenGauge";
+import { TokenGauge, TokenGaugeRef } from "../Sidebar/TokenGauge";
 
 interface SidebarProps {
   planType?: string;
+}
+
+export interface SidebarRef {
+  refreshTokenGauge: () => void;
 }
 
 // @dashboard-redesign - Mobile-optimized ProfileChip component
@@ -127,11 +131,19 @@ function UpgradeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
   );
 }
 
-export default function Sidebar({ planType = "free" }: SidebarProps) {
+export default forwardRef<SidebarRef, SidebarProps>(function Sidebar({ planType = "free" }, ref) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const router = useRouter();
+  const tokenGaugeRef = useRef<TokenGaugeRef>(null);
+
+  // Expose refresh method to parent components
+  useImperativeHandle(ref, () => ({
+    refreshTokenGauge: () => {
+      tokenGaugeRef.current?.refresh();
+    },
+  }), []);
 
   // @dashboard-redesign - Listen for hamburger menu toggle from chat header
   useEffect(() => {
@@ -268,7 +280,7 @@ export default function Sidebar({ planType = "free" }: SidebarProps) {
         <div className="px-2 sm:px-3 py-3 sm:py-4 border-t border-gray-200">
           {(!collapsed || mobileMenuOpen) && (
             <div className="mb-3 space-y-2 sm:space-y-3">
-              <TokenGauge />
+              <TokenGauge ref={tokenGaugeRef} />
               <PlanBadge
                 plan={planType as "free" | "pro" | "max"}
                 onClick={handlePlanBadgeClick}
@@ -286,4 +298,4 @@ export default function Sidebar({ planType = "free" }: SidebarProps) {
       />
     </>
   );
-}
+});
