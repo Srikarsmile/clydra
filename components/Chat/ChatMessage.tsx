@@ -36,8 +36,8 @@ function ChatMessage({
   model, // Add back missing model prop
   id, // Add back missing id prop
 }: ChatMessageProps) {
-    return (
-      <div
+  return (
+    <div
         id={id ? `message-${id}` : undefined}
         className={cn(
           "prose prose-gray max-w-none",
@@ -145,7 +145,7 @@ function ChatMessage({
           <div className="flex items-center gap-1 mt-2 text-xs text-blue-600">
             <Globe className="w-3 h-3" />
             <span>Enhanced with web search</span>
-          </div>
+        </div>
         )}
 
         {timestamp && (
@@ -156,8 +156,8 @@ function ChatMessage({
             })}
           </p>
         )}
-      </div>
-    );
+    </div>
+  );
 }
 
 ChatMessage.displayName = "ChatMessage";
