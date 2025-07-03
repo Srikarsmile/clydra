@@ -13,6 +13,7 @@ import { estimateConversationTokens } from "../lib/chatTokens";
 import { updateUsageMeter } from "../lib/usage";
 import { getRemainingDailyTokens, consumeDailyTokens } from "../lib/grantDailyTokens"; // @grant-40k
 import { addTokens } from "../lib/tokens"; // @model-multiplier - Import token tracking with multipliers
+import { effectiveTokens, MODEL_MULTIPLIER, WEB_SEARCH_MULTIPLIER } from "../lib/tokens"; // @margin-patch - Import token multiplier system
 import { supabaseAdmin } from "../../lib/supabase";
 import { getOrCreateUser } from "../../lib/user-utils";
 import { MODEL_ALIASES, ChatModel, MODELS_WITH_WEB_SEARCH } from "../../types/chatModels";
@@ -180,11 +181,14 @@ export async function processChatRequest(
   });
 
   try {
-    // @performance - Streaming vs Non-streaming logic
-    if (enableStreaming) {
-      // @performance - Optimized streaming implementation
-      // Consume input tokens immediately, output tokens after completion
-      await consumeDailyTokens(userId, inputTokens);
+          // @performance - Streaming vs Non-streaming logic
+      if (enableStreaming) {
+        // @margin-patch - Calculate effective tokens with model multiplier
+        const effectiveInputTokens = await effectiveTokens(model, inputTokens, shouldUseWebSearch);
+        
+        // @performance - Optimized streaming implementation
+        // Consume input tokens immediately, output tokens after completion
+        await consumeDailyTokens(userId, effectiveInputTokens);
 
       const completion = await openai.chat.completions.create({
         model: openRouterModel, // @web-search - Use model with :online suffix if web search enabled
@@ -316,12 +320,18 @@ export async function processChatRequest(
         Math.ceil(assistantMessage.length / 4);
       const totalTokens = inputTokens + outputTokens;
 
+      // @margin-patch - Calculate effective tokens with model multiplier
+      const effectiveTotalTokens = await effectiveTokens(model, completion.usage?.total_tokens || totalTokens, shouldUseWebSearch);
+
+      // Log token calculation for debugging
+      console.log(`Token calculation: ${completion.usage?.total_tokens || totalTokens} × ${MODEL_MULTIPLIER[model] || 1.0} (model) × ${shouldUseWebSearch ? WEB_SEARCH_MULTIPLIER : 1.0} (web search) = ${effectiveTotalTokens}`);
+
       // @grant-40k - Consume daily tokens and update usage meter
       await Promise.all([
-        consumeDailyTokens(userId, completion.usage?.total_tokens || totalTokens),
+        consumeDailyTokens(userId, effectiveTotalTokens),
         updateUsageMeter(userId, totalTokens),
         // @model-multiplier - Track effective tokens with model multipliers and web search cost
-        addTokens(userId, completion.usage?.total_tokens || totalTokens, model, shouldUseWebSearch),
+        addTokens(userId, effectiveTotalTokens, model, shouldUseWebSearch),
       ]);
 
       // @multi-model - Save chat and get message IDs
