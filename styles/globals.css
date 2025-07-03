@@ -695,6 +695,8 @@ html {
     -webkit-overflow-scrolling: touch;
     overflow-y: auto !important;
     overscroll-behavior: contain;
+    /* Prevent double scroll by containing scroll to this element */
+    contain: layout;
   }
 
   .chat-scroll::-webkit-scrollbar {
@@ -1109,6 +1111,19 @@ html {
 html,
 body {
   scroll-behavior: smooth;
+  /* Prevent double scroll in chat layout */
+  overflow-x: hidden;
+}
+
+/* Specific chat layout container fixes */
+.chat-layout-container {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.chat-layout-container .chat-scroll {
+  height: 100%;
+  overflow-y: auto;
 }
 
 /* @fluid-scroll - Smooth animations for chat messages */
@@ -1318,4 +1333,213 @@ input[type="password"] {
 
 .grabbable:active {
   cursor: grabbing;
+}
+
+/* Mobile-First Responsive Design Optimizations */
+
+/* @mobile-optimization - Improved touch interactions */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* @mobile-optimization - Better mobile viewport handling */
+@media screen and (max-width: 640px) {
+  /* Ensure proper mobile viewport */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+  
+  /* Improved scrolling on iOS */
+  body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+  }
+  
+  /* Mobile-optimized chat scrolling */
+  .chat-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    scroll-behavior: smooth;
+  }
+  
+  /* Better mobile text rendering */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Prevent zoom on inputs */
+  input, textarea, select {
+    font-size: 16px;
+    transform: translateZ(0);
+  }
+  
+  /* Mobile-optimized animations */
+  .animate-fade-in-up {
+    animation-duration: 0.3s;
+  }
+  
+  /* Reduce motion for mobile performance */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in-up,
+    .animate-scale-in-spring,
+    .animate-slide-in-right {
+      animation: none;
+    }
+  }
+  
+  /* Mobile-specific button optimizations */
+  button {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  
+  /* Improve mobile form controls */
+  .mobile-optimized-form {
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 12px;
+  }
+}
+
+/* @mobile-optimization - Extra small screens (xs) breakpoint */
+@media screen and (max-width: 475px) {
+  .xs\:hidden {
+    display: none;
+  }
+  
+  .xs\:inline {
+    display: inline;
+  }
+  
+  .xs\:block {
+    display: block;
+  }
+  
+  .xs\:flex {
+    display: flex;
+  }
+  
+  /* Mobile message bubbles optimization */
+  .mobile-message-bubble {
+    max-width: 90% !important;
+    word-break: break-word;
+  }
+  
+  /* Mobile suggestion cards */
+  .mobile-suggestion-card {
+    padding: 12px;
+    font-size: 14px;
+  }
+}
+
+/* @mobile-optimization - Landscape mobile handling */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  /* Reduce vertical padding in landscape */
+  .landscape-compact {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  
+  /* Smaller header in landscape */
+  .landscape-header {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+}
+
+/* @mobile-optimization - High DPI display optimizations */
+@media screen and (-webkit-min-device-pixel-ratio: 2), 
+       screen and (min-resolution: 192dpi) {
+  .mobile-crisp-text {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* @mobile-optimization - iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari input fixes */
+  input, textarea {
+    -webkit-appearance: none;
+    border-radius: 0;
+  }
+  
+  /* Fix iOS Safari 100vh issue */
+  .mobile-full-height {
+    height: -webkit-fill-available;
+  }
+  
+  /* iOS Safari backdrop-filter optimization */
+  .mobile-backdrop-blur {
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+  }
+}
+
+/* @mobile-optimization - Android Chrome specific fixes */
+@media screen and (-webkit-min-device-pixel-ratio: 1) and (max-width: 640px) {
+  /* Android keyboard handling */
+  .android-keyboard-fix {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+  
+  /* Better Android scrolling */
+  .android-scroll-fix {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+}
+
+/* @mobile-optimization - Prevent iOS zoom on input focus */
+@media screen and (max-width: 768px) {
+  /* Force 16px font size on all form inputs to prevent iOS zoom */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  textarea,
+  select {
+    font-size: 16px !important;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+  
+  /* Specific fix for webkit browsers */
+  @supports (-webkit-touch-callout: none) {
+    input,
+    textarea,
+    select {
+      font-size: 16px !important;
+      -webkit-text-size-adjust: 100%;
+    }
+  }
+  
+  /* Better touch experience */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Smooth scrolling for mobile */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent bounce scrolling */
+  body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
 }

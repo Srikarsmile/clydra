@@ -11,11 +11,13 @@ import { ChatModel, MODEL_ALIASES, getModelsByPlan } from "@/types/chatModels";
 import UpgradeCTA from "../UpgradeCTA";
 import ChatMessage from "./ChatMessage";
 import InputBar from "./InputBar"; // @dashboard-redesign
+import { Menu } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant" | "system";
   content: string;
   id?: string;
+  model?: ChatModel; // Track which model generated this message
 }
 
 interface ChatResponse {
@@ -187,6 +189,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
               role: msg.role,
               content: msg.content,
               id: msg.id?.toString(),
+              model: undefined, // Legacy messages don't have model info
             })
           );
           setMessages(formattedMessages);
@@ -368,6 +371,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
           role: "assistant" as const,
           content: fullMessage,
           id: (Date.now() + 1).toString(),
+          model: model, // Store which model generated this message
         },
       ]);
       setStreamingMessage("");
@@ -402,6 +406,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
           {
             ...data.message,
             id: (Date.now() + 1).toString(),
+            model: model, // Store which model generated this message
           },
         ]);
         setShowUpgrade(false);
@@ -549,57 +554,66 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
 
   return (
     <div className="flex flex-col h-full bg-white relative overflow-hidden">
-      {/* @dashboard-redesign - Chat container expanded to full width */}
-      <div className="flex-1 flex flex-col w-full px-6 pb-32 min-h-0">
-        {/* @dashboard-redesign - Clydra logo header */}
-        <div className="flex items-center justify-between py-4 border-b border-gray-100 mb-6">
-          <div className="flex items-center">
-            <span className="text-xl font-bold text-gray-900">Clydra</span>
+      {/* @dashboard-redesign - Chat container with mobile-optimized padding and safe areas */}
+      <div className="flex-1 flex flex-col w-full px-3 sm:px-6 pb-28 sm:pb-32 min-h-0">
+        {/* @dashboard-redesign - Mobile-optimized header with integrated hamburger menu */}
+        <div className="flex items-center justify-between py-3 sm:py-4 border-b border-gray-100 mb-4 sm:mb-6">
+          <div className="flex items-center gap-3">
+            {/* Hamburger menu button integrated into header */}
+            <button
+              onClick={() => {
+                // Toggle mobile sidebar - we'll need to pass this as a prop or use context
+                const event = new CustomEvent('toggleMobileSidebar');
+                window.dispatchEvent(event);
+              }}
+              className="md:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-colors touch-manipulation"
+            >
+              <Menu size={20} />
+            </button>
+            <span className="text-lg sm:text-xl font-bold text-gray-900">Clydra</span>
           </div>
-          {/* @dashboard-redesign - Model badge in header */}
-          <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 border border-gray-200 text-gray-700 px-3 py-1.5 text-sm">
-            <span className="w-2 h-2 rounded-full bg-gray-400" />
-            {MODEL_ALIASES[model]}
+          {/* @dashboard-redesign - Mobile-responsive model badge */}
+          <span className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-gray-100 border border-gray-200 text-gray-700 px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm">
+            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gray-400" />
+            <span className="hidden xs:inline">{MODEL_ALIASES[model]}</span>
+            <span className="xs:hidden">{MODEL_ALIASES[model].split(' ')[0]}</span>
           </span>
         </div>
         
-
-
-        {/* @fluid-scroll - Enhanced messages area with smooth scrolling */}
+        {/* @fluid-scroll - Fixed scrolling container to prevent double scroll */}
         <div
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto min-h-0 chat-scroll scroll-smooth"
-          style={{ height: "100%", overflowY: "auto" }}
         >
-          <div className="space-y-6 py-4 pb-6 min-h-full">
+          <div className="space-y-4 sm:space-y-6 py-2 sm:py-4 pb-6 sm:pb-8">
             {messages.length === 0 ? (
-              // @dashboard-redesign - Empty state with smooth animations
-              <div className="flex flex-col items-center space-y-6 py-16 animate-fade-in-up">
-                <h1 className="text-4xl font-bold text-center">
+              // @dashboard-redesign - Mobile-optimized empty state
+              <div className="flex flex-col items-center space-y-4 sm:space-y-6 py-8 sm:py-16 animate-fade-in-up px-2">
+                <h1 className="text-2xl sm:text-4xl font-bold text-center leading-tight">
                   Hello{" "}
                   <span className="text-gray-900">{user?.firstName}!</span>
                 </h1>
-                <p className="text-xl text-text-muted text-center">
+                <p className="text-lg sm:text-xl text-text-muted text-center max-w-md">
                   How can I assist you today?
                 </p>
 
-                {/* @dashboard-redesign - 4 suggestion cards with stagger animation */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl w-full mt-8 animate-stagger">
+                {/* @dashboard-redesign - Mobile-responsive suggestion cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 max-w-6xl w-full mt-6 sm:mt-8 animate-stagger">
                   {suggestions.map((suggestion, index) => (
                     <button
                       key={index}
                       onClick={() => setInput(suggestion.description)}
-                      className="group p-4 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-lg transition-all duration-300 text-left transform hover:scale-105 hover:-translate-y-1"
+                      className="group p-3 sm:p-4 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-lg transition-all duration-300 text-left transform hover:scale-105 hover:-translate-y-1 active:scale-95"
                     >
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="text-xl transition-transform duration-300 group-hover:scale-110">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                        <div className="text-lg sm:text-xl transition-transform duration-300 group-hover:scale-110">
                           {suggestion.icon}
                         </div>
-                        <div className="font-medium text-text-main">
+                        <div className="font-medium text-text-main text-sm sm:text-base">
                           {suggestion.title}
                         </div>
                       </div>
-                      <div className="text-sm text-text-muted">
+                      <div className="text-xs sm:text-sm text-text-muted">
                         {suggestion.description}
                       </div>
                     </button>
@@ -608,28 +622,33 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
               </div>
             ) : (
               <>
-                {/* @fluid-scroll - Message list with expanded widths for larger screens */}
+                {/* @fluid-scroll - Mobile-optimized message list with better retry button positioning */}
                 {messages.map((message, index) => (
                   <div
                     key={message.id || index}
-                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-fade-in-up`}
+                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-fade-in-up mb-6 sm:mb-8`}
                     style={{
                       animationDelay: `${Math.min(index * 50, 500)}ms`,
                       animationFillMode: "both",
                     }}
                   >
                     <div
-                      className={`max-w-xs sm:max-w-sm md:max-w-md lg:max-w-2xl xl:max-w-4xl ${
+                      className={`w-full max-w-[85%] sm:max-w-xs md:max-w-sm lg:max-w-md xl:max-w-2xl 2xl:max-w-4xl ${
                         message.role === "assistant"
                           ? "bg-white text-gray-900 shadow-md"
                           : "bg-gray-100 text-gray-900 shadow-sm"
-                      } rounded-2xl px-6 py-4 relative group transition-all duration-300 hover:shadow-lg transform hover:scale-[1.02]`}
+                      } rounded-2xl px-3 sm:px-6 py-3 sm:py-4 relative group transition-all duration-300 hover:shadow-lg transform hover:scale-[1.01] sm:hover:scale-[1.02]`}
                     >
-                      {/* Show model name for assistant messages */}
+                      {/* Show model name for assistant messages - mobile optimized */}
                       {message.role === "assistant" && (
-                        <div className="flex items-center gap-2 mb-2 text-xs text-gray-600">
+                        <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 text-xs text-gray-600">
                           <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-                          {MODEL_ALIASES[model]}
+                          <span className="hidden xs:inline">
+                            {message.model ? MODEL_ALIASES[message.model] : MODEL_ALIASES[model]}
+                          </span>
+                          <span className="xs:hidden">
+                            {message.model ? MODEL_ALIASES[message.model].split(' ')[0] : MODEL_ALIASES[model].split(' ')[0]}
+                          </span>
                         </div>
                       )}
                       <ChatMessage
@@ -638,14 +657,15 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                         timestamp={new Date()}
                       />
 
-                      {/* @dashboard-redesign - Retry button for assistant messages */}
+                      {/* @dashboard-redesign - Better positioned retry buttons for visibility with proper spacing */}
                       {message.role === "assistant" &&
                         index === messages.length - 1 && (
-                          <div className="absolute -bottom-12 left-0 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                            <div className="flex gap-2 text-xs">
+                          <div className="mt-6 pt-4 border-t border-gray-100 space-y-2">
+                            <div className="text-center text-xs text-gray-500 mb-3">Try with different models</div>
+                            <div className="flex gap-2 text-xs flex-wrap justify-center">
                               {getModelsByPlan("pro")
-                                .filter((m: ChatModel) => m !== model)
-                                .slice(0, 3)
+                                .filter((m: ChatModel) => m !== (message.model || model))
+                                .slice(0, typeof window !== 'undefined' && window.innerWidth < 640 ? 2 : 3)
                                 .map((altModel: ChatModel) => (
                                   <button
                                     key={altModel}
@@ -653,9 +673,10 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                                       handleRetryWithModel(altModel)
                                     }
                                     disabled={isMutating}
-                                    className="px-3 py-1.5 bg-white hover:bg-gray-50 rounded-lg text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 disabled:opacity-50 transform hover:scale-105"
+                                    className="px-4 py-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm hover:shadow-md border border-gray-200 disabled:opacity-50 transform hover:scale-105 active:scale-95 whitespace-nowrap font-medium"
                                   >
-                                    Retry with {MODEL_ALIASES[altModel]}
+                                    <span className="hidden xs:inline">Retry with </span>
+                                    {MODEL_ALIASES[altModel].split(' ')[0]}
                                   </button>
                                 ))}
                             </div>
@@ -665,14 +686,15 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                   </div>
                 ))}
 
-                {/* @performance - Real-time streaming message display */}
+                {/* @performance - Mobile-optimized streaming message */}
                 {streamingMessage && (
                   <div className="flex justify-start animate-fade-in-up">
-                    <div className="max-w-xs sm:max-w-sm md:max-w-md lg:max-w-2xl xl:max-w-4xl bg-white text-gray-900 shadow-md rounded-2xl px-6 py-4 relative">
-                      {/* Show model name when there's actual output */}
-                      <div className="flex items-center gap-2 mb-2 text-xs text-gray-600">
+                    <div className="w-full max-w-[85%] sm:max-w-xs md:max-w-sm lg:max-w-md xl:max-w-2xl 2xl:max-w-4xl bg-white text-gray-900 shadow-md rounded-2xl px-3 sm:px-6 py-3 sm:py-4 relative">
+                      {/* Show model name when there's actual output - mobile optimized */}
+                      <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 text-xs text-gray-600">
                         <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-pulse" />
-                        {MODEL_ALIASES[model]}
+                        <span className="hidden xs:inline">{MODEL_ALIASES[model]}</span>
+                        <span className="xs:hidden">{MODEL_ALIASES[model].split(' ')[0]}</span>
                       </div>
                       <ChatMessage
                         content={streamingMessage}
@@ -683,19 +705,19 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                   </div>
                 )}
 
-                <div ref={messagesEndRef} className="h-8" />
+                <div ref={messagesEndRef} className="h-20 sm:h-24" />
               </>
             )}
           </div>
         </div>
       </div>
 
-      {/* @dashboard-redesign - InputBar component with model selector */}
+      {/* @dashboard-redesign - InputBar component remains the same for consistency */}
       <InputBar
         value={input}
         onChange={setInput}
         onSubmit={handleSubmit}
-        disabled={isStreaming || isMutating} // @performance - Disable during streaming
+        disabled={isStreaming || isMutating}
         placeholder="Type your message..."
         selectedModel={model}
         onModelChange={handleModelChange}

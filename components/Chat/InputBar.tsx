@@ -75,16 +75,16 @@ export default function InputBar({
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-30 pointer-events-none">
-      {/* Centered container - perfect middle positioning */}
+      {/* Mobile-optimized container with proper safe area handling */}
       <div className="flex justify-center items-end pointer-events-none">
-        <div className="w-full max-w-4xl px-4 md:px-6 pb-6 transition-all duration-300 pointer-events-auto">
-          {/* @fluid-scroll - Enhanced container with smooth backdrop */}
-          <div className="bg-surface/95 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-2xl transition-all duration-300 hover:shadow-3xl hover:bg-surface/98 w-full">
+        <div className="w-full max-w-4xl px-3 sm:px-4 md:px-6 pb-4 sm:pb-6 pointer-events-auto">
+          {/* Add background blur and proper spacing from edges */}
+          <div className="bg-white/95 backdrop-blur-xl border border-gray-200/60 rounded-xl sm:rounded-2xl shadow-2xl transition-all duration-300 hover:shadow-3xl hover:bg-white/98 w-full mx-2 sm:mx-0">
             <form
               onSubmit={handleSubmit}
-              className="flex items-center gap-3 p-4"
+              className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4"
             >
-              {/* @fluid-scroll - Model selector with smooth transitions */}
+              {/* Mobile-responsive model selector - prevents zoom */}
               <div className="relative flex-shrink-0">
                 <select
                   value={selectedModel}
@@ -92,24 +92,33 @@ export default function InputBar({
                   disabled={disabled}
                   className={cn(
                     "appearance-none bg-gray-100 text-gray-700 border border-gray-300",
-                    "rounded-xl px-3 py-2 pr-8 text-sm font-medium",
+                    "rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 pr-6 sm:pr-8 font-medium",
                     "focus:outline-none focus:ring-2 focus:ring-gray-300/50 focus:border-gray-400",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
-                    "w-[140px] transition-all duration-200",
+                    "w-[90px] sm:w-[140px] transition-all duration-200",
                     "hover:bg-gray-200 hover:border-gray-400",
-                    "transform-gpu will-change-transform"
+                    "transform-gpu will-change-transform",
+                    "touch-manipulation",
+                    // Prevent zoom on iOS
+                    "-webkit-appearance-none"
                   )}
+                  style={{
+                    // 16px font size prevents iOS zoom
+                    fontSize: "16px",
+                  }}
                 >
                   {availableModels.map((model) => (
                     <option key={model} value={model}>
-                      {MODEL_ALIASES[model]}
+                      {/* Show very short names on mobile */}
+                      <span className="sm:hidden">{MODEL_ALIASES[model].split(' ')[0].slice(0, 6)}</span>
+                      <span className="hidden sm:inline">{MODEL_ALIASES[model]}</span>
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none transition-transform duration-200" />
+                <ChevronDown className="absolute right-1.5 sm:right-2 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-gray-600 pointer-events-none transition-transform duration-200" />
               </div>
 
-              {/* @fluid-scroll - Enhanced textarea with original height but constrained width */}
+              {/* Mobile-optimized textarea - prevents zoom */}
               <div className="flex-1 relative min-w-0 max-w-none">
                 <textarea
                   ref={textareaRef}
@@ -120,42 +129,55 @@ export default function InputBar({
                   disabled={disabled}
                   rows={1}
                   className={cn(
-                    "w-full resize-none bg-transparent text-text-main placeholder-text-muted",
+                    "w-full resize-none bg-transparent text-gray-900 placeholder-gray-500",
                     "border-none outline-none focus:outline-none focus:ring-0",
-                    "text-base leading-6 min-h-[40px] max-h-[80px] overflow-y-auto", // Restored original height
+                    // Important: 16px font size prevents iOS zoom
+                    "text-base leading-6 min-h-[40px] max-h-[80px] overflow-y-auto",
                     "transition-all duration-200 ease-out",
                     "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent",
-                    "will-change-contents"
+                    "will-change-contents touch-manipulation",
+                    // Additional iOS fixes
+                    "-webkit-appearance-none appearance-none",
+                    "transform-gpu" // Hardware acceleration for smoother performance
                   )}
                   style={{
                     transition: "height 0.2s ease-out",
+                    // Ensure consistent font size across all devices
+                    fontSize: "16px",
+                    lineHeight: "1.5",
                   }}
                 />
               </div>
 
-              {/* @fluid-scroll - Enhanced send button with original size */}
-              <div className="flex-shrink-0">
-                <button
-                  type="submit"
-                  disabled={!value.trim() || disabled}
-                  className={cn(
-                    "w-12 h-12 rounded-xl shadow-lg transition-all duration-300",
-                    "disabled:cursor-not-allowed flex items-center justify-center",
-                    "transform-gpu will-change-transform border-none outline-none focus:outline-none",
-                    "hover:scale-105 hover:shadow-xl active:scale-95",
-                    "relative z-10", // Ensure it's above other elements
-                    !value.trim() || disabled
-                      ? "bg-gray-400 hover:bg-gray-400 disabled:opacity-60"
-                      : "bg-black hover:bg-gray-800 focus:bg-gray-800 shadow-gray-500/30"
-                  )}
+              {/* Mobile-optimized send button */}
+              <button
+                type="submit"
+                disabled={disabled || !value.trim()}
+                className={cn(
+                  "flex-shrink-0 rounded-lg sm:rounded-xl transition-all duration-200",
+                  "bg-black text-white shadow-sm hover:shadow-md",
+                  "hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed",
+                  "focus:outline-none focus:ring-2 focus:ring-gray-300/50",
+                  "transform-gpu will-change-transform hover:scale-105 active:scale-95",
+                  "p-2.5 sm:p-3",
+                  "min-w-[40px] sm:min-w-[48px] min-h-[40px] sm:min-h-[48px]",
+                  "touch-manipulation"
+                )}
+              >
+                <svg
+                  className="w-4 h-4 sm:w-5 sm:h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  {disabled ? (
-                    <Loader2 className="w-6 h-6 animate-spin text-white" />
-                  ) : (
-                    <Send className="w-6 h-6 text-white" />
-                  )}
-                </button>
-              </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                  />
+                </svg>
+              </button>
             </form>
           </div>
         </div>

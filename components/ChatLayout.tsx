@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import ChatInterface from "./ChatInterface";
 // import Sheet from "./Sheet";  // @remove-inner-rail - no longer needed without mobile sidebar
 import { useUser } from "@clerk/nextjs";
+import Sidebar from "./Layout/Sidebar";
 
 interface ChatLayoutProps {
   children?: React.ReactNode;
@@ -33,10 +34,7 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
-  // @remove-inner-rail - removed unused state variables for sidebar functionality
-  // const [activeTab, setActiveTab] = useState("chat");
-  // const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  // const [chatUsage, setChatUsage] = useState<ChatUsage>({ used: 0, total: 100 });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Load chat history on component mount
   useEffect(() => {
@@ -64,6 +62,18 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
       loadChatHistory();
     }
   }, [user]);
+
+  // @dashboard-redesign - Handle hamburger menu toggle from chat header
+  useEffect(() => {
+    const handleToggleMobileSidebar = () => {
+      setSidebarOpen(prev => !prev);
+    };
+
+    window.addEventListener('toggleMobileSidebar', handleToggleMobileSidebar);
+    return () => {
+      window.removeEventListener('toggleMobileSidebar', handleToggleMobileSidebar);
+    };
+  }, []);
 
   // Note: Messages are now loaded directly in handleChatSelect function
 
@@ -208,55 +218,28 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
   }
 
   return (
-    <div className="flex h-screen">
-      {/* Desktop Sidebar - removed ChatSidebar with chat and settings */}
-      {/* @remove-inner-rail - commented out desktop ChatSidebar
-      <div className="hidden md:block">
-        <ChatSidebar
-          userName={user.fullName || user.firstName || "User"}
-          userEmail={user.primaryEmailAddress?.emailAddress || ""}
-          onNewChat={handleNewChat}
-          selectedTab={activeTab}
-          onTabChange={setActiveTab}
-        />
+    <div className="flex h-screen bg-white overflow-hidden chat-layout-container">
+      {/* @dashboard-redesign - Desktop sidebar */}
+      <div className="hidden md:flex">
+        <Sidebar />
       </div>
-      */}
 
-      {/* Mobile Sidebar - removed ChatSidebar with chat and settings */}
-      {/* @remove-inner-rail - commented out mobile ChatSidebar
-      <Sheet
-        isOpen={isMobileMenuOpen}
-        onClose={() => setIsMobileMenuOpen(false)}
-      >
-        <ChatSidebar
-          userName={user.fullName || user.firstName || "User"}
-          userEmail={user.primaryEmailAddress?.emailAddress || ""}
-          onNewChat={handleNewChat}
-          selectedTab={activeTab}
-          onTabChange={(tab) => {
-            setActiveTab(tab);
-            setIsMobileMenuOpen(false);
-          }}
-        />
-      </Sheet>
-      */}
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Mobile Header - removed menu button since no mobile sidebar */}
-        {/* @remove-inner-rail - commented out mobile menu button
-        <div className="md:hidden p-4 border-b border-border/30">
-          <button
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2 hover:bg-surface/60 rounded-lg"
-          >
-            <span className="text-2xl">☰</span>
-          </button>
+      {/* @dashboard-redesign - Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div 
+            className="absolute inset-0 bg-black/50" 
+            onClick={() => setSidebarOpen(false)}
+          />
+          <div className="absolute left-0 top-0 h-full w-80 max-w-[80vw] bg-white shadow-xl">
+            <Sidebar />
+          </div>
         </div>
-        */}
+      )}
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-hidden">{renderContent()}</div>
+      {/* @dashboard-redesign - Main content area with proper scrolling */}
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+        {children}
       </div>
     </div>
   );
