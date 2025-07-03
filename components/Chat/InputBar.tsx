@@ -17,6 +17,7 @@ interface InputBarProps {
   userPlan?: "free" | "pro" | "max";
   enableWebSearch?: boolean; // @web-search - Add web search toggle prop
   onWebSearchChange?: (enabled: boolean) => void; // @web-search - Add web search change handler
+  onFocus?: () => void; // @auto-thread - Add focus handler for automatic thread creation
 }
 
 export default function InputBar({
@@ -30,6 +31,7 @@ export default function InputBar({
   userPlan = "pro",
   enableWebSearch = false, // @web-search - Default web search to false
   onWebSearchChange,
+  onFocus, // @auto-thread - Add focus handler for automatic thread creation
 }: InputBarProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const availableModels = getModelsByPlan(userPlan);
@@ -158,6 +160,7 @@ export default function InputBar({
                   value={value}
                   onChange={(e) => onChange(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  onFocus={onFocus} // @auto-thread - Add focus handler for automatic thread creation
                   placeholder={placeholder}
                   disabled={disabled}
                   rows={1}

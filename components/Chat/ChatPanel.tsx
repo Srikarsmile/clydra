@@ -368,6 +368,18 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
 
 
 
+  // @auto-thread - Create thread when user focuses on input (proactive thread creation)
+  const handleInputFocus = useCallback(async () => {
+    // Only create a thread if we don't have one already and user is signed in
+    if (!currentThreadId && user && !isStreaming) {
+      console.log("🎯 Input focused - creating thread proactively...");
+      const newThreadId = await createNewThread();
+      if (newThreadId) {
+        console.log(`✅ Proactive thread created: ${newThreadId}`);
+      }
+    }
+  }, [currentThreadId, user, isStreaming, createNewThread]);
+
   // @dashboard-redesign - Switch model and continue conversation
   const handleModelChange = useCallback(
     (newModel: ChatModel) => {
@@ -590,6 +602,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
         value={input}
         onChange={setInput}
         onSubmit={handleSubmit}
+        onFocus={handleInputFocus} // @auto-thread - Pass focus handler for automatic thread creation
         disabled={isStreaming}
         placeholder="Type your message..."
         selectedModel={model}
