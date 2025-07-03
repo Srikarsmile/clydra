@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { grantDailyTokens } from "./server/lib/grantDailyTokens"; // @grant-40k
 
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
@@ -18,6 +19,12 @@ const isPublicRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req) && isProtectedRoute(req)) {
     await auth.protect();
+  }
+  
+  // @grant-40k - Grant daily tokens to authenticated users (fire-and-forget)
+  const { userId } = await auth();
+  if (userId) {
+    void grantDailyTokens(userId); // @grant-40k - runs in background
   }
 });
 
