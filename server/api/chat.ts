@@ -42,7 +42,7 @@ const chatInputSchema = z.object({
       "anthropic/claude-3-opus-20240229",
       "meta-llama/llama-3-70b-instruct",
     ] as const)
-    .default("anthropic/claude-sonnet-4"), // @dashboard-redesign - Default to Claude 4 Sonnet
+    .default("google/gemini-2.5-flash"), // @dashboard-redesign - Default to free Gemini 2.5 Flash
   threadId: z.string().optional(), // @threads - Add threadId support
 });
 

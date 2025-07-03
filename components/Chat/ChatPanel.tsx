@@ -164,7 +164,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   const { user } = useUser();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [model, setModel] = useState<ChatModel>("anthropic/claude-sonnet-4");
+  const [model, setModel] = useState<ChatModel>("google/gemini-2.5-flash");
   const [enableWebSearch] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
