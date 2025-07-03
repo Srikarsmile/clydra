@@ -92,64 +92,67 @@ export default function InputBar({
           <div className="bg-white/95 backdrop-blur-xl border border-gray-200/60 rounded-xl sm:rounded-2xl shadow-2xl transition-all duration-300 hover:shadow-3xl hover:bg-white/98 w-full mx-2 sm:mx-0">
             <form
               onSubmit={handleSubmit}
-              className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4"
+              className="flex items-center gap-1.5 sm:gap-2 p-3 sm:p-4"
             >
-              {/* Mobile-responsive model selector - prevents zoom */}
-              <div className="relative flex-shrink-0">
-                <select
-                  value={selectedModel}
-                  onChange={handleModelChange}
-                  disabled={disabled}
-                  className={cn(
-                    "appearance-none bg-gray-100 text-gray-700 border border-gray-300",
-                    "rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 pr-6 sm:pr-8 font-medium",
-                    "focus:outline-none focus:ring-2 focus:ring-gray-300/50 focus:border-gray-400",
-                    "disabled:opacity-50 disabled:cursor-not-allowed",
-                    "w-[90px] sm:w-[140px] transition-all duration-200",
-                    "hover:bg-gray-200 hover:border-gray-400",
-                    "transform-gpu will-change-transform",
-                    "touch-manipulation",
-                    // Prevent zoom on iOS
-                    "-webkit-appearance-none"
-                  )}
-                  style={{
-                    // 16px font size prevents iOS zoom
-                    fontSize: "16px",
-                  }}
-                >
-                  {availableModels.map((model) => (
-                    <option key={model} value={model}>
-                      {MODEL_ALIASES[model]}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-1.5 sm:right-2 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-gray-600 pointer-events-none transition-transform duration-200" />
+              {/* Compact model selector and web search controls group */}
+              <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+                {/* Mobile-responsive model selector - made more compact */}
+                <div className="relative">
+                  <select
+                    value={selectedModel}
+                    onChange={handleModelChange}
+                    disabled={disabled}
+                    className={cn(
+                      "appearance-none bg-gray-100 text-gray-700 border border-gray-300",
+                      "rounded-lg px-2 py-2 pr-5 font-medium text-xs sm:text-sm",
+                      "focus:outline-none focus:ring-2 focus:ring-gray-300/50 focus:border-gray-400",
+                      "disabled:opacity-50 disabled:cursor-not-allowed",
+                      "w-[75px] sm:w-[110px] transition-all duration-200", // Made more compact
+                      "hover:bg-gray-200 hover:border-gray-400",
+                      "transform-gpu will-change-transform",
+                      "touch-manipulation",
+                      // Prevent zoom on iOS
+                      "-webkit-appearance-none"
+                    )}
+                    style={{
+                      // 16px font size prevents iOS zoom
+                      fontSize: "16px",
+                    }}
+                  >
+                    {availableModels.map((model) => (
+                      <option key={model} value={model}>
+                        {MODEL_ALIASES[model]}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-1 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-600 pointer-events-none transition-transform duration-200" />
+                </div>
+
+                {/* @web-search - Compact web search toggle button */}
+                {currentModelSupportsWebSearch && onWebSearchChange && (
+                  <button
+                    type="button"
+                    onClick={() => onWebSearchChange(!enableWebSearch)}
+                    disabled={disabled}
+                    className={cn(
+                      "rounded-lg transition-all duration-200",
+                      "border-2 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300/50",
+                      "p-1.5 sm:p-2 w-[32px] h-[32px] sm:w-[36px] sm:h-[36px]", // More compact
+                      "touch-manipulation transform-gpu will-change-transform hover:scale-105 active:scale-95",
+                      "disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center",
+                      enableWebSearch
+                        ? "bg-blue-50 border-blue-300 text-blue-600 hover:bg-blue-100"
+                        : "bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200"
+                    )}
+                    title={enableWebSearch ? "Web search enabled" : "Enable web search"}
+                  >
+                    <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </button>
+                )}
               </div>
 
-              {/* @web-search - Web search toggle button */}
-              {currentModelSupportsWebSearch && onWebSearchChange && (
-                <button
-                  type="button"
-                  onClick={() => onWebSearchChange(!enableWebSearch)}
-                  disabled={disabled}
-                  className={cn(
-                    "flex-shrink-0 rounded-lg sm:rounded-xl transition-all duration-200",
-                    "border-2 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-300/50",
-                    "p-2.5 sm:p-3 min-w-[40px] sm:min-w-[48px] min-h-[40px] sm:min-h-[48px]",
-                    "touch-manipulation transform-gpu will-change-transform hover:scale-105 active:scale-95",
-                    "disabled:opacity-50 disabled:cursor-not-allowed",
-                    enableWebSearch
-                      ? "bg-blue-50 border-blue-300 text-blue-600 hover:bg-blue-100"
-                      : "bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200"
-                  )}
-                  title={enableWebSearch ? "Web search enabled" : "Enable web search"}
-                >
-                  <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-              )}
-
-              {/* Mobile-optimized textarea - prevents zoom */}
-              <div className="flex-1 relative min-w-0 max-w-none">
+              {/* Spacious textarea with more room */}
+              <div className="flex-1 relative min-w-0">
                 <textarea
                   ref={textareaRef}
                   value={value}
@@ -163,7 +166,7 @@ export default function InputBar({
                     "border-none outline-none focus:outline-none focus:ring-0",
                     // Important: 16px font size prevents iOS zoom
                     "text-base leading-6 min-h-[40px] max-h-[80px] overflow-y-auto",
-                    "transition-all duration-200 ease-out",
+                    "transition-all duration-200 ease-out px-2 sm:px-3", // Added horizontal padding for better text spacing
                     "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent",
                     "will-change-contents touch-manipulation",
                     // Additional iOS fixes
@@ -179,23 +182,23 @@ export default function InputBar({
                 />
               </div>
 
-              {/* Mobile-optimized send button */}
+              {/* Compact send button */}
               <button
                 type="submit"
                 disabled={disabled || !value.trim()}
                 className={cn(
-                  "flex-shrink-0 rounded-lg sm:rounded-xl transition-all duration-200",
+                  "flex-shrink-0 rounded-lg transition-all duration-200",
                   "bg-black text-white shadow-sm hover:shadow-md",
                   "hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed",
                   "focus:outline-none focus:ring-2 focus:ring-gray-300/50",
                   "transform-gpu will-change-transform hover:scale-105 active:scale-95",
-                  "p-2.5 sm:p-3",
-                  "min-w-[40px] sm:min-w-[48px] min-h-[40px] sm:min-h-[48px]",
-                  "touch-manipulation"
+                  "p-2 sm:p-2.5", // Made slightly more compact
+                  "w-[36px] h-[36px] sm:w-[40px] sm:h-[40px]", // More compact but still touch-friendly
+                  "touch-manipulation flex items-center justify-center"
                 )}
               >
                 <svg
-                  className="w-4 h-4 sm:w-5 sm:h-5"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
