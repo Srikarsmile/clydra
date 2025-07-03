@@ -1,69 +1,71 @@
-/**
- * @performance
- * High-performance streaming chat endpoint
- * Optimized for minimal latency with edge runtime
- */
+// Fast streaming proxy route for OpenRouter
+// Returns stream directly with minimal processing for ~400ms first token
 
-import { NextRequest } from "next/server";
-import { getAuth } from "@clerk/nextjs/server";
-import { processChatRequest, ChatInput } from "../../../server/api/chat";
+import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
 
-export const config = {
-  runtime: "nodejs", // Keep nodejs for Supabase compatibility
-};
+const openrouter = new OpenAI({
+  baseURL: "https://openrouter.ai/api/v1",
+  apiKey: process.env.OPENROUTER_API_KEY,
+});
 
 export default async function handler(req: NextRequest) {
-  if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 });
+  if (req.method !== 'POST') {
+    return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
   }
 
   try {
-    // @performance - Fast auth check
-    const { userId } = getAuth(req as any);
-    if (!userId) {
-      return new Response("Unauthorized", { status: 401 });
-    }
+    const body = await req.json();
+    const { model, messages, temperature = 0.5, max_tokens = 3000 } = body;
 
-    const input: ChatInput = await req.json();
-
-    // @performance - Optimized streaming headers
-    const headers = new Headers({
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache, no-transform",
-      "Connection": "keep-alive",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Cache-Control",
-      "X-Accel-Buffering": "no",
-      "Content-Encoding": "identity",
+    // Start timing for performance measurement
+    const t0 = performance.now();
+    
+    // Create streaming completion
+    const completion = await openrouter.chat.completions.create({
+      model,
+      messages,
+      stream: true,
+      temperature,
+      max_tokens,
+      top_p: 0.9,
+      frequency_penalty: 0,
+      presence_penalty: 0,
     });
 
-    // @performance - Create streaming response
-    const result = await processChatRequest(
-      userId,
-      input,
-      input.threadId,
-      true
-    );
+    const t1 = performance.now();
 
-    if ("stream" in result) {
-      return new Response(result.stream, { headers });
-    }
-
-    // Fallback for non-streaming
-    return new Response(
-      `data: ${JSON.stringify(result)}\n\ndata: [DONE]\n\n`,
-      { headers }
-    );
-  } catch (error) {
-    console.error("Streaming API error:", error);
-    return new Response(
-      `data: ${JSON.stringify({ error: "Streaming failed" })}\n\n`,
-      { 
-        status: 500,
-        headers: {
-          "Content-Type": "text/event-stream",
+    // Convert OpenAI stream to ReadableStream
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of completion) {
+            const data = `data: ${JSON.stringify(chunk)}\n\n`;
+            controller.enqueue(new TextEncoder().encode(data));
+          }
+          controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+          controller.close();
+        } catch (error) {
+          controller.error(error);
         }
-      }
+      },
+    });
+
+    // Return the stream with proper headers
+    return new NextResponse(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Server-Timing': `openrouter;dur=${(t1-t0).toFixed()}`,
+      },
+    });
+
+  } catch (error) {
+    console.error('Streaming proxy error:', error);
+    return NextResponse.json(
+      { error: 'Failed to create streaming completion' }, 
+      { status: 500 }
     );
   }
 }

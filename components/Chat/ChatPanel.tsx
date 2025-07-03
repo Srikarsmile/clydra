@@ -332,11 +332,6 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
           reader.releaseLock();
         }
 
-        // @performance - Refresh token gauge after successful chat response
-        if (onTokensUpdated) {
-          onTokensUpdated();
-        }
-
     } catch (error) {
         console.error("Chat error:", error);
         
@@ -370,6 +365,16 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
     createNewThread,
     onTokensUpdated,
   ]);
+
+  // @performance - Refresh token gauge when messages change (throttled approach)
+  useEffect(() => {
+    // Only refresh if the last message is from assistant (indicating completion)
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'assistant' && lastMessage.id && onTokensUpdated) {
+      console.log("🔄 ChatPanel: Triggering token gauge refresh for completed message", lastMessage.id);
+      onTokensUpdated();
+    }
+  }, [messages[messages.length - 1]?.id, onTokensUpdated]); // Only trigger when the last message ID changes
 
 
 
