@@ -39,53 +39,45 @@ class MockRedis {
   }
 
   on(event: string, callback: (error: any) => void): void {
-    // Mock event handler
+    // Mock event handler - no-op
   }
 }
 
 let redis: Redis | MockRedis;
 
-// @grant-40k - Initialize Redis with fallback to mock for development
-try {
+// @grant-40k - Initialize Redis with development fallback
+function initializeRedis(): Redis | MockRedis {
+  // In development, always use MockRedis unless explicitly configured
+  if (process.env.NODE_ENV !== "production" && !process.env.REDIS_URL) {
+    console.log("Using MockRedis for development environment");
+    return new MockRedis();
+  }
+
+  // Production or explicit Redis configuration
   if (process.env.REDIS_URL) {
-    redis = new Redis(process.env.REDIS_URL);
-  } else if (process.env.NODE_ENV === "production") {
-    // In production, require Redis configuration
-    throw new Error("Redis configuration required in production");
-  } else {
-    // Development fallback - try local Redis first, then mock
-    redis = new Redis({
-      host: process.env.REDIS_HOST || "localhost",
-      port: parseInt(process.env.REDIS_PORT || "6379"),
-      enableReadyCheck: false,
-      maxRetriesPerRequest: 1,
-      lazyConnect: true, // @grant-40k - Connect only when needed
-      connectTimeout: 1000, // Quick timeout for dev
-      commandTimeout: 1000,
-    });
+    try {
+      const redisClient = new Redis(process.env.REDIS_URL, {
+        maxRetriesPerRequest: 1,
+        lazyConnect: true,
+        enableReadyCheck: false,
+      });
 
-    // @grant-40k - Test connection and fallback to mock if Redis unavailable
-    redis.ping().catch(() => {
-      console.warn("Redis unavailable in development, using mock Redis client");
-      redis = new MockRedis();
-    });
+      redisClient.on("error", (error) => {
+        console.error("Redis connection error:", error);
+      });
+
+      return redisClient;
+    } catch (error) {
+      console.error("Failed to initialize Redis:", error);
+      return new MockRedis();
+    }
   }
 
-  // @grant-40k - Handle Redis connection errors gracefully
-  if (redis instanceof Redis) {
-    redis.on("error", (error) => {
-      console.error("Redis connection error:", error);
-      // In development, fallback to mock
-      if (process.env.NODE_ENV !== "production") {
-        console.warn("Falling back to mock Redis client");
-        redis = new MockRedis();
-      }
-    });
-  }
-} catch (error) {
-  console.error("Failed to initialize Redis:", error);
-  // Fallback to mock Redis
-  redis = new MockRedis();
+  // Fallback to MockRedis
+  console.log("No Redis configuration found, using MockRedis");
+  return new MockRedis();
 }
+
+redis = initializeRedis();
 
 export { redis }; 
