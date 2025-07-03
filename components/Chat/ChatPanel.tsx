@@ -64,11 +64,11 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
   useEffect(() => {
     if (!threadId || !user) return;
 
-    const loadMessages = async () => {
-      try {
-        const response = await fetch(`/api/messages/${threadId}`);
-        if (response.ok) {
-          const data = await response.json();
+      const loadMessages = async () => {
+        try {
+          const response = await fetch(`/api/messages/${threadId}`);
+          if (response.ok) {
+            const data = await response.json();
           const formattedMessages: Message[] = data.map(
             (msg: { role: string; content: string; id?: number; model?: string }) => ({
               role: msg.role,
@@ -78,13 +78,13 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
             })
           );
           setMessages(formattedMessages);
-        }
-      } catch (error) {
+          }
+        } catch (error) {
         console.error("Failed to load messages:", error);
-      }
-    };
+        }
+      };
 
-    loadMessages();
+      loadMessages();
   }, [threadId, user]);
 
   // @dashboard-redesign - Clear messages when no threadId (new chat)
@@ -113,7 +113,8 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
         setCurrentThreadId(newThreadId);
         
         // Update URL to include the new thread ID so messages persist after refresh
-        router.push(`/dashboard?thread=${newThreadId}`);
+        // Use replace instead of push to avoid page refresh and maintain user input
+        router.replace(`/dashboard?thread=${newThreadId}`);
         
         return newThreadId;
       } else {
@@ -249,7 +250,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
           },
           body: JSON.stringify({
             messages: [...messages, userMessage],
-            model,
+        model,
             threadId: threadIdToUse, // @persistence-fix - Use the current or newly created thread ID
             stream: true,
             enableWebSearch,
@@ -330,7 +331,7 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
           reader.releaseLock();
         }
 
-      } catch (error) {
+    } catch (error) {
         console.error("Chat error:", error);
         
         // Remove the assistant placeholder message on error
@@ -458,8 +459,8 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
             <span className="hidden xs:inline">{MODEL_ALIASES[model]}</span>
             <span className="xs:hidden">{MODEL_ALIASES[model].split(' ')[0]}</span>
           </span>
-        </div>
-        
+            </div>
+
         {/* @fluid-scroll - Fixed scrolling container to prevent double scroll */}
         <div
           ref={scrollContainerRef}
@@ -496,23 +497,23 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                       <div className="text-xs sm:text-sm text-text-muted">
                         {suggestion.description}
                       </div>
-                    </button>
+              </button>
                   ))}
-                </div>
-              </div>
+            </div>
+          </div>
             ) : (
               <>
                 {/* @fluid-scroll - Mobile-optimized message list with better retry button positioning */}
-                {messages.map((message, index) => (
-                  <div
-                    key={message.id || index}
+            {messages.map((message, index) => (
+              <div
+                key={message.id || index}
                     className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-fade-in-up mb-6 sm:mb-8`}
                     style={{
                       animationDelay: `${Math.min(index * 50, 500)}ms`,
                       animationFillMode: "both",
                     }}
-                  >
-                    <div
+              >
+                <div
                       className={`w-full max-w-[85%] sm:max-w-xs md:max-w-sm lg:max-w-md xl:max-w-2xl 2xl:max-w-4xl ${
                         message.role === "assistant"
                           ? "bg-white text-gray-900 shadow-md"
@@ -554,9 +555,9 @@ export default function ChatPanel({ threadId }: ChatPanelProps) {
                       )}
 
 
-                    </div>
-                  </div>
-                ))}
+                </div>
+              </div>
+            ))}
 
                 {/* @performance - Mobile-optimized streaming message */}
                 {streamingMessage && (
