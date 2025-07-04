@@ -6,7 +6,7 @@ This guide covers all environment variables needed for the Clydra Chat applicati
 
 1. **Copy the example file:**
    ```bash
-   cp .env.example .env.local
+   cp env.example .env.local
    ```
 
 2. **Fill in your API keys** (see sections below)
@@ -153,7 +153,7 @@ console.log(process.env.NEXT_PUBLIC_SITE_URL)
 
 ```
 .env.local          # Your actual environment variables (never commit)
-.env.example        # Template file (safe to commit)
+env.example         # Template file (safe to commit)
 .env.local.backup*  # Automatic backups
 ENVIRONMENT_SETUP.md # This guide
 ```
