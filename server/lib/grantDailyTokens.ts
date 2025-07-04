@@ -1,7 +1,7 @@
-// @grant-40k - Daily token granting for users with persistent database storage
+// @grant-80k - Daily token granting for users with persistent database storage
 import { supabaseAdmin } from "../../lib/supabase";
 
-const DAILY_CAP = 40_000;
+const DAILY_CAP = 80_000;
 
 /**
  * Grant the daily free-tier tokens to a user.

@@ -3,7 +3,6 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getAuth } from "@clerk/nextjs/server";
 import {
   getRemainingDailyTokens,
-  consumeDailyTokens,
   grantDailyTokens,
 } from "../../../server/lib/grantDailyTokens";
 import { getOrCreateUser } from "../../../lib/user-utils";
@@ -29,7 +28,7 @@ export default async function handler(
       // Return default values for new users
       return res.status(200).json({
         used: 0,
-        cap: 40000, // Daily cap for free users
+        cap: 80000, // Daily cap for free users
       });
     }
 
@@ -40,7 +39,7 @@ export default async function handler(
 
     // Get remaining daily tokens
     const remaining = await getRemainingDailyTokens(userId);
-    const cap = 40000; // 40k daily cap for free users
+    const cap = 80000; // 80k daily cap for free users
     const used = cap - remaining;
 
     return res.status(200).json({
@@ -52,7 +51,7 @@ export default async function handler(
     // Return default values instead of 500 error to prevent blocking the UI
     return res.status(200).json({
       used: 0,
-      cap: 40000, // Daily cap for free users
+      cap: 80000, // Daily cap for free users
     });
   }
 }

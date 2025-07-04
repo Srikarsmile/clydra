@@ -44,7 +44,7 @@ export interface TokenGaugeRef {
 export const TokenGauge = forwardRef<TokenGaugeRef, {}>(
   function TokenGauge(props, ref) {
     // Use SWR with manual control - no automatic polling
-    const { data: tokenUsage, mutate } = useSWR<TokenUsage>(
+    const { data: tokenUsage, mutate, isLoading, error } = useSWR<TokenUsage>(
       "/api/tokens/current",
       fetcher,
       {
@@ -68,7 +68,7 @@ export const TokenGauge = forwardRef<TokenGaugeRef, {}>(
     );
 
     const used = tokenUsage?.used ?? 0;
-    const cap = tokenUsage?.cap ?? 40000; // Daily cap
+    const cap = tokenUsage?.cap ?? 80000; // Daily cap
     const remaining = cap - used;
     const percentage = cap > 0 ? (used / cap) * 100 : 0;
 

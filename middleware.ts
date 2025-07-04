@@ -1,5 +1,5 @@
+import { grantDailyTokens } from "./server/lib/grantDailyTokens"; // @grant-80k
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { grantDailyTokens } from "./server/lib/grantDailyTokens"; // @grant-40k
 
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
@@ -21,10 +21,10 @@ export default clerkMiddleware(async (auth, req) => {
     await auth.protect();
   }
 
-  // @grant-40k - Grant daily tokens to authenticated users (fire-and-forget)
+  // @grant-80k - Grant daily tokens to authenticated users (fire-and-forget)
   const { userId } = await auth();
   if (userId) {
-    void grantDailyTokens(userId); // @grant-40k - runs in background
+    void grantDailyTokens(userId); // @grant-80k - runs in background
   }
 });
 

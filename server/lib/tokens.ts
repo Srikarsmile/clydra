@@ -189,10 +189,10 @@ export async function getUsage(userId: string): Promise<number> {
 export function getCap(plan: "free" | "pro"): number {
   // @pro-cap
   const PLAN_CAP = {
-    free: 40_000, // daily
-    pro: 1_000_000, // monthly  (was 1_500_000)
-  } as const;
-  return PLAN_CAP[plan]; // free = 40k / day, pro = 1M / month
+    free: 80_000, // daily
+    pro: 1_000_000, // monthly
+  };
+  return PLAN_CAP[plan]; // free = 80k / day, pro = 1M / month
 }
 
 // @token-meter - Check if user has exceeded quota before making request

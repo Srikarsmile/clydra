@@ -177,18 +177,15 @@ export async function processChatRequest(
     model
   );
 
-  // @grant-40k - Check daily token quota (primary limit)
+  // @grant-80k - Check daily token quota (primary limit)
   const remainingTokens = await getRemainingDailyTokens(userId);
 
   if (remainingTokens < inputTokens) {
-    throw new ChatError(
-      "FORBIDDEN",
-      `Insufficient daily tokens. Need ${inputTokens}, have ${remainingTokens}.`
-    );
+    throw new ChatError("FORBIDDEN", `Insufficient daily tokens. Need ${inputTokens}, have ${remainingTokens}.`);
   }
 
   // Note: Removed legacy daily message limit check in favor of token-based system
-  // The token system (40K daily) is more sophisticated and should be the primary limit
+  // The token system (80K daily) is more sophisticated and should be the primary limit
 
   // @clydra-core Set up OpenAI client - support multiple providers
   const isKlusterModel = isKlusterAIModel(model);

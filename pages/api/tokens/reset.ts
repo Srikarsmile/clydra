@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getAuth } from "@clerk/nextjs/server";
 import { resetDailyTokens } from "../../../server/lib/grantDailyTokens";
 import { getOrCreateUser } from "../../../lib/user-utils";
-import { supabase } from "../../../lib/supabase";
+import { supabase, supabaseAdmin } from "../../../lib/supabase";
 
 export default async function handler(
   req: NextApiRequest,
@@ -60,9 +60,20 @@ export default async function handler(
     // Reset tokens
     await resetDailyTokens(supabaseUserId);
 
+    // Also reset daily tokens if table exists
+    await supabaseAdmin.from("daily_tokens").upsert({
+      user_id: userId,
+      date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+      tokens_granted: 80000,
+      tokens_remaining: 80000,
+    });
+
+    console.log(`✅ Tokens reset to 80000 for user ${userId}`);
+
     return res.status(200).json({
-      message: "Daily tokens reset to 40,000",
-      tokens: 40000,
+      success: true,
+      message: "Tokens reset successfully",
+      tokens: 80000,
     });
   } catch (error) {
     console.error("Error resetting tokens:", error);
