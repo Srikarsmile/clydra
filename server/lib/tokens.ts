@@ -10,9 +10,11 @@ export const MODEL_MULTIPLIER: Record<string, number> = {
 
   // Pro Plan Models
   "openai/gpt-4o": 1.0, // Base model with 1.0x multiplier
-  "anthropic/claude-3.5-sonnet": 1.5, // Premium model with 1.5x multiplier
+  "anthropic/claude-3-5-sonnet-20241022": 1.5, // Claude 4 Sonnet with 1.5x multiplier
   "x-ai/grok-beta": 1.5, // Premium model with 1.5x multiplier
   "google/gemini-2.5-pro-exp-03-25": 1.0, // Standard pro model with 1.0x multiplier
+  "mistralai/Magistral-Small-2506": 0.8, // Efficient vision model via Kluster AI with 0.8x multiplier
+  "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo": 1.2, // Large reasoning model via Kluster AI with 1.2x multiplier
 
   // Legacy models (kept for compatibility)
   "openai/gpt-4o-mini": 0.75,

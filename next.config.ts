@@ -1,19 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Turbopack configuration (updated for Next.js 15)
-  turbopack: {
-    rules: {
-      // Add custom rules if needed
-    },
-    resolveAlias: {
-      // Add custom aliases if needed
-    },
-  },
-
-  // Experimental features - simplified to avoid issues
+  // Remove Turbopack config as it's not needed for production
   experimental: {
-    // Remove problematic optimizeCss for now
+    // Keep only essential experimental features
     optimizePackageImports: [
       "lucide-react",
       "@clerk/nextjs",
@@ -26,7 +16,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: false,
+    ignoreBuildErrors: false, // Keep type checking enabled
   },
 
   // Image optimizations
@@ -50,10 +40,7 @@ const nextConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === "production",
   },
 
-  // Remove problematic output setting for now
-  poweredByHeader: false,
-
-  // Headers for better performance
+  // Security headers
   async headers() {
     return [
       {
@@ -75,6 +62,10 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  // Vercel specific optimizations
+  swcMinify: true,
+  poweredByHeader: false,
 };
 
 export default nextConfig;

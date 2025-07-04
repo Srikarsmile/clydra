@@ -5,9 +5,11 @@ export const MODEL_ALIASES = {
 
   // Pro Plan Models - using correct OpenRouter identifiers
   "openai/gpt-4o": "GPT-4o",
-  "anthropic/claude-3.5-sonnet": "Claude 3.5 Sonnet",
+  "anthropic/claude-3-5-sonnet-20241022": "Claude 4 Sonnet", // Upgraded to Claude 4 Sonnet
   "x-ai/grok-beta": "Grok Beta",
   "google/gemini-2.5-pro-exp-03-25": "Gemini 2.5 Pro",
+  "mistralai/Magistral-Small-2506": "Mistral Small", // Vision-capable model via Kluster AI
+  "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo": "Llama 3.3 70B", // Large reasoning model via Kluster AI
 
   // Legacy models (kept for compatibility)
   "openai/gpt-4o-mini": "GPT-4o Mini",
@@ -28,18 +30,36 @@ export const FREE_PLAN_MODELS: ChatModel[] = [
 
 export const PRO_PLAN_MODELS: ChatModel[] = [
   "openai/gpt-4o",
-  "anthropic/claude-3.5-sonnet", // Fixed to use correct identifier
+  "anthropic/claude-3-5-sonnet-20241022", // Fixed to use correct identifier
   "x-ai/grok-beta", // Fixed to use correct identifier
   "google/gemini-2.5-pro-exp-03-25", // Fixed to use correct identifier
+  "mistralai/Magistral-Small-2506", // New vision-capable model via Kluster AI
+  "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo", // New large reasoning model via Kluster AI
 ];
 
 // Model features
 export const MODELS_WITH_WEB_SEARCH: ChatModel[] = [
-  // Pro plan models with web search capability
-  "openai/gpt-4o",
-  "anthropic/claude-3.5-sonnet",
-  "x-ai/grok-beta",
-  "google/gemini-2.5-pro-exp-03-25",
+  // Pro plan models with web search capability (only models that actually support :online in OpenRouter)
+  "anthropic/claude-3-5-sonnet-20241022", // ✅ Confirmed working with :online
+  // "openai/gpt-4o", // ❌ Does not support :online suffix in OpenRouter
+  // "x-ai/grok-beta", // ❓ Not tested with :online
+  // "google/gemini-2.5-pro-exp-03-25", // ❓ Not tested with :online
+  // "mistralai/Magistral-Small-2506", // ❓ Not tested with :online
+  // "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo", // ❓ Not tested with :online
+];
+
+// Models with vision capabilities (can process images)
+export const MODELS_WITH_VISION: ChatModel[] = [
+  "mistralai/Magistral-Small-2506", // ✅ Supports vision as per Kluster AI documentation
+  "openai/gpt-4o", // ✅ Supports vision
+  "anthropic/claude-3-5-sonnet-20241022", // ✅ Supports vision
+  "google/gemini-2.5-pro-exp-03-25", // ✅ Supports vision
+];
+
+// Models that use Kluster AI instead of OpenRouter
+export const KLUSTER_AI_MODELS: ChatModel[] = [
+  "mistralai/Magistral-Small-2506",
+  "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
 ];
 
 export function getModelsByPlan(plan: "free" | "pro" | "max"): ChatModel[] {
@@ -56,4 +76,12 @@ export function getModelsByPlan(plan: "free" | "pro" | "max"): ChatModel[] {
 
 export function modelSupportsWebSearch(model: ChatModel): boolean {
   return MODELS_WITH_WEB_SEARCH.includes(model);
+}
+
+export function modelSupportsVision(model: ChatModel): boolean {
+  return MODELS_WITH_VISION.includes(model);
+}
+
+export function isKlusterAIModel(model: ChatModel): boolean {
+  return KLUSTER_AI_MODELS.includes(model);
 }

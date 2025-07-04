@@ -16,7 +16,7 @@ import { addTokens } from "../lib/tokens"; // @model-multiplier - Import token t
 import { computeEffectiveTokens, MODEL_MULTIPLIER, WEB_SEARCH_MULTIPLIER } from "../lib/tokens"; // @margin-patch - Import token multiplier system
 import { supabaseAdmin } from "../../lib/supabase";
 import { getOrCreateUser } from "../../lib/user-utils";
-import { MODEL_ALIASES, ChatModel, MODELS_WITH_WEB_SEARCH } from "../../types/chatModels";
+import { MODEL_ALIASES, ChatModel, MODELS_WITH_WEB_SEARCH, isKlusterAIModel } from "../../types/chatModels";
 
 // @dashboard-redesign - Updated input validation schema to match frontend models
 const chatInputSchema = z.object({
@@ -31,9 +31,11 @@ const chatInputSchema = z.object({
       // @dashboard-redesign - Models matching the design brief with correct OpenRouter identifiers
       "google/gemini-2.0-flash-001", // Free model
       "openai/gpt-4o",
-      "anthropic/claude-3.5-sonnet", // Updated to correct OpenRouter identifier
+      "anthropic/claude-3-5-sonnet-20241022", // Updated to Claude 4 Sonnet
       "x-ai/grok-beta", // Updated to correct OpenRouter identifier
       "google/gemini-2.5-pro-exp-03-25", // Updated to correct OpenRouter identifier
+      "mistralai/Magistral-Small-2506", // New vision-capable model via Kluster AI
+      "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo", // New large reasoning model via Kluster AI
       // Legacy models for compatibility
       "openai/gpt-4o-mini",
       "deepseek/deepseek-r1",
@@ -127,9 +129,10 @@ export async function processChatRequest(
     ? (validatedInput.model as ChatModel)
     : "google/gemini-2.0-flash-001";
 
-  // @web-search - Check if web search should be enabled
+  // @web-search - Check if web search should be enabled (only for supported models)
   const shouldUseWebSearch = validatedInput.enableWebSearch && 
-    MODELS_WITH_WEB_SEARCH.includes(model);
+    MODELS_WITH_WEB_SEARCH.includes(model) &&
+    (model === "anthropic/claude-3-5-sonnet-20241022"); // Only enable for models that actually support :online
 
   // @web-search - Prepare the model string for OpenRouter (append :online for web search)
   const openRouterModel = shouldUseWebSearch ? `${model}:online` : model;
@@ -158,25 +161,38 @@ export async function processChatRequest(
   // Note: Removed legacy daily message limit check in favor of token-based system
   // The token system (40K daily) is more sophisticated and should be the primary limit
 
-  // @clydra-core Set up OpenRouter client via OpenAI SDK
-  const baseURL = process.env.OPENROUTER_BASE || "https://openrouter.ai/api/v1";
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  // @clydra-core Set up OpenAI client - use Kluster AI for specific models, OpenRouter for others
+  const isKlusterModel = isKlusterAIModel(model);
+  
+  let baseURL: string;
+  let apiKey: string | undefined;
+  let defaultHeaders: Record<string, string> = {};
+  
+  if (isKlusterModel) {
+    // Use Kluster AI configuration
+    baseURL = "https://api.kluster.ai/v1";
+    apiKey = "9f2ddf46-4401-48d1-b3d7-72c05edb44f2"; // Kluster AI API key
+  } else {
+    // Use OpenRouter configuration
+    baseURL = process.env.OPENROUTER_BASE || "https://openrouter.ai/api/v1";
+    apiKey = process.env.OPENROUTER_API_KEY;
+    defaultHeaders = {
+      "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+      "X-Title": "Clydra Chat",
+    };
+  }
 
   if (!apiKey) {
     throw new ChatError(
       "INTERNAL_SERVER_ERROR",
-      "OpenRouter API key not configured. Please set OPENROUTER_API_KEY in your environment."
+      `${isKlusterModel ? 'Kluster AI' : 'OpenRouter'} API key not configured.`
     );
   }
 
   const openai = new OpenAI({
     baseURL,
     apiKey,
-    defaultHeaders: {
-      "HTTP-Referer":
-        process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-      "X-Title": "Clydra Chat",
-    },
+    defaultHeaders,
     // @performance - Optimize connection settings for reduced latency
     timeout: 30000, // Reduced to 30 seconds for faster failures
     maxRetries: 1, // Minimize retries for faster responses
@@ -193,10 +209,11 @@ export async function processChatRequest(
         await consumeDailyTokens(userId, effectiveInputTokens);
 
       // @debug - Log request details before API call
-      console.log("🔍 OpenRouter API Call Details:", {
-        model: openRouterModel,
+      console.log(`🔍 ${isKlusterModel ? 'Kluster AI' : 'OpenRouter'} API Call Details:`, {
+        model: isKlusterModel ? model : openRouterModel,
         originalModel: model,
-        shouldUseWebSearch,
+        provider: isKlusterModel ? 'Kluster AI' : 'OpenRouter',
+        shouldUseWebSearch: isKlusterModel ? false : shouldUseWebSearch, // Kluster AI doesn't support web search
         messagesCount: validatedInput.messages.length,
         temperature: 0.7,
         max_tokens: 2000,
@@ -204,7 +221,7 @@ export async function processChatRequest(
       });
 
       const completion = await openai.chat.completions.create({
-        model: openRouterModel, // @web-search - Use model with :online suffix if web search enabled
+        model: isKlusterModel ? model : openRouterModel, // Use raw model name for Kluster AI, OpenRouter model for others
         messages: validatedInput.messages,
         // @performance - Optimized parameters for lower latency
         temperature: 0.7, // Balanced for speed and quality
@@ -213,8 +230,8 @@ export async function processChatRequest(
         frequency_penalty: 0,
         presence_penalty: 0,
         stream: true,
-        // @web-search - Add web search options for compatible models
-        ...(shouldUseWebSearch && {
+        // @web-search - Add web search options for compatible models (OpenRouter only)
+        ...(!isKlusterModel && shouldUseWebSearch && {
           web_search_options: {
             search_context_size: validatedInput.webSearchContextSize,
           },
@@ -304,10 +321,11 @@ export async function processChatRequest(
       const t0 = performance.now();
       
       // @debug - Log request details before API call
-      console.log("🔍 OpenRouter API Call Details (non-streaming):", {
-        model: openRouterModel,
+      console.log(`🔍 ${isKlusterModel ? 'Kluster AI' : 'OpenRouter'} API Call Details (non-streaming):`, {
+        model: isKlusterModel ? model : openRouterModel,
         originalModel: model,
-        shouldUseWebSearch,
+        provider: isKlusterModel ? 'Kluster AI' : 'OpenRouter',
+        shouldUseWebSearch: isKlusterModel ? false : shouldUseWebSearch,
         messagesCount: validatedInput.messages.length,
         temperature: 0.5,
         max_tokens: 3000,
@@ -315,7 +333,7 @@ export async function processChatRequest(
       });
       
       const completion = await openai.chat.completions.create({
-        model: openRouterModel, // @web-search - Use model with :online suffix if web search enabled
+        model: isKlusterModel ? model : openRouterModel, // Use raw model name for Kluster AI, OpenRouter model for others
         messages: validatedInput.messages,
         // @performance - Optimized parameters for lower latency
         temperature: 0.5, // Reduced for faster, more focused responses
@@ -323,8 +341,8 @@ export async function processChatRequest(
         top_p: 0.9, // More focused sampling for speed
         frequency_penalty: 0,
         presence_penalty: 0,
-        // @web-search - Add web search options for compatible models
-        ...(shouldUseWebSearch && {
+        // @web-search - Add web search options for compatible models (OpenRouter only)
+        ...(!isKlusterModel && shouldUseWebSearch && {
           web_search_options: {
             search_context_size: validatedInput.webSearchContextSize,
           },
@@ -402,14 +420,34 @@ export async function processChatRequest(
       };
     }
   } catch (error) {
-    console.error("@clydra-core OpenRouter API error:", error);
+    const providerName = isKlusterAIModel(model) ? 'Kluster AI' : 'OpenRouter';
+    console.error(`@clydra-core ${providerName} API error:`, error);
 
     if (error instanceof ChatError) {
       throw error;
     }
 
+    // Enhanced error handling for API errors
+    if (error && typeof error === 'object' && 'status' in error) {
+      const status = error.status as number;
+      const message = 'message' in error ? (error.message as string) : `Unknown ${providerName} error`;
+      
+      if (status === 400) {
+        throw new ChatError("BAD_REQUEST", `${providerName} API error: ${message}. Model: ${model}`);
+      }
+      if (status === 401) {
+        throw new ChatError("UNAUTHORIZED", `${providerName} API key is invalid or missing`);
+      }
+      if (status === 429) {
+        throw new ChatError("TOO_MANY_REQUESTS", `${providerName} rate limit exceeded. Please try again later.`);
+      }
+      if (status >= 500) {
+        throw new ChatError("SERVICE_UNAVAILABLE", `${providerName} service is temporarily unavailable. Please try again later.`);
+      }
+    }
+
     if (error instanceof Error) {
-      throw new ChatError("INTERNAL_SERVER_ERROR", error.message);
+      throw new ChatError("INTERNAL_SERVER_ERROR", `${providerName} error: ${error.message}`);
     }
 
     throw new ChatError(
