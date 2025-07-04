@@ -207,9 +207,9 @@ export async function processChatRequest(
   } else if (isSarvamModel) {
     // Use Sarvam AI configuration
     baseURL = "https://api.sarvam.ai/v1";
-    apiKey = process.env.SARVAM_API_KEY; // Sarvam AI API key from environment
+    apiKey = "sk_wq9yiszy_Jewt6e5hC7N99X4khkVVNE7m"; // Sarvam AI API key
     defaultHeaders = {
-      "api-subscription-key": apiKey || "",
+      "api-subscription-key": apiKey,
     };
     providerName = "Sarvam AI";
   } else {
@@ -227,7 +227,7 @@ export async function processChatRequest(
   if (!apiKey) {
     throw new ChatError(
       "INTERNAL_SERVER_ERROR",
-      `${providerName} API key not configured. Please set ${isSarvamModel ? "SARVAM_API_KEY" : isKlusterModel ? "Kluster AI API key" : "OPENROUTER_API_KEY"} in your environment.`
+      `${providerName} API key not configured. Please set ${isKlusterModel ? 'Kluster AI API key' : 'OPENROUTER_API_KEY'} in your environment.`
     );
   }
 
