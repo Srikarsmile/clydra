@@ -20,7 +20,9 @@ const MODELS: { key: ChatModel; minPlan: "free" | "pro" | "max" }[] = [
   // Free plan models
   ...FREE_PLAN_MODELS.map((key) => ({ key, minPlan: "free" as const })),
   // Pro plan models (excluding ones already in free)
-  ...PRO_PLAN_MODELS.filter((key) => !FREE_PLAN_MODELS.includes(key)).map((key) => ({ key, minPlan: "pro" as const })),
+  ...PRO_PLAN_MODELS.filter((key) => !FREE_PLAN_MODELS.includes(key)).map(
+    (key) => ({ key, minPlan: "pro" as const })
+  ),
 ];
 
 // Plan configuration - memoized outside component

@@ -35,13 +35,15 @@ export default async function handler(
     // Verify the user owns this message
     const { data: message, error: messageError } = await supabaseAdmin
       .from("messages")
-      .select(`
+      .select(
+        `
         id,
         thread_id,
         threads!inner(
           user_id
         )
-      `)
+      `
+      )
       .eq("id", messageId)
       .single();
 
@@ -70,7 +72,9 @@ export default async function handler(
     const formattedResponses = responses.map((response, index) => ({
       id: response.id,
       model: response.model,
-      modelDisplayName: MODEL_ALIASES[response.model as keyof typeof MODEL_ALIASES] || response.model,
+      modelDisplayName:
+        MODEL_ALIASES[response.model as keyof typeof MODEL_ALIASES] ||
+        response.model,
       content: response.content,
       tokensUsed: response.tokens_used,
       isPrimary: response.is_primary,
@@ -90,4 +94,4 @@ export default async function handler(
       error: error instanceof Error ? error.message : "Internal server error",
     });
   }
-} 
+}

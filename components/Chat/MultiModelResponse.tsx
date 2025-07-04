@@ -16,8 +16,12 @@ const MarkdownContent: React.FC<{ content: string }> = ({ content }) => (
     components={{
       // Custom components for better styling
       p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-      strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
-      em: ({ children }) => <em className="italic text-gray-800">{children}</em>,
+      strong: ({ children }) => (
+        <strong className="font-semibold text-gray-900">{children}</strong>
+      ),
+      em: ({ children }) => (
+        <em className="italic text-gray-800">{children}</em>
+      ),
       code: ({ children, className }) => {
         const isInline = !className;
         return isInline ? (
@@ -33,8 +37,12 @@ const MarkdownContent: React.FC<{ content: string }> = ({ content }) => (
           {children}
         </pre>
       ),
-      ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
-      ol: ({ children }) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
+      ul: ({ children }) => (
+        <ul className="list-disc list-inside mb-2">{children}</ul>
+      ),
+      ol: ({ children }) => (
+        <ol className="list-decimal list-inside mb-2">{children}</ol>
+      ),
       li: ({ children }) => <li className="mb-1">{children}</li>,
       blockquote: ({ children }) => (
         <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-700 mb-2">
@@ -52,10 +60,10 @@ export default function MultiModelResponse({
   initialModel,
 }: MultiModelResponseProps) {
   // Debug logging to help trace model information
-  console.log('MultiModelResponse render:', {
+  console.log("MultiModelResponse render:", {
     initialModel,
-    modelAlias: initialModel ? MODEL_ALIASES[initialModel] : 'undefined',
-    contentLength: initialContent?.length || 0
+    modelAlias: initialModel ? MODEL_ALIASES[initialModel] : "undefined",
+    contentLength: initialContent?.length || 0,
   });
 
   return (
@@ -64,17 +72,14 @@ export default function MultiModelResponse({
       <div className="flex items-center gap-2 text-xs text-gray-600">
         <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
         <span>
-          {initialModel 
-            ? MODEL_ALIASES[initialModel] 
-            : "AI Assistant"
-          }
+          {initialModel ? MODEL_ALIASES[initialModel] : "AI Assistant"}
         </span>
       </div>
-      
+
       {/* Message content */}
       <div className="prose prose-gray max-w-none text-gray-800">
         <MarkdownContent content={initialContent} />
       </div>
     </div>
   );
-} 
+}

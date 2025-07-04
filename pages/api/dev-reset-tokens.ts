@@ -18,20 +18,20 @@ export default async function handler(
     // Grant tokens to hardcoded development user IDs
     const devUserIds = [
       "user_2yS2w4d9SvpJNCbHtLyogP09kEM", // From logs
-      "6bd64b0c-d698-46bf-ae98-12fe9d3b4c8a" // From logs
+      "6bd64b0c-d698-46bf-ae98-12fe9d3b4c8a", // From logs
     ];
 
     for (const userId of devUserIds) {
       await grantDailyTokens(userId);
     }
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       message: `Granted 40,000 tokens to ${devUserIds.length} development users`,
       users: devUserIds,
-      tokens: 40000
+      tokens: 40000,
     });
   } catch (error) {
     console.error("Error resetting development tokens:", error);
     return res.status(500).json({ error: "Failed to reset tokens" });
   }
-} 
+}

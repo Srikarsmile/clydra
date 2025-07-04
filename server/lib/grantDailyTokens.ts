@@ -16,8 +16,8 @@ export async function grantDailyTokens(userId: string): Promise<void> {
     }
 
     // Get today's date string (YYYY-MM-DD)
-    const today = new Date().toISOString().split('T')[0];
-    
+    const today = new Date().toISOString().split("T")[0];
+
     // Check if user already has tokens for today
     const { data: existing, error: fetchError } = await supabaseAdmin
       .from("daily_tokens")
@@ -52,7 +52,9 @@ export async function grantDailyTokens(userId: string): Promise<void> {
       return;
     }
 
-    console.log(`Granted ${DAILY_CAP} daily tokens to user ${userId} for ${today}`);
+    console.log(
+      `Granted ${DAILY_CAP} daily tokens to user ${userId} for ${today}`
+    );
   } catch (error) {
     // Fail silently to avoid blocking the application
     console.error("Error granting daily tokens:", error);
@@ -69,7 +71,7 @@ export async function resetDailyTokens(userId: string): Promise<void> {
       return;
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
 
     // Delete existing record for today and create fresh one
     await supabaseAdmin
@@ -78,20 +80,18 @@ export async function resetDailyTokens(userId: string): Promise<void> {
       .eq("user_id", userId)
       .eq("date", today);
 
-    const { error } = await supabaseAdmin
-      .from("daily_tokens")
-      .insert({
-        user_id: userId,
-        date: today,
-        tokens_granted: DAILY_CAP,
-        tokens_remaining: DAILY_CAP,
-      });
+    const { error } = await supabaseAdmin.from("daily_tokens").insert({
+      user_id: userId,
+      date: today,
+      tokens_granted: DAILY_CAP,
+      tokens_remaining: DAILY_CAP,
+    });
 
     if (error) {
       console.error("Error resetting daily tokens:", error);
       return;
     }
-    
+
     console.log(`Reset daily tokens to ${DAILY_CAP} for user ${userId}`);
   } catch (error) {
     console.error("Error resetting daily tokens:", error);
@@ -106,11 +106,14 @@ export async function getRemainingDailyTokens(userId: string): Promise<number> {
   try {
     // @grant-40k - Validate userId
     if (!userId || typeof userId !== "string" || userId.trim().length === 0) {
-      console.warn("Invalid userId provided to getRemainingDailyTokens:", userId);
+      console.warn(
+        "Invalid userId provided to getRemainingDailyTokens:",
+        userId
+      );
       return 0;
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
 
     const { data, error } = await supabaseAdmin
       .from("daily_tokens")
@@ -129,7 +132,7 @@ export async function getRemainingDailyTokens(userId: string): Promise<number> {
       await grantDailyTokens(userId);
       return DAILY_CAP;
     }
-    
+
     return data.tokens_remaining || 0;
   } catch (error) {
     console.error("Error getting remaining daily tokens:", error);
@@ -141,7 +144,10 @@ export async function getRemainingDailyTokens(userId: string): Promise<number> {
  * Consume daily tokens for a user
  * @grant-40k - Decrement tokens when user makes API calls
  */
-export async function consumeDailyTokens(userId: string, tokensUsed: number): Promise<boolean> {
+export async function consumeDailyTokens(
+  userId: string,
+  tokensUsed: number
+): Promise<boolean> {
   try {
     // @grant-40k - Validate inputs
     if (!userId || typeof userId !== "string" || userId.trim().length === 0) {
@@ -150,11 +156,14 @@ export async function consumeDailyTokens(userId: string, tokensUsed: number): Pr
     }
 
     if (!tokensUsed || tokensUsed <= 0 || !Number.isInteger(tokensUsed)) {
-      console.warn("Invalid tokensUsed provided to consumeDailyTokens:", tokensUsed);
+      console.warn(
+        "Invalid tokensUsed provided to consumeDailyTokens:",
+        tokensUsed
+      );
       return true; // Fail open
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split("T")[0];
 
     // Get current token balance
     const { data: current, error: fetchError } = await supabaseAdmin
@@ -193,7 +202,7 @@ export async function consumeDailyTokens(userId: string, tokensUsed: number): Pr
       const { error: updateError } = await supabaseAdmin
         .from("daily_tokens")
         .update({
-          tokens_remaining: newCurrent.tokens_remaining - tokensUsed
+          tokens_remaining: newCurrent.tokens_remaining - tokensUsed,
         })
         .eq("user_id", userId)
         .eq("date", today);
@@ -203,20 +212,24 @@ export async function consumeDailyTokens(userId: string, tokensUsed: number): Pr
         return true; // Fail open
       }
 
-      console.log(`Consumed ${tokensUsed} tokens for user ${userId}. Remaining: ${newCurrent.tokens_remaining - tokensUsed}`);
+      console.log(
+        `Consumed ${tokensUsed} tokens for user ${userId}. Remaining: ${newCurrent.tokens_remaining - tokensUsed}`
+      );
       return true;
     }
 
     if (current.tokens_remaining < tokensUsed) {
-      console.log(`Insufficient tokens for user ${userId}. Need: ${tokensUsed}, Have: ${current.tokens_remaining}`);
+      console.log(
+        `Insufficient tokens for user ${userId}. Need: ${tokensUsed}, Have: ${current.tokens_remaining}`
+      );
       return false; // Not enough tokens
     }
-    
+
     // Update token count
     const { error: updateError } = await supabaseAdmin
       .from("daily_tokens")
       .update({
-        tokens_remaining: current.tokens_remaining - tokensUsed
+        tokens_remaining: current.tokens_remaining - tokensUsed,
       })
       .eq("user_id", userId)
       .eq("date", today);
@@ -226,10 +239,12 @@ export async function consumeDailyTokens(userId: string, tokensUsed: number): Pr
       return true; // Fail open
     }
 
-    console.log(`Consumed ${tokensUsed} tokens for user ${userId}. Remaining: ${current.tokens_remaining - tokensUsed}`);
+    console.log(
+      `Consumed ${tokensUsed} tokens for user ${userId}. Remaining: ${current.tokens_remaining - tokensUsed}`
+    );
     return true; // Successfully consumed tokens
   } catch (error) {
     console.error("Error consuming daily tokens:", error);
     return true; // Fail open - allow the request if something goes wrong
   }
-} 
+}

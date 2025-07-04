@@ -1,8 +1,8 @@
 // Fast streaming proxy route for OpenRouter
 // Returns stream directly with minimal processing for ~400ms first token
 
-import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
 
 const openrouter = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
@@ -10,8 +10,8 @@ const openrouter = new OpenAI({
 });
 
 export default async function handler(req: NextRequest) {
-  if (req.method !== 'POST') {
-    return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+  if (req.method !== "POST") {
+    return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
   }
 
   try {
@@ -20,7 +20,7 @@ export default async function handler(req: NextRequest) {
 
     // Start timing for performance measurement
     const t0 = performance.now();
-    
+
     // Create streaming completion
     const completion = await openrouter.chat.completions.create({
       model,
@@ -43,7 +43,7 @@ export default async function handler(req: NextRequest) {
             const data = `data: ${JSON.stringify(chunk)}\n\n`;
             controller.enqueue(new TextEncoder().encode(data));
           }
-          controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+          controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
           controller.close();
         } catch (error) {
           controller.error(error);
@@ -54,17 +54,16 @@ export default async function handler(req: NextRequest) {
     // Return the stream with proper headers
     return new NextResponse(stream, {
       headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Server-Timing': `openrouter;dur=${(t1-t0).toFixed()}`,
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+        "Server-Timing": `openrouter;dur=${(t1 - t0).toFixed()}`,
       },
     });
-
   } catch (error) {
-    console.error('Streaming proxy error:', error);
+    console.error("Streaming proxy error:", error);
     return NextResponse.json(
-      { error: 'Failed to create streaming completion' }, 
+      { error: "Failed to create streaming completion" },
       { status: 500 }
     );
   }

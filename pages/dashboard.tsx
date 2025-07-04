@@ -79,8 +79,8 @@ function Dashboard() {
   // @dashboard-redesign - Use our new ChatPanel component directly
   return (
     <Shell ref={shellRef}>
-      <ChatPanel 
-        threadId={threadId} 
+      <ChatPanel
+        threadId={threadId}
         onTokensUpdated={() => shellRef.current?.refreshTokenGauge()}
       />
     </Shell>

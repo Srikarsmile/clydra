@@ -15,8 +15,14 @@ class MockRedis {
     return 1;
   }
 
-  async set(key: string, value: string | number, mode?: string, duration?: number): Promise<string> {
-    const expiry = mode === "EX" && duration ? Date.now() + (duration * 1000) : undefined;
+  async set(
+    key: string,
+    value: string | number,
+    mode?: string,
+    duration?: number
+  ): Promise<string> {
+    const expiry =
+      mode === "EX" && duration ? Date.now() + duration * 1000 : undefined;
     this.storage.set(key, { value: String(value), expiry });
     return "OK";
   }
@@ -80,4 +86,4 @@ function initializeRedis(): Redis | MockRedis {
 
 redis = initializeRedis();
 
-export { redis }; 
+export { redis };

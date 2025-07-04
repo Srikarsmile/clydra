@@ -8,9 +8,12 @@ export default function Home() {
 
   const demoMessages = [
     { type: "user", text: "help me write a fire Instagram caption 🔥" },
-    { type: "ai", text: "Say less! ✨ How about: 'Living my best life, no cap 💯 Main character energy activated 🌟'" },
+    {
+      type: "ai",
+      text: "Say less! ✨ How about: 'Living my best life, no cap 💯 Main character energy activated 🌟'",
+    },
     { type: "user", text: "that's actually lowkey perfect ngl" },
-    { type: "ai", text: "I got you! That's what I'm here for 😎" }
+    { type: "ai", text: "I got you! That's what I'm here for 😎" },
   ];
 
   useEffect(() => {
@@ -18,7 +21,7 @@ export default function Home() {
       if (currentMessage < demoMessages.length - 1) {
         setIsTyping(true);
         setTimeout(() => {
-          setCurrentMessage(prev => prev + 1);
+          setCurrentMessage((prev) => prev + 1);
           setIsTyping(false);
         }, 1000);
       } else {
@@ -40,7 +43,8 @@ export default function Home() {
     },
     {
       title: "Real-time Streaming",
-      description: "Get instant responses with our optimized streaming technology",
+      description:
+        "Get instant responses with our optimized streaming technology",
       icon: "⚡",
     },
     {
@@ -58,7 +62,7 @@ export default function Home() {
     },
     {
       name: "Claude Sonnet",
-      status: "Pro", 
+      status: "Pro",
       description: "Superior writing and creative capabilities",
     },
     {
@@ -84,30 +88,43 @@ export default function Home() {
             <div className="flex justify-between items-center h-16">
               {/* Logo */}
               <div className="flex items-center">
-                <div className="text-3xl font-bold text-black">
-                  Clydra
-                </div>
+                <div className="text-3xl font-bold text-black">Clydra</div>
               </div>
 
               {/* Desktop Navigation */}
               <div className="hidden md:flex items-center space-x-8">
-                <Link href="#features" className="text-gray-600 hover:text-black transition-colors duration-300 font-medium">
+                <Link
+                  href="#features"
+                  className="text-gray-600 hover:text-black transition-colors duration-300 font-medium"
+                >
                   Features
                 </Link>
-                <Link href="#models" className="text-gray-600 hover:text-black transition-colors duration-300 font-medium">
+                <Link
+                  href="#models"
+                  className="text-gray-600 hover:text-black transition-colors duration-300 font-medium"
+                >
                   Models
                 </Link>
-                <Link href="#pricing" className="text-gray-600 hover:text-black transition-colors duration-300 font-medium">
+                <Link
+                  href="#pricing"
+                  className="text-gray-600 hover:text-black transition-colors duration-300 font-medium"
+                >
                   Pricing
                 </Link>
               </div>
 
               {/* Auth Buttons */}
               <div className="flex items-center space-x-4">
-                <Link href="/sign-in" className="text-gray-600 hover:text-black font-medium transition-colors duration-300">
+                <Link
+                  href="/sign-in"
+                  className="text-gray-600 hover:text-black font-medium transition-colors duration-300"
+                >
                   Sign In
                 </Link>
-                <Link href="/sign-up" className="px-6 py-2.5 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                <Link
+                  href="/sign-up"
+                  className="px-6 py-2.5 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+                >
                   Get Started
                 </Link>
               </div>
@@ -119,7 +136,6 @@ export default function Home() {
         <section className="relative pt-12 pb-24">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              
               {/* Left Side - Content */}
               <div className="text-left">
                 <div className="mb-6">
@@ -128,27 +144,33 @@ export default function Home() {
                   </span>
                   <h1 className="text-6xl md:text-7xl font-black text-black tracking-tight leading-none mb-6">
                     Chat with AI
-                    <span className="block text-gray-600">
-                      that speaks
-                    </span>
+                    <span className="block text-gray-600">that speaks</span>
                     <span className="block text-black">your vibe</span>
                   </h1>
                 </div>
 
                 <p className="text-xl text-gray-600 leading-relaxed mb-8 max-w-lg">
-                  No cap, this is the AI platform you've been waiting for. GPT-4o, Claude, and Gemini all in one place. Free to start, premium when you need it. 
+                  No cap, this is the AI platform you've been waiting for.
+                  GPT-4o, Claude, and Gemini all in one place. Free to start,
+                  premium when you need it.
                 </p>
 
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                  <Link href="/sign-up" className="group relative px-8 py-4 bg-black text-white rounded-2xl font-bold text-lg hover:bg-gray-800 hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
+                  <Link
+                    href="/sign-up"
+                    className="group relative px-8 py-4 bg-black text-white rounded-2xl font-bold text-lg hover:bg-gray-800 hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                  >
                     <span className="flex items-center">
                       Start chatting free
                       <span className="ml-2 text-xl">🚀</span>
                     </span>
                   </Link>
-                  
-                  <Link href="#models" className="px-8 py-4 bg-white text-gray-700 rounded-2xl font-bold text-lg border border-gray-300 hover:bg-gray-50 hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+
+                  <Link
+                    href="#models"
+                    className="px-8 py-4 bg-white text-gray-700 rounded-2xl font-bold text-lg border border-gray-300 hover:bg-gray-50 hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+                  >
                     See what's possible
                   </Link>
                 </div>
@@ -174,7 +196,9 @@ export default function Home() {
                         <span className="text-white font-bold text-sm">AI</span>
                       </div>
                       <div>
-                        <div className="font-semibold text-gray-800">Clydra AI</div>
+                        <div className="font-semibold text-gray-800">
+                          Clydra AI
+                        </div>
                         <div className="flex items-center space-x-1">
                           <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                           <span className="text-xs text-gray-500">Online</span>
@@ -186,23 +210,25 @@ export default function Home() {
 
                   {/* Chat Messages */}
                   <div className="space-y-4 h-64 overflow-hidden">
-                    {demoMessages.slice(0, currentMessage + 1).map((message, index) => (
-                      <div
-                        key={index}
-                        className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}
-                      >
+                    {demoMessages
+                      .slice(0, currentMessage + 1)
+                      .map((message, index) => (
                         <div
-                          className={`max-w-[80%] px-4 py-3 rounded-2xl ${
-                            message.type === 'user'
-                              ? 'bg-black text-white'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
+                          key={index}
+                          className={`flex ${message.type === "user" ? "justify-end" : "justify-start"} animate-fade-in-up`}
                         >
-                          <p className="text-sm">{message.text}</p>
+                          <div
+                            className={`max-w-[80%] px-4 py-3 rounded-2xl ${
+                              message.type === "user"
+                                ? "bg-black text-white"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            <p className="text-sm">{message.text}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                    
+                      ))}
+
                     {/* Typing Indicator */}
                     {isTyping && (
                       <div className="flex justify-start animate-fade-in-up">
@@ -227,8 +253,18 @@ export default function Home() {
                         disabled
                       />
                       <button className="p-2 bg-black rounded-xl text-white hover:bg-gray-800 hover:shadow-lg transition-all duration-300">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                          />
                         </svg>
                       </button>
                     </div>
@@ -255,11 +291,12 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="text-center mb-20">
               <h2 className="text-5xl md:text-6xl font-bold text-black mb-6 tracking-tight">
-                Why Choose 
+                Why Choose
                 <span className="text-gray-600"> Clydra</span>
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto font-light">
-                Experience the perfect blend of power, simplicity, and innovation
+                Experience the perfect blend of power, simplicity, and
+                innovation
               </p>
             </div>
 
@@ -287,11 +324,12 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="text-center mb-20">
               <h2 className="text-5xl md:text-6xl font-bold text-black mb-6 tracking-tight">
-                Powerful 
+                Powerful
                 <span className="text-gray-600"> AI Models</span>
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto font-light">
-                Access the world's most advanced AI models through one unified interface
+                Access the world's most advanced AI models through one unified
+                interface
               </p>
             </div>
 
@@ -305,18 +343,24 @@ export default function Home() {
                     <h3 className="text-lg font-bold text-black">
                       {model.name}
                     </h3>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      model.status === "Free" ? "bg-green-500 text-white" : "bg-black text-white"
-                    }`}>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        model.status === "Free"
+                          ? "bg-green-500 text-white"
+                          : "bg-black text-white"
+                      }`}
+                    >
                       {model.status}
                     </span>
                   </div>
                   <p className="text-gray-600 text-sm leading-relaxed">
                     {model.description}
                   </p>
-                  <div className={`absolute bottom-0 left-0 right-0 h-1 ${
-                    model.status === "Free" ? "bg-green-500" : "bg-black"
-                  } rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                  <div
+                    className={`absolute bottom-0 left-0 right-0 h-1 ${
+                      model.status === "Free" ? "bg-green-500" : "bg-black"
+                    } rounded-b-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                  ></div>
                 </div>
               ))}
             </div>
@@ -328,7 +372,7 @@ export default function Home() {
           <div className="max-w-6xl mx-auto px-6 lg:px-8">
             <div className="text-center mb-20">
               <h2 className="text-5xl md:text-6xl font-bold text-black mb-6 tracking-tight">
-                Simple 
+                Simple
                 <span className="text-gray-600"> Pricing</span>
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto font-light">
@@ -343,35 +387,66 @@ export default function Home() {
                   <h3 className="text-2xl font-bold text-black mb-2">Free</h3>
                   <div className="text-4xl font-bold text-black mb-6">
                     ₹0
-                    <span className="text-lg text-gray-500 font-normal">/month</span>
+                    <span className="text-lg text-gray-500 font-normal">
+                      /month
+                    </span>
                   </div>
                   <ul className="space-y-4 mb-8">
                     <li className="flex items-center space-x-3">
                       <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
                       <span className="text-gray-700">40 messages daily</span>
                     </li>
                     <li className="flex items-center space-x-3">
                       <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
-                      <span className="text-gray-700">GPT-3.5 Turbo access</span>
+                      <span className="text-gray-700">
+                        GPT-3.5 Turbo access
+                      </span>
                     </li>
                     <li className="flex items-center space-x-3">
                       <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
                       <span className="text-gray-700">Chat history</span>
                     </li>
                   </ul>
-                  <Link href="/sign-up" className="w-full inline-block text-center px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors duration-300">
+                  <Link
+                    href="/sign-up"
+                    className="w-full inline-block text-center px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors duration-300"
+                  >
                     Get Started Free
                   </Link>
                 </div>
@@ -388,43 +463,82 @@ export default function Home() {
                   <h3 className="text-2xl font-bold text-black mb-2">Pro</h3>
                   <div className="text-4xl font-bold text-black mb-6">
                     ₹799
-                    <span className="text-lg text-gray-500 font-normal">/month</span>
+                    <span className="text-lg text-gray-500 font-normal">
+                      /month
+                    </span>
                   </div>
                   <ul className="space-y-4 mb-8">
                     <li className="flex items-center space-x-3">
                       <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center">
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
                       <span className="text-gray-700">Unlimited messages</span>
                     </li>
                     <li className="flex items-center space-x-3">
                       <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center">
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
-                      <span className="text-gray-700">All premium AI models</span>
+                      <span className="text-gray-700">
+                        All premium AI models
+                      </span>
                     </li>
                     <li className="flex items-center space-x-3">
                       <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center">
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
                       <span className="text-gray-700">Priority support</span>
                     </li>
                     <li className="flex items-center space-x-3">
                       <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center">
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
                       <span className="text-gray-700">Advanced features</span>
                     </li>
                   </ul>
-                  <Link href="/sign-up" className="w-full inline-block text-center px-6 py-3 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+                  <Link
+                    href="/sign-up"
+                    className="w-full inline-block text-center px-6 py-3 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+                  >
                     Upgrade to Pro
                   </Link>
                 </div>
@@ -441,13 +555,20 @@ export default function Home() {
               <span className="block text-gray-300"> Clydra</span>?
             </h2>
             <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto font-light leading-relaxed">
-              Join thousands of users already having amazing conversations with AI
+              Join thousands of users already having amazing conversations with
+              AI
             </p>
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <Link href="/sign-up" className="px-10 py-4 bg-white text-black rounded-2xl font-semibold text-lg hover:bg-gray-100 hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
+              <Link
+                href="/sign-up"
+                className="px-10 py-4 bg-white text-black rounded-2xl font-semibold text-lg hover:bg-gray-100 hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+              >
                 Start Free Today
               </Link>
-              <Link href="#features" className="px-10 py-4 bg-gray-800 text-white rounded-2xl font-semibold text-lg border border-gray-700 hover:bg-gray-700 hover:shadow-lg transition-all duration-300">
+              <Link
+                href="#features"
+                className="px-10 py-4 bg-gray-800 text-white rounded-2xl font-semibold text-lg border border-gray-700 hover:bg-gray-700 hover:shadow-lg transition-all duration-300"
+              >
                 Learn More
               </Link>
             </div>
@@ -459,37 +580,75 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
               <div className="col-span-1 md:col-span-2">
-                <div className="text-3xl font-bold text-white mb-4">
-                  Clydra
-                </div>
+                <div className="text-3xl font-bold text-white mb-4">Clydra</div>
                 <p className="text-gray-300 max-w-md leading-relaxed">
-                  The next-generation AI chat platform that brings together the world's most powerful AI models in one beautiful interface.
+                  The next-generation AI chat platform that brings together the
+                  world's most powerful AI models in one beautiful interface.
                 </p>
               </div>
 
               <div>
                 <h4 className="text-lg font-semibold mb-4">Product</h4>
                 <ul className="space-y-2">
-                  <li><Link href="#features" className="text-gray-300 hover:text-white transition-colors">Features</Link></li>
-                  <li><Link href="#models" className="text-gray-300 hover:text-white transition-colors">AI Models</Link></li>
-                  <li><Link href="#pricing" className="text-gray-300 hover:text-white transition-colors">Pricing</Link></li>
+                  <li>
+                    <Link
+                      href="#features"
+                      className="text-gray-300 hover:text-white transition-colors"
+                    >
+                      Features
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="#models"
+                      className="text-gray-300 hover:text-white transition-colors"
+                    >
+                      AI Models
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="#pricing"
+                      className="text-gray-300 hover:text-white transition-colors"
+                    >
+                      Pricing
+                    </Link>
+                  </li>
                 </ul>
               </div>
 
               <div>
                 <h4 className="text-lg font-semibold mb-4">Company</h4>
                 <ul className="space-y-2">
-                  <li><Link href="/privacy" className="text-gray-300 hover:text-white transition-colors">Privacy</Link></li>
-                  <li><Link href="/terms" className="text-gray-300 hover:text-white transition-colors">Terms</Link></li>
+                  <li>
+                    <Link
+                      href="/privacy"
+                      className="text-gray-300 hover:text-white transition-colors"
+                    >
+                      Privacy
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/terms"
+                      className="text-gray-300 hover:text-white transition-colors"
+                    >
+                      Terms
+                    </Link>
+                  </li>
                 </ul>
               </div>
             </div>
 
             <div className="border-t border-gray-700 pt-8">
               <div className="flex flex-col md:flex-row justify-between items-center">
-                <p className="text-gray-400">© 2024 Clydra. All rights reserved.</p>
+                <p className="text-gray-400">
+                  © 2024 Clydra. All rights reserved.
+                </p>
                 <div className="flex space-x-6 mt-4 md:mt-0">
-                  <span className="text-gray-400">Made with ❤️ for AI enthusiasts</span>
+                  <span className="text-gray-400">
+                    Made with ❤️ for AI enthusiasts
+                  </span>
                 </div>
               </div>
             </div>

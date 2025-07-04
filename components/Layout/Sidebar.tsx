@@ -1,5 +1,13 @@
 // @fluid-ui - T3.chat sidebar component
-import React, { useState, useCallback, useMemo, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { useRouter } from "next/router";
 import { Menu, ChevronLeft, User, LogOut, X } from "lucide-react";
 import { useClerk, useUser } from "@clerk/nextjs";
@@ -63,7 +71,13 @@ function ProfileChip({ collapsed }: { collapsed: boolean }) {
 }
 
 // @dashboard-redesign - Upgrade modal component
-function UpgradeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+function UpgradeModal({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
   if (!isOpen) return null;
 
   return (
@@ -71,7 +85,9 @@ function UpgradeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
       <div className="bg-white rounded-2xl max-w-md w-full mx-auto shadow-2xl border border-gray-200">
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold text-gray-900">Upgrade to Pro</h3>
+            <h3 className="text-xl font-semibold text-gray-900">
+              Upgrade to Pro
+            </h3>
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -79,19 +95,21 @@ function UpgradeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
               <X size={20} className="text-gray-500" />
             </button>
           </div>
-          
+
           <div className="mb-6">
             <p className="text-gray-600 mb-4">
-              Unlock unlimited messages, faster responses, and access to premium models like GPT-4o, Claude Sonnet 4, and web search.
+              Unlock unlimited messages, faster responses, and access to premium
+              models like GPT-4o, Claude Sonnet 4, and web search.
             </p>
-            
+
             <div className="bg-gray-50 rounded-lg p-4 mb-4">
               <div className="text-2xl font-bold text-black mb-2">
-                ₹799 <span className="text-sm font-normal text-gray-500">/ month</span>
+                ₹799{" "}
+                <span className="text-sm font-normal text-gray-500">
+                  / month
+                </span>
               </div>
-              <div className="text-sm text-gray-600">
-                or $15 / month
-              </div>
+              <div className="text-sm text-gray-600">or $15 / month</div>
             </div>
 
             <div className="space-y-2 text-sm text-gray-600">
@@ -131,7 +149,10 @@ function UpgradeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
   );
 }
 
-export default forwardRef<SidebarRef, SidebarProps>(function Sidebar({ planType = "free" }, ref) {
+export default forwardRef<SidebarRef, SidebarProps>(function Sidebar(
+  { planType = "free" },
+  ref
+) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -139,21 +160,28 @@ export default forwardRef<SidebarRef, SidebarProps>(function Sidebar({ planType 
   const tokenGaugeRef = useRef<TokenGaugeRef>(null);
 
   // Expose refresh method to parent components
-  useImperativeHandle(ref, () => ({
-    refreshTokenGauge: () => {
-      tokenGaugeRef.current?.refresh();
-    },
-  }), []);
+  useImperativeHandle(
+    ref,
+    () => ({
+      refreshTokenGauge: () => {
+        tokenGaugeRef.current?.refresh();
+      },
+    }),
+    []
+  );
 
   // @dashboard-redesign - Listen for hamburger menu toggle from chat header
   useEffect(() => {
     const handleToggleMobileSidebar = () => {
-      setMobileMenuOpen(prev => !prev);
+      setMobileMenuOpen((prev) => !prev);
     };
 
-    window.addEventListener('toggleMobileSidebar', handleToggleMobileSidebar);
+    window.addEventListener("toggleMobileSidebar", handleToggleMobileSidebar);
     return () => {
-      window.removeEventListener('toggleMobileSidebar', handleToggleMobileSidebar);
+      window.removeEventListener(
+        "toggleMobileSidebar",
+        handleToggleMobileSidebar
+      );
     };
   }, []);
 
@@ -240,15 +268,23 @@ export default forwardRef<SidebarRef, SidebarProps>(function Sidebar({ planType 
             {mobileMenuOpen ? (
               <X size={16} className="md:hidden" />
             ) : collapsed ? (
-              <Menu size={16} className="hidden md:block sm:w-[18px] sm:h-[18px]" />
+              <Menu
+                size={16}
+                className="hidden md:block sm:w-[18px] sm:h-[18px]"
+              />
             ) : (
-              <ChevronLeft size={16} className="hidden md:block sm:w-[18px] sm:h-[18px]" />
+              <ChevronLeft
+                size={16}
+                className="hidden md:block sm:w-[18px] sm:h-[18px]"
+              />
             )}
           </button>
 
           {(!collapsed || mobileMenuOpen) && (
             <div className="flex items-center">
-              <span className="text-sm font-semibold tracking-tight text-gray-900">Clydra</span>
+              <span className="text-sm font-semibold tracking-tight text-gray-900">
+                Clydra
+              </span>
             </div>
           )}
         </div>
@@ -262,7 +298,7 @@ export default forwardRef<SidebarRef, SidebarProps>(function Sidebar({ planType 
               "hover:bg-gray-800 transition-colors touch-manipulation",
               "flex items-center justify-center gap-2",
               "min-h-[40px] sm:min-h-auto",
-              (collapsed && !mobileMenuOpen) ? "px-2 py-2.5" : "px-3 py-2.5"
+              collapsed && !mobileMenuOpen ? "px-2 py-2.5" : "px-3 py-2.5"
             )}
           >
             <span className="text-lg leading-none">+</span>
@@ -273,7 +309,9 @@ export default forwardRef<SidebarRef, SidebarProps>(function Sidebar({ planType 
         {/* Search + thread list */}
         <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-2 sm:py-3 space-y-2 sm:space-y-3">
           {(!collapsed || mobileMenuOpen) && <ThreadSearch />}
-          {(!collapsed || mobileMenuOpen) && <ThreadList activeThread={threadId} />}
+          {(!collapsed || mobileMenuOpen) && (
+            <ThreadList activeThread={threadId} />
+          )}
         </div>
 
         {/* Bottom cluster */}
@@ -292,9 +330,9 @@ export default forwardRef<SidebarRef, SidebarProps>(function Sidebar({ planType 
       </aside>
 
       {/* Upgrade Modal */}
-      <UpgradeModal 
-        isOpen={showUpgradeModal} 
-        onClose={() => setShowUpgradeModal(false)} 
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
       />
     </>
   );

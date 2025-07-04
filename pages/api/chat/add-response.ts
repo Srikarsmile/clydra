@@ -45,11 +45,12 @@ export default async function handler(
       // Generate response using the single chat API (much faster)
       const response = await processChatRequest(
         clerkUserId,
-        { 
-          messages, 
+        {
+          messages,
           model,
-          enableWebSearch: false, // @web-search - Disable web search for add-response 
-          webSearchContextSize: "medium" // @web-search - Default context size
+          enableWebSearch: false, // @web-search - Disable web search for add-response
+          webSearchContextSize: "medium", // @web-search - Default context size
+          enableWikiGrounding: false, // @sarvam - Disable wiki grounding for add-response
         },
         undefined, // Don't save to thread
         false // No streaming
@@ -89,7 +90,10 @@ export default async function handler(
     } catch (error) {
       console.error(`Error with model ${model}:`, error);
       return res.status(500).json({
-        error: error instanceof Error ? error.message : "Failed to generate response",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to generate response",
       });
     }
   } catch (error) {
@@ -98,4 +102,4 @@ export default async function handler(
       error: error instanceof Error ? error.message : "Internal server error",
     });
   }
-} 
+}

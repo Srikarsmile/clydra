@@ -15,6 +15,7 @@ export const MODEL_MULTIPLIER: Record<string, number> = {
   "google/gemini-2.5-pro-exp-03-25": 1.0, // Standard pro model with 1.0x multiplier
   "mistralai/Magistral-Small-2506": 0.8, // Efficient vision model via Kluster AI with 0.8x multiplier
   "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo": 1.2, // Large reasoning model via Kluster AI with 1.2x multiplier
+  "sarvam-m": 0.9, // Sarvam AI model with wiki grounding with 0.9x multiplier
 
   // Legacy models (kept for compatibility)
   "openai/gpt-4o-mini": 0.75,
@@ -81,16 +82,16 @@ async function normalizeUserId(userId: string): Promise<string | null> {
 }
 
 export async function addTokens(
-  userId: string, 
-  tokens: number, 
-  model?: ChatModel, 
+  userId: string,
+  tokens: number,
+  model?: ChatModel,
   usedWebSearch?: boolean
 ): Promise<void> {
   const month = startOfMonth(new Date());
   const monthStr = month.toISOString().split("T")[0]; // YYYY-MM-DD format
 
   // @model-multiplier - Calculate effective tokens based on model and web search usage
-  const effectiveTokenCount = model 
+  const effectiveTokenCount = model
     ? await computeEffectiveTokens(model, tokens, usedWebSearch)
     : tokens; // Fallback to raw tokens if model not specified
 
@@ -188,8 +189,8 @@ export async function getUsage(userId: string): Promise<number> {
 export function getCap(plan: "free" | "pro"): number {
   // @pro-cap
   const PLAN_CAP = {
-    free : 40_000,          // daily
-    pro  : 1_000_000,       // monthly  (was 1_500_000)
+    free: 40_000, // daily
+    pro: 1_000_000, // monthly  (was 1_500_000)
   } as const;
   return PLAN_CAP[plan]; // free = 40k / day, pro = 1M / month
 }
@@ -207,7 +208,7 @@ export async function checkQuota(
     const cap = getCap(plan);
 
     // @model-multiplier - Calculate effective tokens for the request
-    const effectiveRequestTokens = model 
+    const effectiveRequestTokens = model
       ? await computeEffectiveTokens(model, requestTokens, usedWebSearch)
       : requestTokens;
 

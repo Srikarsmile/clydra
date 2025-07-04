@@ -33,19 +33,23 @@ export default async function handler(
     const { messageId, responseId }: SwitchResponseRequest = req.body;
 
     if (!messageId || !responseId) {
-      return res.status(400).json({ error: "messageId and responseId are required" });
+      return res
+        .status(400)
+        .json({ error: "messageId and responseId are required" });
     }
 
     // Verify the user owns this message
     const { data: message, error: messageError } = await supabaseAdmin
       .from("messages")
-      .select(`
+      .select(
+        `
         id,
         thread_id,
         threads!inner(
           user_id
         )
-      `)
+      `
+      )
       .eq("id", messageId)
       .single();
 
@@ -98,4 +102,4 @@ export default async function handler(
       error: error instanceof Error ? error.message : "Internal server error",
     });
   }
-} 
+}

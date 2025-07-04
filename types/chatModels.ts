@@ -10,6 +10,7 @@ export const MODEL_ALIASES = {
   "google/gemini-2.5-pro-exp-03-25": "Gemini 2.5 Pro",
   "mistralai/Magistral-Small-2506": "Mistral Small", // Vision-capable model via Kluster AI
   "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo": "Llama 3.3 70B", // Large reasoning model via Kluster AI
+  "sarvam-m": "Sarvam M", // Sarvam AI model with wiki grounding
 
   // Legacy models (kept for compatibility)
   "openai/gpt-4o-mini": "GPT-4o Mini",
@@ -35,6 +36,7 @@ export const PRO_PLAN_MODELS: ChatModel[] = [
   "google/gemini-2.5-pro-exp-03-25", // Fixed to use correct identifier
   "mistralai/Magistral-Small-2506", // New vision-capable model via Kluster AI
   "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo", // New large reasoning model via Kluster AI
+  "sarvam-m", // Sarvam AI model with wiki grounding
 ];
 
 // Model features
@@ -46,6 +48,7 @@ export const MODELS_WITH_WEB_SEARCH: ChatModel[] = [
   // "google/gemini-2.5-pro-exp-03-25", // ❓ Not tested with :online
   // "mistralai/Magistral-Small-2506", // ❓ Not tested with :online
   // "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo", // ❓ Not tested with :online
+  // "sarvam-m", // ❌ Uses wiki grounding instead of web search
 ];
 
 // Models with vision capabilities (can process images)
@@ -60,6 +63,14 @@ export const MODELS_WITH_VISION: ChatModel[] = [
 export const KLUSTER_AI_MODELS: ChatModel[] = [
   "mistralai/Magistral-Small-2506",
   "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
+];
+
+// Models that use Sarvam AI instead of OpenRouter
+export const SARVAM_AI_MODELS: ChatModel[] = ["sarvam-m"];
+
+// Models with wiki grounding capabilities (factual information retrieval)
+export const MODELS_WITH_WIKI_GROUNDING: ChatModel[] = [
+  "sarvam-m", // ✅ Supports wiki grounding as per Sarvam AI documentation
 ];
 
 export function getModelsByPlan(plan: "free" | "pro" | "max"): ChatModel[] {
@@ -84,4 +95,12 @@ export function modelSupportsVision(model: ChatModel): boolean {
 
 export function isKlusterAIModel(model: ChatModel): boolean {
   return KLUSTER_AI_MODELS.includes(model);
+}
+
+export function isSarvamAIModel(model: ChatModel): boolean {
+  return SARVAM_AI_MODELS.includes(model);
+}
+
+export function modelSupportsWikiGrounding(model: ChatModel): boolean {
+  return MODELS_WITH_WIKI_GROUNDING.includes(model);
 }

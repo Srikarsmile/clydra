@@ -32,18 +32,15 @@ interface Message {
   webSearchUsed?: boolean; // @web-search - Indicate if web search was used
 }
 
-
-
-
-
-
-
 interface ChatPanelProps {
   threadId?: string;
   onTokensUpdated?: () => void; // Callback to refresh token gauge after chat responses
 }
 
-export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps) {
+export default function ChatPanel({
+  threadId,
+  onTokensUpdated,
+}: ChatPanelProps) {
   const { user } = useUser();
   const router = useRouter(); // @persistence-fix - Add router for URL updates
   const [messages, setMessages] = useState<Message[]>([]);
@@ -54,8 +51,9 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const [currentThreadId, setCurrentThreadId] = useState<string | undefined>(threadId); // @persistence-fix - Track current thread
-
+  const [currentThreadId, setCurrentThreadId] = useState<string | undefined>(
+    threadId
+  ); // @persistence-fix - Track current thread
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -65,13 +63,18 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
   useEffect(() => {
     if (!threadId || !user) return;
 
-      const loadMessages = async () => {
-        try {
-          const response = await fetch(`/api/messages/${threadId}`);
-          if (response.ok) {
-            const data = await response.json();
+    const loadMessages = async () => {
+      try {
+        const response = await fetch(`/api/messages/${threadId}`);
+        if (response.ok) {
+          const data = await response.json();
           const formattedMessages: Message[] = data.map(
-            (msg: { role: string; content: string; id?: number; model?: string }) => ({
+            (msg: {
+              role: string;
+              content: string;
+              id?: number;
+              model?: string;
+            }) => ({
               role: msg.role,
               content: msg.content,
               id: msg.id?.toString(),
@@ -79,13 +82,13 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
             })
           );
           setMessages(formattedMessages);
-          }
-        } catch (error) {
-        console.error("Failed to load messages:", error);
         }
-      };
+      } catch (error) {
+        console.error("Failed to load messages:", error);
+      }
+    };
 
-      loadMessages();
+    loadMessages();
   }, [threadId, user]);
 
   // @dashboard-redesign - Clear messages when no threadId (new chat)
@@ -107,16 +110,16 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         const newThreadId = data.id;
         setCurrentThreadId(newThreadId);
-        
+
         // Update URL to include the new thread ID so messages persist after refresh
         // Use replace instead of push to avoid page refresh and maintain user input
         router.replace(`/dashboard?thread=${newThreadId}`);
-        
+
         return newThreadId;
       } else {
         console.error("Failed to create new thread:", response.status);
@@ -210,7 +213,7 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
     // Process chat response
     const processChat = async () => {
       const assistantMessageId = `assistant-${Date.now()}`;
-      
+
       try {
         setIsStreaming(true);
         setStreamingMessage("");
@@ -235,13 +238,13 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
           model,
         };
 
-        console.log('Creating assistant message with model:', {
+        console.log("Creating assistant message with model:", {
           model,
           modelType: typeof model,
           assistantMessageId,
-          modelAlias: model ? MODEL_ALIASES[model] : 'undefined'
+          modelAlias: model ? MODEL_ALIASES[model] : "undefined",
         });
-        
+
         setMessages((prev) => [...prev, assistantMessage]);
 
         const response = await fetch("/api/chat/proxy", {
@@ -251,7 +254,7 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
           },
           body: JSON.stringify({
             messages: [...messages, userMessage],
-        model,
+            model,
             threadId: threadIdToUse, // @persistence-fix - Use the current or newly created thread ID
             stream: true,
             enableWebSearch,
@@ -287,50 +290,50 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
             if (done) break;
 
             const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
+            const lines = chunk.split("\n");
 
             for (const line of lines) {
-              if (line.startsWith('data: ')) {
+              if (line.startsWith("data: ")) {
                 const data = line.slice(6).trim();
-                if (data === '[DONE]') continue;
-                
+                if (data === "[DONE]") continue;
+
                 try {
                   const parsed = JSON.parse(data);
                   if (parsed.content) {
                     fullContent += parsed.content;
-                    
+
                     // Update the assistant message in real-time
                     setMessages((prev) => {
-                      const updatedMessages = prev.map((msg) => 
-                        msg.id === assistantMessageId 
+                      const updatedMessages = prev.map((msg) =>
+                        msg.id === assistantMessageId
                           ? { ...msg, content: fullContent }
                           : msg
                       );
-                      
 
-                      
                       return updatedMessages;
                     });
-                    
+
                     // Auto-scroll
                     requestAnimationFrame(() => scrollToBottom());
                   } else if (parsed.messageId && parsed.type === "completion") {
                     // Update the message with the database ID
-                    console.log(`🔄 Updating message ID from ${assistantMessageId} to ${parsed.messageId}`);
+                    console.log(
+                      `🔄 Updating message ID from ${assistantMessageId} to ${parsed.messageId}`
+                    );
                     setMessages((prev) => {
-                      const updatedMessages = prev.map((msg) => 
-                        msg.id === assistantMessageId 
+                      const updatedMessages = prev.map((msg) =>
+                        msg.id === assistantMessageId
                           ? { ...msg, id: parsed.messageId.toString() }
                           : msg
                       );
-                      
 
-                      
                       return updatedMessages;
                     });
-                    console.log(`✅ Message saved to database with ID: ${parsed.messageId}`);
+                    console.log(
+                      `✅ Message saved to database with ID: ${parsed.messageId}`
+                    );
                   } else {
-                    console.log('📦 Received data:', parsed);
+                    console.log("📦 Received data:", parsed);
                   }
                 } catch {
                   // Skip invalid JSON
@@ -342,17 +345,20 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
         } finally {
           reader.releaseLock();
         }
-
-    } catch (error) {
+      } catch (error) {
         console.error("Chat error:", error);
-        
+
         // Remove the assistant placeholder message on error
-        setMessages((prev) => prev.filter((msg) => msg.id !== assistantMessageId));
-        
+        setMessages((prev) =>
+          prev.filter((msg) => msg.id !== assistantMessageId)
+        );
+
         // Show appropriate error message
         if (error instanceof Error) {
-          if (error.message.includes("Daily message limit exceeded") || 
-              error.message.includes("429")) {
+          if (
+            error.message.includes("Daily message limit exceeded") ||
+            error.message.includes("429")
+          ) {
             setShowUpgrade(true);
           }
         }
@@ -381,15 +387,18 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
   useEffect(() => {
     // Only refresh if the last message is from assistant (indicating completion)
     const lastMessage = messages[messages.length - 1];
-    if (lastMessage?.role === 'assistant' && lastMessage.id && onTokensUpdated) {
-      console.log("🔄 ChatPanel: Triggering token gauge refresh for completed message", lastMessage.id);
+    if (
+      lastMessage?.role === "assistant" &&
+      lastMessage.id &&
+      onTokensUpdated
+    ) {
+      console.log(
+        "🔄 ChatPanel: Triggering token gauge refresh for completed message",
+        lastMessage.id
+      );
       onTokensUpdated();
     }
   }, [messages[messages.length - 1]?.id, onTokensUpdated]); // Only trigger when the last message ID changes
-
-
-
-
 
   // @auto-thread - Create thread when user focuses on input (proactive thread creation)
   const handleInputFocus = useCallback(async () => {
@@ -479,22 +488,26 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
             <button
               onClick={() => {
                 // Toggle mobile sidebar - we'll need to pass this as a prop or use context
-                const event = new CustomEvent('toggleMobileSidebar');
+                const event = new CustomEvent("toggleMobileSidebar");
                 window.dispatchEvent(event);
               }}
               className="md:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-colors touch-manipulation"
             >
               <Menu size={20} />
             </button>
-            <span className="text-lg sm:text-xl font-bold text-gray-900">Clydra</span>
+            <span className="text-lg sm:text-xl font-bold text-gray-900">
+              Clydra
+            </span>
           </div>
           {/* @dashboard-redesign - Mobile-responsive model badge */}
           <span className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-gray-100 border border-gray-200 text-gray-700 px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm">
             <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gray-400" />
             <span className="hidden xs:inline">{MODEL_ALIASES[model]}</span>
-            <span className="xs:hidden">{MODEL_ALIASES[model].split(' ')[0]}</span>
+            <span className="xs:hidden">
+              {MODEL_ALIASES[model].split(" ")[0]}
+            </span>
           </span>
-            </div>
+        </div>
 
         {/* @fluid-scroll - Fixed scrolling container to prevent double scroll */}
         <div
@@ -532,23 +545,23 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
                       <div className="text-xs sm:text-sm text-text-muted">
                         {suggestion.description}
                       </div>
-              </button>
+                    </button>
                   ))}
-            </div>
-          </div>
+                </div>
+              </div>
             ) : (
               <>
                 {/* @fluid-scroll - Mobile-optimized message list with better retry button positioning */}
-            {messages.map((message, index) => (
-              <div
-                key={message.id || index}
+                {messages.map((message, index) => (
+                  <div
+                    key={message.id || index}
                     className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-fade-in-up mb-6 sm:mb-8`}
                     style={{
                       animationDelay: `${Math.min(index * 50, 500)}ms`,
                       animationFillMode: "both",
                     }}
-              >
-                <div
+                  >
+                    <div
                       className={`w-full max-w-[85%] sm:max-w-xs md:max-w-sm lg:max-w-md xl:max-w-2xl 2xl:max-w-4xl ${
                         message.role === "assistant"
                           ? "bg-white text-gray-900 shadow-md"
@@ -568,10 +581,14 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
                             <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 text-xs text-gray-600">
                               <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
                               <span className="hidden xs:inline">
-                                {message.model ? MODEL_ALIASES[message.model] : MODEL_ALIASES[model]}
+                                {message.model
+                                  ? MODEL_ALIASES[message.model]
+                                  : MODEL_ALIASES[model]}
                               </span>
                               <span className="xs:hidden">
-                                {message.model ? MODEL_ALIASES[message.model].split(' ')[0] : MODEL_ALIASES[model].split(' ')[0]}
+                                {message.model
+                                  ? MODEL_ALIASES[message.model].split(" ")[0]
+                                  : MODEL_ALIASES[model].split(" ")[0]}
                               </span>
                             </div>
                             <ChatMessage
@@ -588,11 +605,9 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
                           timestamp={new Date()}
                         />
                       )}
-
-
-                </div>
-              </div>
-            ))}
+                    </div>
+                  </div>
+                ))}
 
                 {/* @performance - Mobile-optimized streaming message */}
                 {streamingMessage && (
@@ -601,8 +616,12 @@ export default function ChatPanel({ threadId, onTokensUpdated }: ChatPanelProps)
                       {/* Show model name when there's actual output - mobile optimized */}
                       <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 text-xs text-gray-600">
                         <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-pulse" />
-                        <span className="hidden xs:inline">{MODEL_ALIASES[model]}</span>
-                        <span className="xs:hidden">{MODEL_ALIASES[model].split(' ')[0]}</span>
+                        <span className="hidden xs:inline">
+                          {MODEL_ALIASES[model]}
+                        </span>
+                        <span className="xs:hidden">
+                          {MODEL_ALIASES[model].split(" ")[0]}
+                        </span>
                       </div>
                       <ChatMessage
                         content={streamingMessage}

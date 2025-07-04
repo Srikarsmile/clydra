@@ -66,12 +66,15 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
   // @dashboard-redesign - Handle hamburger menu toggle from chat header
   useEffect(() => {
     const handleToggleMobileSidebar = () => {
-      setSidebarOpen(prev => !prev);
+      setSidebarOpen((prev) => !prev);
     };
 
-    window.addEventListener('toggleMobileSidebar', handleToggleMobileSidebar);
+    window.addEventListener("toggleMobileSidebar", handleToggleMobileSidebar);
     return () => {
-      window.removeEventListener('toggleMobileSidebar', handleToggleMobileSidebar);
+      window.removeEventListener(
+        "toggleMobileSidebar",
+        handleToggleMobileSidebar
+      );
     };
   }, []);
 
@@ -227,8 +230,8 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
       {/* @dashboard-redesign - Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div 
-            className="absolute inset-0 bg-black/50" 
+          <div
+            className="absolute inset-0 bg-black/50"
             onClick={() => setSidebarOpen(false)}
           />
           <div className="absolute left-0 top-0 h-full w-80 max-w-[80vw] bg-white shadow-xl">

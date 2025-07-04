@@ -79,44 +79,47 @@ export default async function handler(
     }
 
     // @performance - Generate responses from all models in parallel
-    const modelPromises = models.map(async (model): Promise<ModelResponse | null> => {
-      try {
-        console.log(`Starting request for model: ${model}`);
-        const startTime = Date.now();
-        
-        const response = await processChatRequest(
-          clerkUserId,
-          { 
-            messages, 
-            model,
-            enableWebSearch: false, // @web-search - Disable web search for multi-response (performance)
-            webSearchContextSize: "medium" // @web-search - Default context size
-          },
-          undefined, // Don't save to thread yet
-          false // No streaming for multi-response
-        );
+    const modelPromises = models.map(
+      async (model): Promise<ModelResponse | null> => {
+        try {
+          console.log(`Starting request for model: ${model}`);
+          const startTime = Date.now();
 
-        const endTime = Date.now();
-        console.log(`Model ${model} completed in ${endTime - startTime}ms`);
+          const response = await processChatRequest(
+            clerkUserId,
+            {
+              messages,
+              model,
+              enableWebSearch: false, // @web-search - Disable web search for multi-response (performance)
+              webSearchContextSize: "medium", // @web-search - Default context size
+              enableWikiGrounding: false, // @sarvam - Disable wiki grounding for multi-response (performance)
+            },
+            undefined, // Don't save to thread yet
+            false // No streaming for multi-response
+          );
 
-        if ("message" in response) {
+          const endTime = Date.now();
+          console.log(`Model ${model} completed in ${endTime - startTime}ms`);
+
+          if ("message" in response) {
+            return {
+              model,
+              content: response.message.content,
+              tokens: response.usage.totalTokens,
+            };
+          }
+          return null;
+        } catch (error) {
+          console.error(`Error with model ${model}:`, error);
           return {
             model,
-            content: response.message.content,
-            tokens: response.usage.totalTokens,
+            content: "",
+            tokens: 0,
+            error: error instanceof Error ? error.message : "Unknown error",
           };
         }
-        return null;
-      } catch (error) {
-        console.error(`Error with model ${model}:`, error);
-        return {
-          model,
-          content: "",
-          tokens: 0,
-          error: error instanceof Error ? error.message : "Unknown error",
-        };
       }
-    });
+    );
 
     // Wait for all models to complete (or timeout after 30 seconds)
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -125,7 +128,7 @@ export default async function handler(
 
     const results = await Promise.race([
       Promise.allSettled(modelPromises),
-      timeoutPromise
+      timeoutPromise,
     ]);
 
     // Process results
@@ -179,7 +182,7 @@ export default async function handler(
         try {
           await supabaseAdmin.from("messages").insert({
             thread_id: threadId,
-            role: "assistant", 
+            role: "assistant",
             content: primaryResponse.content,
           });
         } catch (error: any) {
@@ -199,4 +202,4 @@ export default async function handler(
       error: error instanceof Error ? error.message : "Internal server error",
     });
   }
-} 
+}

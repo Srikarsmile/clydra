@@ -20,7 +20,7 @@ export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req) && isProtectedRoute(req)) {
     await auth.protect();
   }
-  
+
   // @grant-40k - Grant daily tokens to authenticated users (fire-and-forget)
   const { userId } = await auth();
   if (userId) {

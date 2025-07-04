@@ -3,7 +3,12 @@
 
 import { useRef, useEffect, KeyboardEvent, useCallback } from "react";
 import { Send, Loader2, ChevronDown, Globe } from "lucide-react";
-import { ChatModel, MODEL_ALIASES, getModelsByPlan, modelSupportsWebSearch } from "@/types/chatModels";
+import {
+  ChatModel,
+  MODEL_ALIASES,
+  getModelsByPlan,
+  modelSupportsWebSearch,
+} from "@/types/chatModels";
 import { cn } from "@/lib/utils";
 
 interface InputBarProps {
@@ -72,15 +77,22 @@ export default function InputBar({
     [onSubmit]
   );
 
-  const handleModelChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newModel = e.target.value as ChatModel;
-    onModelChange(newModel);
-    
-    // @web-search - Auto-disable web search if new model doesn't support it
-    if (enableWebSearch && !modelSupportsWebSearch(newModel) && onWebSearchChange) {
-      onWebSearchChange(false);
-    }
-  }, [onModelChange, enableWebSearch, onWebSearchChange]);
+  const handleModelChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const newModel = e.target.value as ChatModel;
+      onModelChange(newModel);
+
+      // @web-search - Auto-disable web search if new model doesn't support it
+      if (
+        enableWebSearch &&
+        !modelSupportsWebSearch(newModel) &&
+        onWebSearchChange
+      ) {
+        onWebSearchChange(false);
+      }
+    },
+    [onModelChange, enableWebSearch, onWebSearchChange]
+  );
 
   // @web-search - Check if current model supports web search
   const currentModelSupportsWebSearch = modelSupportsWebSearch(selectedModel);
@@ -146,7 +158,11 @@ export default function InputBar({
                         ? "bg-blue-50 border-blue-300 text-blue-600 hover:bg-blue-100"
                         : "bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200"
                     )}
-                    title={enableWebSearch ? "Web search enabled" : "Enable web search"}
+                    title={
+                      enableWebSearch
+                        ? "Web search enabled"
+                        : "Enable web search"
+                    }
                   >
                     <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </button>

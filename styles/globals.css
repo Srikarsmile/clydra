@@ -1350,37 +1350,39 @@ input[type="password"] {
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
   }
-  
+
   /* Improved scrolling on iOS */
   body {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: none;
   }
-  
+
   /* Mobile-optimized chat scrolling */
   .chat-scroll {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     scroll-behavior: smooth;
   }
-  
+
   /* Better mobile text rendering */
   * {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   /* Prevent zoom on inputs */
-  input, textarea, select {
+  input,
+  textarea,
+  select {
     font-size: 16px;
     transform: translateZ(0);
   }
-  
+
   /* Mobile-optimized animations */
   .animate-fade-in-up {
     animation-duration: 0.3s;
   }
-  
+
   /* Reduce motion for mobile performance */
   @media (prefers-reduced-motion: reduce) {
     .animate-fade-in-up,
@@ -1389,14 +1391,14 @@ input[type="password"] {
       animation: none;
     }
   }
-  
+
   /* Mobile-specific button optimizations */
   button {
     -webkit-tap-highlight-color: transparent;
     user-select: none;
     -webkit-user-select: none;
   }
-  
+
   /* Improve mobile form controls */
   .mobile-optimized-form {
     -webkit-appearance: none;
@@ -1410,25 +1412,25 @@ input[type="password"] {
   .xs\:hidden {
     display: none;
   }
-  
+
   .xs\:inline {
     display: inline;
   }
-  
+
   .xs\:block {
     display: block;
   }
-  
+
   .xs\:flex {
     display: flex;
   }
-  
+
   /* Mobile message bubbles optimization */
   .mobile-message-bubble {
     max-width: 90% !important;
     word-break: break-word;
   }
-  
+
   /* Mobile suggestion cards */
   .mobile-suggestion-card {
     padding: 12px;
@@ -1443,7 +1445,7 @@ input[type="password"] {
     padding-top: 8px;
     padding-bottom: 8px;
   }
-  
+
   /* Smaller header in landscape */
   .landscape-header {
     padding-top: 12px;
@@ -1452,8 +1454,8 @@ input[type="password"] {
 }
 
 /* @mobile-optimization - High DPI display optimizations */
-@media screen and (-webkit-min-device-pixel-ratio: 2), 
-       screen and (min-resolution: 192dpi) {
+@media screen and (-webkit-min-device-pixel-ratio: 2),
+  screen and (min-resolution: 192dpi) {
   .mobile-crisp-text {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -1463,16 +1465,17 @@ input[type="password"] {
 /* @mobile-optimization - iOS Safari specific fixes */
 @supports (-webkit-touch-callout: none) {
   /* iOS Safari input fixes */
-  input, textarea {
+  input,
+  textarea {
     -webkit-appearance: none;
     border-radius: 0;
   }
-  
+
   /* Fix iOS Safari 100vh issue */
   .mobile-full-height {
     height: -webkit-fill-available;
   }
-  
+
   /* iOS Safari backdrop-filter optimization */
   .mobile-backdrop-blur {
     -webkit-backdrop-filter: blur(20px);
@@ -1487,7 +1490,7 @@ input[type="password"] {
     min-height: 100vh;
     min-height: -webkit-fill-available;
   }
-  
+
   /* Better Android scrolling */
   .android-scroll-fix {
     transform: translateZ(0);
@@ -1512,7 +1515,7 @@ input[type="password"] {
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
   }
-  
+
   /* Specific fix for webkit browsers */
   @supports (-webkit-touch-callout: none) {
     input,
@@ -1522,7 +1525,7 @@ input[type="password"] {
       -webkit-text-size-adjust: 100%;
     }
   }
-  
+
   /* Better touch experience */
   input:focus,
   textarea:focus,
@@ -1530,13 +1533,13 @@ input[type="password"] {
     outline: none;
     -webkit-tap-highlight-color: transparent;
   }
-  
+
   /* Smooth scrolling for mobile */
   html {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
   }
-  
+
   /* Prevent bounce scrolling */
   body {
     overscroll-behavior: none;
@@ -1550,9 +1553,9 @@ input[type="password"] {
 }
 
 @keyframes response-update {
-  0% { 
-    opacity: 0.7; 
-    transform: scale(0.98) translateY(2px); 
+  0% {
+    opacity: 0.7;
+    transform: scale(0.98) translateY(2px);
     filter: brightness(1.1);
   }
   50% {
@@ -1560,9 +1563,9 @@ input[type="password"] {
     transform: scale(1.01) translateY(-1px);
     filter: brightness(1.05);
   }
-  100% { 
-    opacity: 1; 
-    transform: scale(1) translateY(0); 
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
     filter: brightness(1);
   }
 }

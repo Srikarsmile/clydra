@@ -14,10 +14,8 @@ const PlanBadge: React.FC<PlanBadgeProps> = ({ plan, onClick }) => {
         "inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border",
         plan === "free" &&
           "bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200",
-        plan === "pro" &&
-          "bg-black text-white hover:bg-gray-800 border-black",
-        plan === "max" &&
-          "bg-black text-white hover:bg-gray-800 border-black"
+        plan === "pro" && "bg-black text-white hover:bg-gray-800 border-black",
+        plan === "max" && "bg-black text-white hover:bg-gray-800 border-black"
       )}
     >
       {plan === "free" && "Free Plan"}

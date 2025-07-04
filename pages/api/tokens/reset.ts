@@ -31,14 +31,14 @@ export default async function handler(
         for (const user of users) {
           await resetDailyTokens(user.id);
         }
-        return res.status(200).json({ 
+        return res.status(200).json({
           message: `Daily tokens reset for ${users.length} users`,
-          tokens: 40000
+          tokens: 40000,
         });
       } else {
-        return res.status(200).json({ 
+        return res.status(200).json({
           message: "No users found to reset tokens for",
-          tokens: 40000
+          tokens: 40000,
         });
       }
     }
@@ -60,12 +60,12 @@ export default async function handler(
     // Reset tokens
     await resetDailyTokens(supabaseUserId);
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       message: "Daily tokens reset to 40,000",
-      tokens: 40000
+      tokens: 40000,
     });
   } catch (error) {
     console.error("Error resetting tokens:", error);
     return res.status(500).json({ error: "Failed to reset tokens" });
   }
-} 
+}
