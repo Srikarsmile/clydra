@@ -1,4 +1,4 @@
--- Rivo Labs Database Setup
+-- Clydra Labs Database Setup
 -- Run this script in your Supabase SQL editor to set up the required tables
 
 -- Enable UUID extension

@@ -1,7 +1,7 @@
 /**
- * Rivo Labs Theme Configuration
+ * Clydra Labs Theme Configuration
  *
- * This file contains the complete theme system for Rivo Labs, including:
+ * This file contains the complete theme system for Clydra Labs, including:
  * - Brand colors and design tokens
  * - Component variants and styles
  * - Utility functions for theme consistency
