@@ -233,8 +233,8 @@ export async function processChatRequest(
     apiKey,
     defaultHeaders,
     // @performance - Optimize connection settings for reduced latency
-    timeout: 30000, // Reduced to 30 seconds for faster failures
-    maxRetries: 1, // Minimize retries for faster responses
+    timeout: 10000, // Reduced to 10 seconds for faster failures and better UX
+    maxRetries: 0, // Disable retries for faster responses - let client handle retries
   });
 
   try {

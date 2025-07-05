@@ -1,9 +1,21 @@
-import { useState, useEffect, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
-import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
-import { Shell, ShellRef } from "../components/Layout/Shell";
-import ChatPanel from "../components/Chat/ChatPanel"; // @dashboard-redesign
+import { useEffect, useState, useRef } from "react";
+import dynamic from "next/dynamic";
+import { Shell, ShellRef } from "@/components/Layout/Shell";
+
+// @performance - Dynamic import for ChatPanel to reduce initial bundle size
+const ChatPanel = dynamic(() => import("@/components/Chat/ChatPanel"), {
+  loading: () => (
+    <div className="flex items-center justify-center h-full">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-sm text-gray-500">Loading chat...</p>
+      </div>
+    </div>
+  ),
+  ssr: false, // Disable SSR for better performance
+});
 
 interface DashboardStats {
   totalChats: number;
@@ -87,7 +99,7 @@ function Dashboard() {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getServerSideProps = async () => {
   return { props: {} };
 };
 

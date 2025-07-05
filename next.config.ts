@@ -1,13 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Remove Turbopack config as it's not needed for production
+  // @performance - Enable experimental optimizations
   experimental: {
-    // Keep only essential experimental features
+    // Optimize package imports for better tree shaking
     optimizePackageImports: [
       "lucide-react",
       "@clerk/nextjs",
       "@supabase/supabase-js",
+      "react-markdown",
+      "remark-gfm",
     ],
   },
 
@@ -40,6 +42,9 @@ const nextConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === "production",
   },
 
+  // @performance - Enable compression
+  compress: true,
+
   // Security headers
   async headers() {
     return [
@@ -58,13 +63,17 @@ const nextConfig: NextConfig = {
             key: "X-XSS-Protection",
             value: "1; mode=block",
           },
+          // @performance - Add caching headers for static assets
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
         ],
       },
     ];
   },
 
   // Vercel specific optimizations
-  swcMinify: true,
   poweredByHeader: false,
 };
 

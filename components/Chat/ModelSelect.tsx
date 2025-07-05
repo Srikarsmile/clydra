@@ -1,5 +1,5 @@
 // @fluid-ui - T3.chat model selector component - Optimized for performance
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import {
   Popover,
   PopoverTrigger,
@@ -59,7 +59,7 @@ interface ModelSelectProps {
   userPlan?: "free" | "pro" | "max";
 }
 
-export function ModelSelect({
+const ModelSelectComponent = function ModelSelect({
   model,
   setModel,
   userPlan = "pro",
@@ -294,4 +294,7 @@ export function ModelSelect({
       </PopoverContent>
     </Popover>
   );
-}
+};
+
+// @performance - Memoized export for better performance
+export const ModelSelect = memo(ModelSelectComponent);
