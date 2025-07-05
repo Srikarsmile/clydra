@@ -2,6 +2,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getAuth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "../../../lib/supabase";
+import { getOrCreateUser } from "../../../lib/user-utils";
 
 export default async function handler(
   req: NextApiRequest,
@@ -18,15 +19,11 @@ export default async function handler(
     return res.status(400).json({ error: "Thread ID is required" });
   }
 
-  // Get user from Supabase
-  const { data: user } = await supabaseAdmin
-    .from("users")
-    .select("*")
-    .eq("clerk_id", userId)
-    .single();
+  // Get or create user in Supabase
+  const userResult = await getOrCreateUser(userId);
 
-  if (!user) {
-    return res.status(404).json({ error: "User not found" });
+  if (!userResult.success || !userResult.user) {
+    return res.status(500).json({ error: "Failed to authenticate user" });
   }
 
   // Verify thread ownership
@@ -34,7 +31,7 @@ export default async function handler(
     .from("threads")
     .select("*")
     .eq("id", threadId)
-    .eq("user_id", user.id)
+    .eq("user_id", userResult.user.id)
     .single();
 
   if (!thread) {
@@ -57,7 +54,7 @@ export default async function handler(
       // Then get model information for assistant messages
       const messageIds =
         messages?.filter((m) => m.role === "assistant").map((m) => m.id) || [];
-      let modelData: any[] = [];
+      let modelData: { message_id: string; model: string }[] = [];
 
       if (messageIds.length > 0) {
         const { data: responses, error: responseError } = await supabaseAdmin
@@ -92,8 +89,80 @@ export default async function handler(
       console.error("Failed to fetch messages:", error);
       res.status(500).json({ error: "Failed to fetch messages" });
     }
+  } else if (req.method === "POST") {
+    try {
+      const { role, content } = req.body;
+
+      if (!role || !content) {
+        return res.status(400).json({ error: "Role and content are required" });
+      }
+
+      if (!["user", "assistant"].includes(role)) {
+        return res
+          .status(400)
+          .json({ error: "Role must be 'user' or 'assistant'" });
+      }
+
+      // Insert the message
+      const { data: message, error } = await supabaseAdmin
+        .from("messages")
+        .insert({
+          thread_id: threadId,
+          role,
+          content,
+        })
+        .select("*")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      res.status(201).json(message);
+    } catch (error) {
+      console.error("Failed to save message:", error);
+      res.status(500).json({ error: "Failed to save message" });
+    }
+  } else if (req.method === "PUT") {
+    // @persistence-fix - Update message content (for streaming updates)
+    try {
+      const { messageId, content } = req.body;
+
+      if (!messageId || !content) {
+        return res
+          .status(400)
+          .json({ error: "messageId and content are required" });
+      }
+
+      // Verify the message belongs to this thread and user owns it
+      const { data: message, error: verifyError } = await supabaseAdmin
+        .from("messages")
+        .select("id, thread_id")
+        .eq("id", messageId)
+        .eq("thread_id", threadId)
+        .single();
+
+      if (verifyError || !message) {
+        return res.status(404).json({ error: "Message not found" });
+      }
+
+      // Update the message content
+      const { error: updateError } = await supabaseAdmin
+        .from("messages")
+        .update({ content })
+        .eq("id", messageId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Failed to update message:", error);
+      res.status(500).json({ error: "Failed to update message" });
+    }
   } else {
-    res.setHeader("Allow", ["GET"]);
+    res.setHeader("Allow", ["GET", "POST", "PUT"]);
     res.status(405).json({ error: "Method not allowed" });
   }
 }

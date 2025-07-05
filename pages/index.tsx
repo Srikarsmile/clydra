@@ -33,7 +33,7 @@ export default function Home() {
     }, 2500);
 
     return () => clearInterval(interval);
-  }, [currentMessage]);
+  }, [currentMessage, demoMessages.length]);
 
   const features = [
     {
@@ -150,7 +150,7 @@ export default function Home() {
                 </div>
 
                 <p className="text-xl text-gray-600 leading-relaxed mb-8 max-w-lg">
-                  No cap, this is the AI platform you've been waiting for.
+                  No cap, this is the AI platform you&apos;ve been waiting for.
                   GPT-4o, Claude, and Gemini all in one place. Free to start,
                   premium when you need it.
                 </p>
@@ -171,7 +171,7 @@ export default function Home() {
                     href="#models"
                     className="px-8 py-4 bg-white text-gray-700 rounded-2xl font-bold text-lg border border-gray-300 hover:bg-gray-50 hover:shadow-lg transform hover:scale-105 transition-all duration-300"
                   >
-                    See what's possible
+                    See what&apos;s possible
                   </Link>
                 </div>
 
@@ -328,8 +328,8 @@ export default function Home() {
                 <span className="text-gray-600"> AI Models</span>
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto font-light">
-                Access the world's most advanced AI models through one unified
-                interface
+                Access the world&apos;s most advanced AI models through one
+                unified interface
               </p>
             </div>
 
@@ -583,7 +583,8 @@ export default function Home() {
                 <div className="text-3xl font-bold text-white mb-4">Clydra</div>
                 <p className="text-gray-300 max-w-md leading-relaxed">
                   The next-generation AI chat platform that brings together the
-                  world's most powerful AI models in one beautiful interface.
+                  world&apos;s most powerful AI models in one beautiful
+                  interface.
                 </p>
               </div>
 

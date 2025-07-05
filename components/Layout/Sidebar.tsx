@@ -13,7 +13,7 @@ import { Menu, ChevronLeft, User, LogOut, X } from "lucide-react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import ThreadList from "../Sidebar/ThreadList";
+import ThreadList, { ThreadListRef } from "../Sidebar/ThreadList";
 import ThreadSearch from "../Sidebar/ThreadSearch";
 import PlanBadge from "../PlanBadge";
 import { TokenGauge, TokenGaugeRef } from "../Sidebar/TokenGauge";
@@ -24,6 +24,7 @@ interface SidebarProps {
 
 export interface SidebarRef {
   refreshTokenGauge: () => void;
+  refreshThreadList: () => void;
 }
 
 // @dashboard-redesign - Mobile-optimized ProfileChip component
@@ -158,6 +159,7 @@ export default forwardRef<SidebarRef, SidebarProps>(function Sidebar(
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const router = useRouter();
   const tokenGaugeRef = useRef<TokenGaugeRef>(null);
+  const threadListRef = useRef<ThreadListRef>(null);
 
   // Expose refresh method to parent components
   useImperativeHandle(
@@ -165,6 +167,9 @@ export default forwardRef<SidebarRef, SidebarProps>(function Sidebar(
     () => ({
       refreshTokenGauge: () => {
         tokenGaugeRef.current?.refresh();
+      },
+      refreshThreadList: () => {
+        threadListRef.current?.refreshThreads();
       },
     }),
     []
@@ -193,6 +198,8 @@ export default forwardRef<SidebarRef, SidebarProps>(function Sidebar(
   // Create new thread - optimized with useCallback and better error handling
   const createThread = useCallback(async () => {
     try {
+      console.log("🆕 Creating new thread from sidebar...");
+
       const response = await fetch("/api/threads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -200,19 +207,29 @@ export default forwardRef<SidebarRef, SidebarProps>(function Sidebar(
 
       if (response.ok) {
         const { id } = await response.json();
+        console.log("✅ New thread created from sidebar:", id);
+
         // Use replace instead of push to avoid navigation history issues
         await router.replace(`/dashboard?thread=${id}`);
+
+        // Refresh thread list to show the new thread
+        threadListRef.current?.refreshThreads();
+
         // Close mobile menu after creating thread
         setMobileMenuOpen(false);
+
+        console.log("🎯 Navigated to new thread:", id);
       } else {
+        const errorText = await response.text();
         console.error(
-          "Failed to create thread:",
+          "❌ Failed to create thread:",
           response.status,
-          response.statusText
+          response.statusText,
+          errorText
         );
       }
     } catch (error) {
-      console.error("Failed to create thread:", error);
+      console.error("❌ Failed to create thread:", error);
     }
   }, [router]);
 
@@ -310,7 +327,7 @@ export default forwardRef<SidebarRef, SidebarProps>(function Sidebar(
         <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-2 sm:py-3 space-y-2 sm:space-y-3">
           {(!collapsed || mobileMenuOpen) && <ThreadSearch />}
           {(!collapsed || mobileMenuOpen) && (
-            <ThreadList activeThread={threadId} />
+            <ThreadList ref={threadListRef} activeThread={threadId} />
           )}
         </div>
 

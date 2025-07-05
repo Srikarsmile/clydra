@@ -38,12 +38,7 @@ async function performWebSearch(query: string): Promise<string> {
 }
 
 // @or Stub helper for usage logging
-async function logUsage(
-  userId: string,
-  model: string,
-  inputTokens: number,
-  outputTokens: number
-): Promise<void> {
+async function logUsage(): Promise<void> {
   // Usage is logged via the main chat API endpoint
   // This function is kept for legacy compatibility
 }
@@ -201,7 +196,7 @@ export default async function handler(
         const outputTokens =
           completion.usage?.completion_tokens ||
           Math.ceil((assistantMessage?.length || 0) / 4);
-        await logUsage(userId, validatedModel, inputTokens, outputTokens);
+        await logUsage();
 
         return res.status(200).json({
           message: {
@@ -217,22 +212,36 @@ export default async function handler(
           webSearchUsed: shouldUseWebSearch,
         });
       }
-    } catch (openAIError: any) {
+    } catch (openAIError: unknown) {
       console.error("OpenAI/OpenRouter API error:", openAIError);
 
       // Handle specific error cases
-      if (openAIError.status === 401) {
-        return res.status(401).json({ error: "Invalid API key" });
-      } else if (openAIError.status === 429) {
-        return res.status(429).json({ error: "Rate limit exceeded" });
-      } else if (openAIError.status === 500) {
-        return res
-          .status(500)
-          .json({ error: "OpenRouter internal server error" });
+      if (
+        openAIError &&
+        typeof openAIError === "object" &&
+        "status" in openAIError
+      ) {
+        const errorWithStatus = openAIError as {
+          status?: number;
+          message?: string;
+        };
+        if (errorWithStatus.status === 401) {
+          return res.status(401).json({ error: "Invalid API key" });
+        } else if (errorWithStatus.status === 429) {
+          return res.status(429).json({ error: "Rate limit exceeded" });
+        } else if (errorWithStatus.status === 500) {
+          return res
+            .status(500)
+            .json({ error: "OpenRouter internal server error" });
+        }
+
+        return res.status(errorWithStatus.status || 500).json({
+          error: errorWithStatus.message || "OpenRouter API error",
+        });
       }
 
-      return res.status(openAIError.status || 500).json({
-        error: openAIError.message || "OpenRouter API error",
+      return res.status(500).json({
+        error: "OpenRouter API error",
       });
     }
   } catch (error) {

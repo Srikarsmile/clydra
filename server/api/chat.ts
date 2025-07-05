@@ -43,31 +43,32 @@ const chatInputSchema = z.object({
   model: z
     .enum([
       // @dashboard-redesign - Models matching the design brief with correct OpenRouter identifiers
-      "google/gemini-2.0-flash-001", // Free model
+      "openai/gpt-4o-mini", // Free model
       "openai/gpt-4o",
       "anthropic/claude-3-5-sonnet-20241022", // Updated to Claude 4 Sonnet
-      "x-ai/grok-beta", // Updated to correct OpenRouter identifier
-      "google/gemini-2.5-pro-exp-03-25", // Updated to correct OpenRouter identifier
+      "x-ai/grok-3", // Updated to latest Grok model
+      "google/gemini-2.5-pro", // Current stable Gemini Pro model
+      "google/gemini-2.5-flash-preview", // Latest Gemini Flash model
       "mistralai/Magistral-Small-2506", // New vision-capable model via Kluster AI
       "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo", // New large reasoning model via Kluster AI
       "sarvam-m", // New Sarvam AI model
       // Legacy models for compatibility
-      "openai/gpt-4o-mini",
       "deepseek/deepseek-r1",
-      "google/gemini-2.5-flash-preview",
       "anthropic/claude-3-opus-20240229",
       "anthropic/claude-3-sonnet-20240229",
-      "google/gemini-1.5-pro",
       "meta-llama/llama-3-70b-instruct",
-    ] as const)
-    .default("google/gemini-2.0-flash-001"), // @dashboard-redesign - Default to free Gemini 2.0 Flash
-  threadId: z.string().optional(), // @threads - Add threadId support
-  enableWebSearch: z.boolean().optional().default(false), // @web-search - Add web search toggle
+      // Deprecated models (temporarily allowed for migration)
+      "x-ai/grok-beta", // Will be migrated to x-ai/grok-3
+      "google/gemini-2.5-pro-exp-03-25", // Will be migrated to google/gemini-2.5-pro
+    ])
+    .describe("Model to use for chat completion"),
+  threadId: z.string().optional(),
+  enableWebSearch: z.boolean().optional().default(false), // @web-search - Add web search parameter
   webSearchContextSize: z
     .enum(["low", "medium", "high"])
     .optional()
-    .default("medium"), // @web-search - Search context size
-  enableWikiGrounding: z.boolean().optional().default(false), // @sarvam - Add wiki grounding toggle
+    .default("medium"), // @web-search - Add context size parameter
+  enableWikiGrounding: z.boolean().optional().default(false), // @sarvam - Add wiki grounding parameter
 });
 
 export type ChatInput = z.infer<typeof chatInputSchema>;
@@ -143,10 +144,31 @@ export async function processChatRequest(
   // @clydra-core Validate input
   const validatedInput = chatInputSchema.parse(input);
 
+  // @fix-deprecated-models - Handle deprecated model names from cached frontend state
+  const modelMigrationMap: Record<string, ChatModel> = {
+    "x-ai/grok-beta": "x-ai/grok-3",
+    "google/gemini-2.5-pro-exp-03-25": "google/gemini-2.5-pro",
+    // Add migration for any old Google model references to the two kept models
+    "google/gemini-2.5-flash": "google/gemini-2.5-flash-preview",
+    "google/gemini-2.0-flash-001": "google/gemini-2.5-flash-preview",
+    "google/gemini-2.5-flash-preview-05-20": "google/gemini-2.5-flash-preview",
+    "google/gemini-1.5-pro": "google/gemini-2.5-pro",
+  };
+
   // @clydra-core Validate incoming model against MODEL_ALIASES
-  const model: ChatModel = MODEL_ALIASES[validatedInput.model as ChatModel]
-    ? (validatedInput.model as ChatModel)
-    : "google/gemini-2.0-flash-001";
+  let requestedModel = validatedInput.model as ChatModel;
+
+  // Apply migration if needed
+  if (modelMigrationMap[requestedModel]) {
+    console.log(
+      `🔄 Migrating deprecated model: ${requestedModel} → ${modelMigrationMap[requestedModel]}`
+    );
+    requestedModel = modelMigrationMap[requestedModel];
+  }
+
+  const model: ChatModel = MODEL_ALIASES[requestedModel]
+    ? requestedModel
+    : "google/gemini-2.5-flash-preview"; // Default to Google Flash model
 
   // @web-search - Check if web search should be enabled (only for supported models)
   const shouldUseWebSearch =
@@ -181,7 +203,10 @@ export async function processChatRequest(
   const remainingTokens = await getRemainingDailyTokens(userId);
 
   if (remainingTokens < inputTokens) {
-    throw new ChatError("FORBIDDEN", `Insufficient daily tokens. Need ${inputTokens}, have ${remainingTokens}.`);
+    throw new ChatError(
+      "FORBIDDEN",
+      `Insufficient daily tokens. Need ${inputTokens}, have ${remainingTokens}.`
+    );
   }
 
   // Note: Removed legacy daily message limit check in favor of token-based system
@@ -199,14 +224,14 @@ export async function processChatRequest(
   if (isKlusterModel) {
     // Use Kluster AI configuration
     baseURL = "https://api.kluster.ai/v1";
-    apiKey = "9f2ddf46-4401-48d1-b3d7-72c05edb44f2"; // Kluster AI API key
+    apiKey = process.env.KLUSTER_API_KEY;
     providerName = "Kluster AI";
   } else if (isSarvamModel) {
     // Use Sarvam AI configuration
     baseURL = "https://api.sarvam.ai/v1";
-    apiKey = "sk_wq9yiszy_Jewt6e5hC7N99X4khkVVNE7m"; // Sarvam AI API key
+    apiKey = process.env.SARVAM_API_KEY;
     defaultHeaders = {
-      "api-subscription-key": apiKey,
+      "api-subscription-key": apiKey || "",
     };
     providerName = "Sarvam AI";
   } else {
@@ -224,7 +249,7 @@ export async function processChatRequest(
   if (!apiKey) {
     throw new ChatError(
       "INTERNAL_SERVER_ERROR",
-      `${providerName} API key not configured. Please set ${isKlusterModel ? 'Kluster AI API key' : 'OPENROUTER_API_KEY'} in your environment.`
+      `${providerName} API key not configured. Please set ${isKlusterModel ? "Kluster AI API key" : "OPENROUTER_API_KEY"} in your environment.`
     );
   }
 
@@ -573,35 +598,128 @@ async function saveMessagesToThread(
       throw new Error("Invalid message format");
     }
 
-    console.log("Inserting messages for thread:", threadId);
+    console.log("Checking existing messages for thread:", threadId);
 
-    // Insert both user and assistant messages and get their IDs
-    const { data, error } = await supabaseAdmin
+    // @fix-foreign-key - First, ensure the thread exists
+    const { data: existingThread, error: threadError } = await supabaseAdmin
+      .from("threads")
+      .select("id")
+      .eq("id", threadId)
+      .single();
+
+    if (threadError || !existingThread) {
+      console.log("Thread does not exist, creating it:", threadId);
+      // Create the thread if it doesn't exist
+      const { error: createThreadError } = await supabaseAdmin
+        .from("threads")
+        .insert({
+          id: threadId,
+          user_id: userId,
+          title: "New Chat",
+        });
+
+      if (createThreadError) {
+        console.error("Failed to create thread:", createThreadError);
+        throw new Error(
+          `Failed to create thread: ${createThreadError.message}`
+        );
+      }
+      console.log("Thread created successfully:", threadId);
+    } else {
+      console.log("Thread exists:", threadId);
+    }
+
+    // Check if user message already exists (saved by ChatPanel)
+    const { data: existingMessages } = await supabaseAdmin
       .from("messages")
-      .insert([
-        {
+      .select("id, role, content")
+      .eq("thread_id", threadId)
+      .order("created_at", { ascending: false })
+      .limit(5); // Get last 5 messages to find recent user message
+
+    let userMessageId: string | undefined;
+    let assistantMessageId: string | undefined;
+
+    // Look for existing user message with same content
+    const existingUserMessage = existingMessages?.find(
+      (msg) => msg.role === "user" && msg.content === lastUserMessage.content
+    );
+
+    if (existingUserMessage) {
+      console.log("Found existing user message:", existingUserMessage.id);
+      userMessageId = existingUserMessage.id;
+    } else {
+      // Save user message if it doesn't exist
+      console.log("Saving new user message...");
+      const { data: userMsg, error: userError } = await supabaseAdmin
+        .from("messages")
+        .insert({
           thread_id: threadId,
           role: "user",
           content: lastUserMessage.content,
-        },
-        {
+        })
+        .select("id")
+        .single();
+
+      if (userError) {
+        console.error("Error saving user message:", userError);
+        throw new Error(`Failed to save user message: ${userError.message}`);
+      } else {
+        userMessageId = userMsg.id;
+        console.log("User message saved with ID:", userMessageId);
+      }
+    }
+
+    // Look for existing assistant message placeholder (saved by ChatPanel)
+    const existingAssistantMessage = existingMessages?.find(
+      (msg) =>
+        msg.role === "assistant" &&
+        (msg.content === "" || msg.content.length < 50)
+    );
+
+    if (existingAssistantMessage) {
+      console.log(
+        "Updating existing assistant message:",
+        existingAssistantMessage.id
+      );
+      // Update existing assistant message with final content
+      const { error: updateError } = await supabaseAdmin
+        .from("messages")
+        .update({ content: assistantResponse })
+        .eq("id", existingAssistantMessage.id);
+
+      if (updateError) {
+        console.error("Error updating assistant message:", updateError);
+        throw new Error(
+          `Failed to update assistant message: ${updateError.message}`
+        );
+      } else {
+        assistantMessageId = existingAssistantMessage.id;
+        console.log("Assistant message updated with ID:", assistantMessageId);
+      }
+    } else {
+      // Create new assistant message if none exists
+      console.log("Creating new assistant message...");
+      const { data: assistantMsg, error: assistantError } = await supabaseAdmin
+        .from("messages")
+        .insert({
           thread_id: threadId,
           role: "assistant",
           content: assistantResponse,
-        },
-      ])
-      .select("id, role");
+        })
+        .select("id")
+        .single();
 
-    if (error) {
-      console.error("Error saving messages to thread:", error);
-      return {};
+      if (assistantError) {
+        console.error("Error saving assistant message:", assistantError);
+        throw new Error(
+          `Failed to save assistant message: ${assistantError.message}`
+        );
+      } else {
+        assistantMessageId = assistantMsg.id;
+        console.log("Assistant message saved with ID:", assistantMessageId);
+      }
     }
-
-    console.log("Messages saved successfully to thread:", threadId);
-
-    // Extract message IDs
-    const userMessageId = data?.find((m) => m.role === "user")?.id;
-    const assistantMessageId = data?.find((m) => m.role === "assistant")?.id;
 
     // @ui-polish - Auto-title on first user message
     await supabaseAdmin

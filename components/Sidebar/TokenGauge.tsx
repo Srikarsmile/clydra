@@ -1,13 +1,7 @@
 // @token-meter - Token usage gauge for sidebar
 "use client";
 
-import {
-  useEffect,
-  useState,
-  useCallback,
-  useImperativeHandle,
-  forwardRef,
-} from "react";
+import { useEffect, useImperativeHandle, forwardRef } from "react";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -41,10 +35,10 @@ export interface TokenGaugeRef {
   refresh: () => void;
 }
 
-export const TokenGauge = forwardRef<TokenGaugeRef, {}>(
-  function TokenGauge(props, ref) {
+export const TokenGauge = forwardRef<TokenGaugeRef>(
+  function TokenGauge(_props, ref) {
     // Use SWR with manual control - no automatic polling
-    const { data: tokenUsage, mutate, isLoading, error } = useSWR<TokenUsage>(
+    const { data: tokenUsage, mutate } = useSWR<TokenUsage>(
       "/api/tokens/current",
       fetcher,
       {

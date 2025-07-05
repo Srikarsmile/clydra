@@ -14,11 +14,13 @@ export async function getOrCreateUser(
 ): Promise<UserResult> {
   try {
     // First try to get existing user using admin client
-    let { data: user, error: selectError } = await supabaseAdmin
+    const { data: userData, error: selectError } = await supabaseAdmin
       .from("users")
       .select("id")
       .eq("clerk_id", clerkUserId)
       .single();
+
+    let user = userData;
 
     if (selectError && selectError.code !== "PGRST116") {
       // PGRST116 = no rows found, which is OK for new users
@@ -31,12 +33,14 @@ export async function getOrCreateUser(
 
     // If user doesn't exist, create them
     if (!user) {
+      console.log("Creating new user for Clerk ID:", clerkUserId);
+
       const { data: newUser, error: createError } = await supabaseAdmin
         .from("users")
         .insert({
           clerk_id: clerkUserId,
-          email: "", // Will be populated by webhook later
-          first_name: "",
+          email: `user-${clerkUserId}@temp.local`, // Temporary email to satisfy constraints
+          first_name: "User",
           last_name: "",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -52,6 +56,7 @@ export async function getOrCreateUser(
         };
       }
 
+      console.log("✅ New user created with ID:", newUser.id);
       user = newUser;
     }
 

@@ -35,17 +35,21 @@ interface Message {
 interface ChatPanelProps {
   threadId?: string;
   onTokensUpdated?: () => void; // Callback to refresh token gauge after chat responses
+  onThreadCreated?: () => void; // Callback to refresh thread list after new thread creation
 }
 
 export default function ChatPanel({
   threadId,
   onTokensUpdated,
+  onThreadCreated,
 }: ChatPanelProps) {
   const { user } = useUser();
   const router = useRouter(); // @persistence-fix - Add router for URL updates
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [model, setModel] = useState<ChatModel>("google/gemini-2.0-flash-001"); // Updated to use correct free tier model
+  const [model, setModel] = useState<ChatModel>(
+    "google/gemini-2.5-flash-preview"
+  ); // Updated to use Google Flash model
   const [enableWebSearch, setEnableWebSearch] = useState(false); // @web-search - Enable web search state management
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
@@ -61,13 +65,25 @@ export default function ChatPanel({
 
   // @dashboard-redesign - Load messages when threadId changes
   useEffect(() => {
-    if (!threadId || !user) return;
+    if (!threadId || !user) {
+      console.log(
+        "🔄 Skipping message load: threadId =",
+        threadId,
+        "user =",
+        !!user
+      );
+      return;
+    }
 
-    const loadMessages = async () => {
+    console.log("📥 Loading messages for thread:", threadId);
+
+    const loadMessages = async (retryCount = 0) => {
       try {
         const response = await fetch(`/api/messages/${threadId}`);
         if (response.ok) {
           const data = await response.json();
+          console.log("✅ Messages loaded:", data.length);
+
           const formattedMessages: Message[] = data.map(
             (msg: {
               role: string;
@@ -82,29 +98,120 @@ export default function ChatPanel({
             })
           );
           setMessages(formattedMessages);
+
+          // @persistence-fix - Save messages to localStorage as backup
+          localStorage.setItem(
+            `clydra-messages-${threadId}`,
+            JSON.stringify(formattedMessages)
+          );
+        } else if (response.status === 404) {
+          // Thread not found, clear messages but don't error
+          console.warn("⚠️ Thread not found, clearing messages");
+          setMessages([]);
+        } else {
+          const errorText = await response.text();
+          console.error(
+            "❌ Failed to load messages:",
+            response.status,
+            response.statusText,
+            errorText
+          );
+
+          // @persistence-fix - Retry on server errors (5xx) or rate limits (429)
+          if (
+            (response.status >= 500 || response.status === 429) &&
+            retryCount < 3
+          ) {
+            console.log(
+              `🔄 Retrying message load (attempt ${retryCount + 1}/3)...`
+            );
+            setTimeout(
+              () => loadMessages(retryCount + 1),
+              1000 * (retryCount + 1)
+            );
+            return;
+          }
+
+          // @persistence-fix - Try to restore from localStorage on error
+          const backupMessages = localStorage.getItem(
+            `clydra-messages-${threadId}`
+          );
+          if (backupMessages) {
+            try {
+              const parsedMessages = JSON.parse(backupMessages);
+              console.log(
+                "🔄 Restored messages from localStorage backup:",
+                parsedMessages.length
+              );
+              setMessages(parsedMessages);
+            } catch (error) {
+              console.warn("Failed to parse backup messages:", error);
+            }
+          }
         }
       } catch (error) {
-        console.error("Failed to load messages:", error);
+        console.error("❌ Failed to load messages:", error);
+
+        // @persistence-fix - Retry on network errors
+        if (retryCount < 3) {
+          console.log(
+            `🔄 Retrying message load after network error (attempt ${retryCount + 1}/3)...`
+          );
+          setTimeout(
+            () => loadMessages(retryCount + 1),
+            1000 * (retryCount + 1)
+          );
+          return;
+        }
+
+        // @persistence-fix - Try to restore from localStorage on network error
+        const backupMessages = localStorage.getItem(
+          `clydra-messages-${threadId}`
+        );
+        if (backupMessages) {
+          try {
+            const parsedMessages = JSON.parse(backupMessages);
+            console.log(
+              "🔄 Restored messages from localStorage backup:",
+              parsedMessages.length
+            );
+            setMessages(parsedMessages);
+          } catch (error) {
+            console.warn("Failed to parse backup messages:", error);
+          }
+        }
       }
     };
 
     loadMessages();
   }, [threadId, user]);
 
-  // @dashboard-redesign - Clear messages when no threadId (new chat)
+  // @persistence-fix - Only clear messages when explicitly starting a new chat
+  // Don't clear messages just because threadId is undefined during loading
+
+  // @persistence-fix - Sync current thread ID with prop changes and localStorage
   useEffect(() => {
-    if (!threadId) {
-      setMessages([]);
+    setCurrentThreadId(threadId);
+
+    // Store thread ID in localStorage for recovery
+    if (threadId) {
+      localStorage.setItem("clydra-current-thread", threadId);
     }
   }, [threadId]);
 
-  // @persistence-fix - Sync current thread ID with prop changes
+  // @persistence-fix - Restore thread ID from localStorage on mount if no threadId prop
   useEffect(() => {
-    setCurrentThreadId(threadId);
-  }, [threadId]);
+    if (!threadId && !currentThreadId) {
+      const savedThreadId = localStorage.getItem("clydra-current-thread");
+      if (savedThreadId) {
+        console.log("🔄 Restoring thread ID from localStorage:", savedThreadId);
+        router.replace(`/dashboard?thread=${savedThreadId}`);
+      }
+    }
+  }, [threadId, currentThreadId, router]);
 
   // @persistence-fix - Create new thread when starting a fresh chat
-  const createNewThread = async (): Promise<string | null> => {
+  const createNewThread = useCallback(async (): Promise<string | null> => {
     try {
       const response = await fetch("/api/threads", {
         method: "POST",
@@ -120,6 +227,12 @@ export default function ChatPanel({
         // Use replace instead of push to avoid page refresh and maintain user input
         router.replace(`/dashboard?thread=${newThreadId}`);
 
+        // Notify parent component to refresh thread list
+        if (onThreadCreated) {
+          console.log("🔄 Notifying parent to refresh thread list");
+          onThreadCreated();
+        }
+
         return newThreadId;
       } else {
         console.error("Failed to create new thread:", response.status);
@@ -129,7 +242,7 @@ export default function ChatPanel({
       console.error("Error creating new thread:", error);
       return null;
     }
-  };
+  }, [onThreadCreated, router]);
 
   // @fluid-scroll - Enhanced smooth scroll with proper timing and user intent detection
   const scrollToBottom = useCallback((force = false) => {
@@ -213,6 +326,7 @@ export default function ChatPanel({
     // Process chat response
     const processChat = async () => {
       const assistantMessageId = `assistant-${Date.now()}`;
+      let currentAssistantId = assistantMessageId;
 
       try {
         setIsStreaming(true);
@@ -230,18 +344,130 @@ export default function ChatPanel({
           console.log(`✅ New thread created: ${threadIdToUse}`);
         }
 
-        // Add empty assistant message placeholder
+        // @persistence-fix - Save user message immediately to prevent loss on refresh
+        console.log("💾 Saving user message immediately...");
+        let userMessageSaved = false;
+        try {
+          const saveResponse = await fetch(`/api/messages/${threadIdToUse}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              role: "user",
+              content: userMessage.content,
+            }),
+          });
+
+          if (!saveResponse.ok) {
+            const errorText = await saveResponse.text();
+            console.warn(
+              "Failed to save user message immediately:",
+              saveResponse.status,
+              errorText
+            );
+
+            // @fix-foreign-key - If thread doesn't exist, create a new one
+            if (saveResponse.status === 404 || errorText.includes("thread")) {
+              console.log("🔄 Thread not found, creating new thread...");
+              const newThreadId = await createNewThread();
+              if (newThreadId) {
+                threadIdToUse = newThreadId;
+                console.log(
+                  `✅ New thread created, retrying save: ${newThreadId}`
+                );
+                // Retry saving with new thread
+                const retryResponse = await fetch(
+                  `/api/messages/${threadIdToUse}`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      role: "user",
+                      content: userMessage.content,
+                    }),
+                  }
+                );
+                if (retryResponse.ok) {
+                  const savedMessage = await retryResponse.json();
+                  console.log(
+                    "✅ User message saved with new thread ID:",
+                    savedMessage.id
+                  );
+                  userMessageSaved = true;
+                  // Update the user message with the database ID
+                  setMessages((prev) =>
+                    prev.map((msg) =>
+                      msg.id === userMessage.id
+                        ? { ...msg, id: savedMessage.id.toString() }
+                        : msg
+                    )
+                  );
+                }
+              }
+            }
+          } else {
+            const savedMessage = await saveResponse.json();
+            console.log(
+              "✅ User message saved immediately with ID:",
+              savedMessage.id
+            );
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            userMessageSaved = true;
+
+            // Update the user message with the database ID
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === userMessage.id
+                  ? { ...msg, id: savedMessage.id.toString() }
+                  : msg
+              )
+            );
+          }
+        } catch (error) {
+          console.warn("Error saving user message immediately:", error);
+        }
+
+        // @persistence-fix - Save empty assistant message immediately to prevent loss on refresh
+        let assistantMessageDbId: string | null = null;
+        try {
+          const assistantSaveResponse = await fetch(
+            `/api/messages/${threadIdToUse}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                role: "assistant",
+                content: "", // Start with empty content, will be updated during streaming
+              }),
+            }
+          );
+
+          if (assistantSaveResponse.ok) {
+            const savedAssistantMessage = await assistantSaveResponse.json();
+            assistantMessageDbId = savedAssistantMessage.id.toString();
+            console.log(
+              "✅ Assistant message placeholder saved with ID:",
+              assistantMessageDbId
+            );
+          } else {
+            console.warn("Failed to save assistant message placeholder");
+          }
+        } catch (error) {
+          console.warn("Error saving assistant message placeholder:", error);
+        }
+
+        // Add assistant message placeholder with database ID if available
         const assistantMessage: Message = {
           role: "assistant",
           content: "",
-          id: assistantMessageId,
+          id: assistantMessageDbId || assistantMessageId,
           model,
         };
+        currentAssistantId = assistantMessage.id || assistantMessageId;
 
         console.log("Creating assistant message with model:", {
           model,
           modelType: typeof model,
-          assistantMessageId,
+          assistantMessageId: assistantMessage.id,
           modelAlias: model ? MODEL_ALIASES[model] : "undefined",
         });
 
@@ -269,7 +495,7 @@ export default function ChatPanel({
             if (errorData.error) {
               errorMessage += `: ${errorData.error}`;
             }
-          } catch (e) {
+          } catch {
             // If we can't parse JSON, use the status text
             errorMessage += `: ${response.statusText}`;
           }
@@ -283,6 +509,7 @@ export default function ChatPanel({
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let fullContent = "";
+        let lastUpdateTime = 0;
 
         try {
           while (true) {
@@ -305,7 +532,7 @@ export default function ChatPanel({
                     // Update the assistant message in real-time
                     setMessages((prev) => {
                       const updatedMessages = prev.map((msg) =>
-                        msg.id === assistantMessageId
+                        msg.id === assistantMessage.id
                           ? { ...msg, content: fullContent }
                           : msg
                       );
@@ -313,22 +540,45 @@ export default function ChatPanel({
                       return updatedMessages;
                     });
 
+                    // @persistence-fix - Update database content periodically during streaming
+                    const now = Date.now();
+                    if (assistantMessageDbId && now - lastUpdateTime > 2000) {
+                      // Update every 2 seconds
+                      lastUpdateTime = now;
+                      // Update in background without blocking the stream
+                      fetch(`/api/messages/${threadIdToUse}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          messageId: assistantMessageDbId,
+                          content: fullContent,
+                        }),
+                      }).catch((error) => {
+                        console.warn(
+                          "Failed to update message content during streaming:",
+                          error
+                        );
+                      });
+                    }
+
                     // Auto-scroll
                     requestAnimationFrame(() => scrollToBottom());
                   } else if (parsed.messageId && parsed.type === "completion") {
-                    // Update the message with the database ID
-                    console.log(
-                      `🔄 Updating message ID from ${assistantMessageId} to ${parsed.messageId}`
-                    );
-                    setMessages((prev) => {
-                      const updatedMessages = prev.map((msg) =>
-                        msg.id === assistantMessageId
-                          ? { ...msg, id: parsed.messageId.toString() }
-                          : msg
+                    // Update the message with the database ID (if we didn't already have one)
+                    if (!assistantMessageDbId) {
+                      console.log(
+                        `🔄 Updating message ID from ${assistantMessage.id} to ${parsed.messageId}`
                       );
+                      setMessages((prev) => {
+                        const updatedMessages = prev.map((msg) =>
+                          msg.id === assistantMessage.id
+                            ? { ...msg, id: parsed.messageId.toString() }
+                            : msg
+                        );
 
-                      return updatedMessages;
-                    });
+                        return updatedMessages;
+                      });
+                    }
                     console.log(
                       `✅ Message saved to database with ID: ${parsed.messageId}`
                     );
@@ -342,6 +592,23 @@ export default function ChatPanel({
               }
             }
           }
+
+          // @persistence-fix - Final update to database with complete content
+          if (assistantMessageDbId && fullContent) {
+            try {
+              await fetch(`/api/messages/${threadIdToUse}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  messageId: assistantMessageDbId,
+                  content: fullContent,
+                }),
+              });
+              console.log("✅ Final message content saved to database");
+            } catch (error) {
+              console.warn("Failed to save final message content:", error);
+            }
+          }
         } finally {
           reader.releaseLock();
         }
@@ -350,7 +617,7 @@ export default function ChatPanel({
 
         // Remove the assistant placeholder message on error
         setMessages((prev) =>
-          prev.filter((msg) => msg.id !== assistantMessageId)
+          prev.filter((msg) => msg.id !== currentAssistantId)
         );
 
         // Show appropriate error message
@@ -375,12 +642,10 @@ export default function ChatPanel({
     input,
     messages,
     model,
-    threadId,
     enableWebSearch,
     scrollToBottom,
     currentThreadId,
     createNewThread,
-    onTokensUpdated,
   ]);
 
   // @performance - Refresh token gauge when messages change (throttled approach)
@@ -398,7 +663,15 @@ export default function ChatPanel({
       );
       onTokensUpdated();
     }
-  }, [messages[messages.length - 1]?.id, onTokensUpdated]); // Only trigger when the last message ID changes
+
+    // @persistence-fix - Save messages to localStorage whenever they change
+    if (messages.length > 0 && currentThreadId) {
+      localStorage.setItem(
+        `clydra-messages-${currentThreadId}`,
+        JSON.stringify(messages)
+      );
+    }
+  }, [messages, onTokensUpdated, currentThreadId]); // Only trigger when the last message ID changes
 
   // @auto-thread - Create thread when user focuses on input (proactive thread creation)
   const handleInputFocus = useCallback(async () => {

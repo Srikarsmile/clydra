@@ -25,7 +25,6 @@ export default function ModelPicker({
   userPlan,
 }: ModelPickerProps) {
   const availableModels = getModelsByPlan(userPlan);
-  const allModels = getModelsByPlan("max"); // Get all models for comparison
 
   return (
     <div className="space-y-4">

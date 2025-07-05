@@ -14,13 +14,6 @@ interface Message {
   timestamp: Date;
 }
 
-interface Model {
-  id: string;
-  name: string;
-  description: string;
-  color: string;
-}
-
 interface ChatInterfaceProps {
   messages?: Message[];
   onSendMessage?: (message: string, model: string) => void;

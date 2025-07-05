@@ -1,5 +1,6 @@
 import { useUser } from "@clerk/nextjs";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 interface ChatSidebarProps {
   userName: string;
@@ -56,9 +57,11 @@ export default function ChatSidebar({
       <div className="p-6 border-b border-border/30">
         <div className="flex items-center space-x-3">
           {user?.imageUrl && (
-            <img
+            <Image
               src={user.imageUrl}
               alt={userName}
+              width={40}
+              height={40}
               className="w-10 h-10 rounded-full object-cover"
             />
           )}

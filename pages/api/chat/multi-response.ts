@@ -171,7 +171,7 @@ export default async function handler(
             })
           );
           await Promise.allSettled(savePromises);
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error("Error saving responses to database:", error);
         }
       })();
@@ -185,7 +185,7 @@ export default async function handler(
             role: "assistant",
             content: primaryResponse.content,
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error("Error saving assistant message:", error);
         }
       })();

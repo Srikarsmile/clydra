@@ -25,7 +25,7 @@ const config: Config = {
         "fade-in-up": "fadeInUp 0.4s ease-out forwards",
         "scale-in-spring": "scaleInSpring 0.5s ease-out forwards",
         "page-enter": "pageEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards",
-        "float": "float 3s ease-in-out infinite",
+        float: "float 3s ease-in-out infinite",
       },
       keyframes: {
         fadeInUp: {
@@ -52,9 +52,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [
-    require("@tailwindcss/forms"),
-  ],
+  plugins: [require("@tailwindcss/forms")],
   // @performance - Optimize for production
   corePlugins: {
     // Disable unused plugins for smaller bundle

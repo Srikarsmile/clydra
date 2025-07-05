@@ -3,6 +3,7 @@ import { forwardRef, useImperativeHandle, useRef } from "react";
 
 export interface ShellRef {
   refreshTokenGauge: () => void;
+  refreshThreadList: () => void;
 }
 
 export const Shell = forwardRef<ShellRef, { children: React.ReactNode }>(
@@ -14,6 +15,9 @@ export const Shell = forwardRef<ShellRef, { children: React.ReactNode }>(
       () => ({
         refreshTokenGauge: () => {
           sidebarRef.current?.refreshTokenGauge();
+        },
+        refreshThreadList: () => {
+          sidebarRef.current?.refreshThreadList();
         },
       }),
       []

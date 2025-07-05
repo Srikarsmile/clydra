@@ -3,28 +3,30 @@ import { supabaseAdmin } from "../../lib/supabase";
 import { startOfMonth } from "date-fns";
 import { ChatModel } from "../../types/chatModels";
 
-// @margin-patch - Token multiplier system for different models
+// @model-multiplier - Model-specific token multipliers for different pricing tiers
 export const MODEL_MULTIPLIER: Record<string, number> = {
-  // Free Plan Models (50% cheaper)
-  "google/gemini-2.0-flash-001": 0.5, // Free model with 0.5x multiplier
+  // Free models
+  "openai/gpt-4o-mini": 0.5, // Mini model with 0.5x multiplier
 
-  // Pro Plan Models
-  "openai/gpt-4o": 1.0, // Base model with 1.0x multiplier
-  "anthropic/claude-3-5-sonnet-20241022": 1.5, // Claude 4 Sonnet with 1.5x multiplier
-  "x-ai/grok-beta": 1.5, // Premium model with 1.5x multiplier
-  "google/gemini-2.5-pro-exp-03-25": 1.0, // Standard pro model with 1.0x multiplier
-  "mistralai/Magistral-Small-2506": 0.8, // Efficient vision model via Kluster AI with 0.8x multiplier
-  "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo": 1.2, // Large reasoning model via Kluster AI with 1.2x multiplier
-  "sarvam-m": 0.9, // Sarvam AI model with wiki grounding with 0.9x multiplier
+  // Pro models with various multipliers
+  "openai/gpt-4o": 2.0, // Premium model with 2.0x multiplier
+  "anthropic/claude-3-5-sonnet-20241022": 1.5, // Premium model with 1.5x multiplier
+  "x-ai/grok-3": 1.5, // Premium model with 1.5x multiplier
+  "google/gemini-2.5-pro": 1.0, // Standard pro model with 1.0x multiplier
+  "google/gemini-2.5-flash-preview": 0.8, // Fast model with 0.8x multiplier
+  "mistralai/Magistral-Small-2506": 1.0, // Standard model with 1.0x multiplier
+  "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo": 1.2, // Large model with 1.2x multiplier
+  "sarvam-m": 1.0, // Standard model with 1.0x multiplier
 
-  // Legacy models (kept for compatibility)
-  "openai/gpt-4o-mini": 0.75,
-  "deepseek/deepseek-r1": 1.0,
-  "google/gemini-2.5-flash-preview": 0.5,
-  "anthropic/claude-3-opus-20240229": 2.0,
-  "anthropic/claude-3-sonnet-20240229": 1.5,
-  "google/gemini-1.5-pro": 1.0,
-  "meta-llama/llama-3-70b-instruct": 1.0,
+  // Legacy models
+  "deepseek/deepseek-r1": 1.0, // Standard model with 1.0x multiplier
+  "anthropic/claude-3-opus-20240229": 2.5, // Premium legacy model with 2.5x multiplier
+  "anthropic/claude-3-sonnet-20240229": 1.2, // Standard legacy model with 1.2x multiplier
+  "meta-llama/llama-3-70b-instruct": 1.0, // Standard model with 1.0x multiplier
+
+  // Deprecated models (will be migrated)
+  "x-ai/grok-beta": 1.5, // Migrates to grok-3
+  "google/gemini-2.5-pro-exp-03-25": 1.0, // Migrates to gemini-2.5-pro
 };
 
 // Web search adds 30% overhead to token consumption

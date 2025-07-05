@@ -2,7 +2,7 @@
 "use client";
 
 import { useRef, useEffect, KeyboardEvent, useCallback } from "react";
-import { Send, Loader2, ChevronDown, Globe } from "lucide-react";
+import { ChevronDown, Globe } from "lucide-react";
 import {
   ChatModel,
   MODEL_ALIASES,

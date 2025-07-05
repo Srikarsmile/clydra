@@ -5,6 +5,7 @@ This guide covers all environment variables needed for the Clydra Chat applicati
 ## 📋 Quick Setup
 
 1. **Copy the example file:**
+
    ```bash
    cp env.example .env.local
    ```
@@ -19,6 +20,7 @@ This guide covers all environment variables needed for the Clydra Chat applicati
 ## 🔑 Required API Keys & Services
 
 ### 1. Clerk Authentication
+
 **Purpose:** User authentication and management  
 **Get from:** [https://dashboard.clerk.com/](https://dashboard.clerk.com/)
 
@@ -29,6 +31,7 @@ CLERK_WEBHOOK_SECRET=whsec_...  # Optional, for webhooks
 ```
 
 ### 2. Supabase Database
+
 **Purpose:** Data storage, user management, chat history  
 **Get from:** [https://supabase.com/dashboard/](https://supabase.com/dashboard/)
 
@@ -39,6 +42,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiI...
 ```
 
 ### 3. OpenRouter (Primary AI Provider)
+
 **Purpose:** Access to multiple AI models (GPT-4, Claude, Gemini, etc.)  
 **Get from:** [https://openrouter.ai/keys](https://openrouter.ai/keys)
 
@@ -50,30 +54,33 @@ OPENROUTER_BASE=https://openrouter.ai/api/v1
 ## 🤖 AI Provider Configuration
 
 ### Multi-Provider Setup
+
 The application supports three AI providers:
 
-| Provider | Models | Configuration | Features |
-|----------|--------|---------------|----------|
+| Provider       | Models                       | Configuration         | Features                    |
+| -------------- | ---------------------------- | --------------------- | --------------------------- |
 | **OpenRouter** | GPT-4o, Claude, Gemini, etc. | Environment variables | Web search, Multiple models |
-| **Kluster AI** | Llama 3.3 70B, Mistral Small | Hardcoded in server | High performance |
-| **Sarvam AI** | sarvam-m | Hardcoded in server | Wiki grounding |
+| **Kluster AI** | Llama 3.3 70B, Mistral Small | Hardcoded in server   | High performance            |
+| **Sarvam AI**  | sarvam-m                     | Hardcoded in server   | Wiki grounding              |
 
 ### Currently Configured API Keys
 
 ✅ **Kluster AI**: `9f2ddf46-4401-48d1-b3d7-72c05edb44f2`  
 ✅ **Sarvam AI**: `sk_wq9yiszy_Jewt6e5hC7N99X4khkVVNE7m`
 
-*These are hardcoded in `server/api/chat.ts` and don't require environment variables.*
+_These are hardcoded in `server/api/chat.ts` and don't require environment variables._
 
 ## ⚙️ Application Configuration
 
 ### Feature Flags
+
 ```env
 NEXT_PUBLIC_USE_OPENROUTER=true     # Enable OpenRouter integration
 NEXT_PUBLIC_CHAT_ENABLED=true      # Enable chat functionality
 ```
 
 ### Site Configuration
+
 ```env
 NEXT_PUBLIC_SITE_URL=http://localhost:3000  # Your site URL
 NODE_ENV=development                         # Environment mode
@@ -82,11 +89,13 @@ NODE_ENV=development                         # Environment mode
 ## 🔧 Optional Services
 
 ### Redis (Caching & Rate Limiting)
+
 ```env
 REDIS_URL=redis://localhost:6379  # Optional, improves performance
 ```
 
 ### FAL (Additional AI Services)
+
 ```env
 FAL_KEY=your_fal_key_here  # Optional, for extended AI features
 ```
@@ -95,11 +104,13 @@ FAL_KEY=your_fal_key_here  # Optional, for extended AI features
 
 ### Public vs Private Variables
 
-**NEXT_PUBLIC_*** variables are **exposed to the browser**:
+**NEXT*PUBLIC*\*** variables are **exposed to the browser**:
+
 - ✅ Use for: Site URLs, feature flags, public keys
 - ❌ Don't use for: Secret keys, API keys, database credentials
 
 **Regular variables** are **server-side only**:
+
 - ✅ Use for: API keys, database credentials, secrets
 
 ### API Key Security
@@ -112,12 +123,14 @@ FAL_KEY=your_fal_key_here  # Optional, for extended AI features
 ## 🚀 Environment-Specific Setup
 
 ### Development
+
 ```env
 NODE_ENV=development
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
 ### Production
+
 ```env
 NODE_ENV=production
 NEXT_PUBLIC_SITE_URL=https://your-domain.com
@@ -128,14 +141,17 @@ NEXT_PUBLIC_SITE_URL=https://your-domain.com
 ### Common Issues
 
 **1. Chat not working:**
+
 - Check `NEXT_PUBLIC_USE_OPENROUTER=true`
 - Verify `OPENROUTER_API_KEY` is set
 
 **2. Authentication errors:**
+
 - Verify Clerk keys are correct
 - Check webhook secret if using webhooks
 
 **3. Database errors:**
+
 - Verify Supabase URL and keys
 - Check service role key permissions
 
@@ -161,6 +177,7 @@ ENVIRONMENT_SETUP.md # This guide
 ## 🆘 Support
 
 If you encounter issues:
+
 1. Check this guide first
 2. Verify all required API keys are set
 3. Restart your development server
@@ -168,4 +185,4 @@ If you encounter issues:
 
 ---
 
-*Last updated: $(date +"%Y-%m-%d")* 
+_Last updated: $(date +"%Y-%m-%d")_

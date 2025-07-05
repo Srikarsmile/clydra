@@ -27,6 +27,7 @@ function Dashboard() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [activeRoute, setActiveRoute] = useState("chat");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [stats, setStats] = useState<DashboardStats>({
     totalChats: 0,
     totalTokens: 0,
@@ -43,6 +44,63 @@ function Dashboard() {
       router.push("/sign-in");
     }
   }, [user, isLoaded, router]);
+
+  // @persistence-fix - Auto-load most recent thread when no thread ID in URL
+  useEffect(() => {
+    if (!isLoaded || !user || threadId) {
+      console.log(
+        "🔄 Skipping auto-load: isLoaded =",
+        isLoaded,
+        "user =",
+        !!user,
+        "threadId =",
+        threadId
+      );
+      return;
+    }
+
+    console.log(
+      "🔍 No thread ID in URL, attempting to load most recent thread..."
+    );
+
+    const loadMostRecentThread = async () => {
+      try {
+        const response = await fetch("/api/threads");
+        if (response.ok) {
+          const threads = await response.json();
+          console.log("📋 Fetched threads for auto-load:", threads.length);
+
+          if (threads.length > 0) {
+            const mostRecentThread = threads[0]; // threads are ordered by created_at desc
+            console.log(
+              "🎯 Redirecting to most recent thread:",
+              mostRecentThread.id
+            );
+
+            router.replace(
+              `/dashboard?thread=${mostRecentThread.id}`,
+              undefined,
+              {
+                shallow: true,
+              }
+            );
+          } else {
+            console.log("ℹ️ No existing threads found, user will start fresh");
+          }
+        } else {
+          console.error(
+            "❌ Failed to load threads for auto-redirect:",
+            response.status,
+            response.statusText
+          );
+        }
+      } catch (error) {
+        console.error("❌ Failed to load most recent thread:", error);
+      }
+    };
+
+    loadMostRecentThread();
+  }, [isLoaded, user, threadId, router]);
 
   // Handle route changes from query params
   useEffect(() => {
@@ -94,6 +152,7 @@ function Dashboard() {
       <ChatPanel
         threadId={threadId}
         onTokensUpdated={() => shellRef.current?.refreshTokenGauge()}
+        onThreadCreated={() => shellRef.current?.refreshThreadList()}
       />
     </Shell>
   );

@@ -58,7 +58,14 @@ export default async function handler(
     }
 
     // Check if user owns this thread
-    if ((message.threads as any).user_id !== userResult.user.id) {
+    const threadData = message.threads as
+      | { user_id: string }
+      | { user_id: string }[];
+    const userId = Array.isArray(threadData)
+      ? threadData[0]?.user_id
+      : threadData?.user_id;
+
+    if (userId !== userResult.user.id) {
       return res.status(403).json({ error: "Access denied" });
     }
 

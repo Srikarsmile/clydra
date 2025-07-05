@@ -10,6 +10,19 @@ export default async function handler(
     return res.status(403).json({ error: "Only available in development" });
   }
 
+  // Additional security: Check if request is from allowed IPs
+  const allowedIPs = process.env.DEV_ALLOWED_IPS?.split(",") || [
+    "127.0.0.1",
+    "::1",
+  ];
+  const clientIP =
+    req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
+  const ip = Array.isArray(clientIP) ? clientIP[0] : clientIP.split(",")[0];
+
+  if (!allowedIPs.includes(ip)) {
+    return res.status(403).json({ error: "IP not allowed" });
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }

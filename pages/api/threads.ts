@@ -2,6 +2,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getAuth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "../../lib/supabase";
+import { getOrCreateUser } from "../../lib/user-utils";
 
 export default async function handler(
   req: NextApiRequest,
@@ -9,20 +10,29 @@ export default async function handler(
 ) {
   const { userId } = getAuth(req);
 
+  console.log(
+    `🔐 Threads API: method=${req.method}, userId=${userId || "undefined"}`
+  );
+
   if (!userId) {
+    console.error("❌ Threads API: No userId from getAuth");
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  // Get user from Supabase
-  const { data: user } = await supabaseAdmin
-    .from("users")
-    .select("*")
-    .eq("clerk_id", userId)
-    .single();
+  // Get or create user in Supabase
+  const userResult = await getOrCreateUser(userId);
 
-  if (!user) {
-    return res.status(404).json({ error: "User not found" });
+  if (!userResult.success || !userResult.user) {
+    console.error(
+      "❌ Threads API: Failed to get or create user:",
+      userResult.error
+    );
+    return res.status(500).json({ error: "Failed to authenticate user" });
   }
+
+  console.log(
+    `✅ Threads API: User ready for ${userId}, ID=${userResult.user.id}`
+  );
 
   if (req.method === "GET") {
     try {
@@ -35,13 +45,17 @@ export default async function handler(
           msg_count:messages(count)
         `
         )
-        .eq("user_id", user.id)
+        .eq("user_id", userResult.user.id)
         .order("created_at", { ascending: false });
 
       if (error) {
+        console.error("❌ Threads API: Error fetching threads:", error);
         throw error;
       }
 
+      console.log(
+        `✅ Threads API: Returning ${data?.length || 0} threads for user ${userResult.user.id}`
+      );
       res.status(200).json(data || []);
     } catch (error) {
       console.error("Failed to fetch threads:", error);
@@ -51,14 +65,18 @@ export default async function handler(
     try {
       const { data, error } = await supabaseAdmin
         .from("threads")
-        .insert({ user_id: user.id })
+        .insert({ user_id: userResult.user.id })
         .select("id")
         .single();
 
       if (error) {
+        console.error("❌ Threads API: Error creating thread:", error);
         throw error;
       }
 
+      console.log(
+        `✅ Threads API: Created new thread ${data.id} for user ${userResult.user.id}`
+      );
       res.status(201).json({ id: data.id });
     } catch (error) {
       console.error("Failed to create thread:", error);
@@ -79,7 +97,7 @@ export default async function handler(
         .from("threads")
         .select("id, user_id")
         .eq("id", threadId)
-        .eq("user_id", user.id)
+        .eq("user_id", userResult.user.id)
         .single();
 
       if (verifyError) {
@@ -96,7 +114,7 @@ export default async function handler(
       if (!existingThread) {
         console.error("Thread not found or user doesn't have access:", {
           threadId,
-          userId: user.id,
+          userId: userResult.user.id,
         });
         return res
           .status(404)
@@ -120,7 +138,7 @@ export default async function handler(
         .from("threads")
         .delete()
         .eq("id", threadId)
-        .eq("user_id", user.id);
+        .eq("user_id", userResult.user.id);
 
       if (deleteError) {
         console.error("Failed to delete thread:", deleteError);
