@@ -1,23 +1,16 @@
-// @fluid-ui - T3.chat model definitions with latest models organized by plan
+// @fluid-ui - T3.chat model definitions with streamlined model selection
 export const MODEL_ALIASES = {
   // Free Plan Models - using correct OpenRouter identifiers
-  "google/gemini-2.5-flash-preview": "Gemini 2.5 Flash", // Latest Gemini Flash model
+  "google/gemini-2.5-flash-preview": "Gemini 2.5 Flash", // Default free model
 
   // Pro Plan Models - using correct OpenRouter identifiers
-  "openai/gpt-4o-mini": "GPT-4o Mini",
   "openai/gpt-4o": "GPT-4o",
-  "anthropic/claude-3-5-sonnet-20241022": "Claude 4 Sonnet", // Upgraded to Claude 4 Sonnet
-  "x-ai/grok-3": "Grok 3", // Latest Grok model
-  "google/gemini-2.5-pro": "Gemini 2.5 Pro", // Current stable Gemini Pro
-  "mistralai/Magistral-Small-2506": "Mistral Small", // Vision-capable model via Kluster AI
-  "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo": "Llama 3.3 70B", // Large reasoning model via Kluster AI
-  "sarvam-m": "Sarvam M", // Sarvam AI model
-
-  // Legacy models for compatibility
-  "deepseek/deepseek-r1": "DeepSeek R1",
-  "anthropic/claude-3-opus-20240229": "Claude 3 Opus",
-  "anthropic/claude-3-sonnet-20240229": "Claude 3 Sonnet",
-  "meta-llama/llama-3-70b-instruct": "Llama 3 70B",
+  "anthropic/claude-3-5-sonnet-20241022": "Claude 4 Sonnet",
+  "x-ai/grok-3": "Grok 3",
+  "google/gemini-2.5-pro": "Gemini 2.5 Pro",
+  "mistralai/Magistral-Small-2506": "Mistral Small",
+  "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo": "Llama 3.3 70B",
+  "sarvam-m": "Sarvam M",
 
   // Deprecated models (kept temporarily for migration)
   "x-ai/grok-beta": "Grok Beta (Deprecated)", // Will be migrated to grok-3
@@ -30,7 +23,6 @@ export type ChatModel = keyof typeof MODEL_ALIASES;
 export const MODEL_GROUPS = {
   free: ["google/gemini-2.5-flash-preview"],
   pro: [
-    "openai/gpt-4o-mini",
     "openai/gpt-4o",
     "anthropic/claude-3-5-sonnet-20241022",
     "x-ai/grok-3",
@@ -39,40 +31,28 @@ export const MODEL_GROUPS = {
     "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
     "sarvam-m",
   ],
-  legacy: [
-    "deepseek/deepseek-r1",
-    "anthropic/claude-3-opus-20240229",
-    "anthropic/claude-3-sonnet-20240229",
-    "meta-llama/llama-3-70b-instruct",
-  ],
+  legacy: [], // No legacy models in streamlined configuration
 } as const;
 
 // @dashboard-redesign - Plan-based model organization per design brief
 export const FREE_PLAN_MODELS: ChatModel[] = [
-  "google/gemini-2.5-flash-preview", // Free model with correct identifier
+  "google/gemini-2.5-flash-preview", // Default free model
 ];
 
 export const PRO_PLAN_MODELS: ChatModel[] = [
-  "openai/gpt-4o-mini",
   "openai/gpt-4o",
-  "anthropic/claude-3-5-sonnet-20241022", // Fixed to use correct identifier
-  "x-ai/grok-3", // Latest Grok model
-  "google/gemini-2.5-pro", // Updated from deprecated exp-03-25
-  "mistralai/Magistral-Small-2506", // New vision-capable model via Kluster AI
-  "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo", // New large reasoning model via Kluster AI
-  "sarvam-m", // Sarvam AI model with wiki grounding
+  "anthropic/claude-3-5-sonnet-20241022",
+  "x-ai/grok-3",
+  "google/gemini-2.5-pro",
+  "mistralai/Magistral-Small-2506",
+  "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
+  "sarvam-m",
 ];
 
 // Model features
 export const MODELS_WITH_WEB_SEARCH: ChatModel[] = [
   // Pro plan models with web search capability (only models that actually support :online in OpenRouter)
   "anthropic/claude-3-5-sonnet-20241022", // ✅ Confirmed working with :online
-  // "openai/gpt-4o", // ❌ Does not support :online suffix in OpenRouter
-  // "x-ai/grok-3", // ❓ Not tested with :online
-  // "google/gemini-2.5-pro", // ❓ Not tested with :online
-  // "mistralai/Magistral-Small-2506", // ❓ Not tested with :online
-  // "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo", // ❓ Not tested with :online
-  // "sarvam-m", // ❌ Uses wiki grounding instead of web search
 ];
 
 // Models with vision capabilities (can process images)

@@ -42,21 +42,15 @@ const chatInputSchema = z.object({
   ),
   model: z
     .enum([
-      // @dashboard-redesign - Models matching the design brief with correct OpenRouter identifiers
-      "google/gemini-2.5-flash-preview", // Free model
-      "openai/gpt-4o-mini",
+      // Streamlined model selection - only 8 models
+      "google/gemini-2.5-flash-preview", // Default free model
       "openai/gpt-4o",
-      "anthropic/claude-3-5-sonnet-20241022", // Updated to Claude 4 Sonnet
-      "x-ai/grok-3", // Updated to latest Grok model
-      "google/gemini-2.5-pro", // Current stable Gemini Pro model
-      "mistralai/Magistral-Small-2506", // New vision-capable model via Kluster AI
-      "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo", // New large reasoning model via Kluster AI
-      "sarvam-m", // New Sarvam AI model
-      // Legacy models for compatibility
-      "deepseek/deepseek-r1",
-      "anthropic/claude-3-opus-20240229",
-      "anthropic/claude-3-sonnet-20240229",
-      "meta-llama/llama-3-70b-instruct",
+      "anthropic/claude-3-5-sonnet-20241022",
+      "x-ai/grok-3",
+      "google/gemini-2.5-pro",
+      "mistralai/Magistral-Small-2506",
+      "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
+      "sarvam-m",
       // Deprecated models (temporarily allowed for migration)
       "x-ai/grok-beta", // Will be migrated to x-ai/grok-3
       "google/gemini-2.5-pro-exp-03-25", // Will be migrated to google/gemini-2.5-pro
@@ -148,7 +142,15 @@ export async function processChatRequest(
   const modelMigrationMap: Record<string, ChatModel> = {
     "x-ai/grok-beta": "x-ai/grok-3",
     "google/gemini-2.5-pro-exp-03-25": "google/gemini-2.5-pro",
-    // Add migration for any old Google model references to the two kept models
+    // Migration for removed models to appropriate alternatives
+    "openai/gpt-4o-mini": "openai/gpt-4o",
+    "deepseek/deepseek-r1": "google/gemini-2.5-flash-preview",
+    "anthropic/claude-3-opus-20240229": "anthropic/claude-3-5-sonnet-20241022",
+    "anthropic/claude-3-sonnet-20240229":
+      "anthropic/claude-3-5-sonnet-20241022",
+    "meta-llama/llama-3-70b-instruct":
+      "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
+    // Google model migrations
     "google/gemini-2.5-flash": "google/gemini-2.5-flash-preview",
     "google/gemini-2.0-flash-001": "google/gemini-2.5-flash-preview",
     "google/gemini-2.5-flash-preview-05-20": "google/gemini-2.5-flash-preview",

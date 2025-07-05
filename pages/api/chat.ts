@@ -81,7 +81,7 @@ export default async function handler(
     // Validate incoming model
     const validatedModel: ChatModel = MODEL_ALIASES[model]
       ? model
-      : "openai/gpt-4o-mini";
+      : "google/gemini-2.5-flash-preview";
 
     // Check if web search is enabled and model supports it
     const shouldUseWebSearch =

@@ -198,19 +198,29 @@ All other Google models automatically migrate to these two:
 
 The system will be fully functional once the database migration is complete! Your previous chats are still in the database - they just need to be properly linked to your user account.
 
-## 🔍 **Available Models Summary**
+## 🔍 **Available Models Summary (Streamlined)**
 
 ### **Free Tier:**
-- `google/gemini-2.5-flash-preview` - Fast Google model with vision support
+- `google/gemini-2.5-flash-preview` - Default model with vision support
 
-### **Pro Tier:**
-- `openai/gpt-4o-mini` - Fast, affordable OpenAI model
+### **Pro Tier (7 Models):**
 - `openai/gpt-4o` - Premium OpenAI model
-- `anthropic/claude-3-5-sonnet-20241022` - Latest Claude
+- `anthropic/claude-3-5-sonnet-20241022` - Latest Claude 4 Sonnet
 - `x-ai/grok-3` - Latest Grok model
 - `google/gemini-2.5-pro` - Stable Gemini Pro (vision)
-- Plus Mistral, Llama, and Sarvam models
+- `mistralai/Magistral-Small-2506` - Mistral Small (vision)
+- `klusterai/Meta-Llama-3.3-70B-Instruct-Turbo` - Llama 3.3 70B
+- `sarvam-m` - Sarvam M (wiki grounding)
 
-**Google Models Streamlined**: Only 2 Google models available with automatic migration from all other Google models.
+**Total: 8 Models** - Streamlined selection with automatic migration from all removed models.
 
-All models now support the latest OpenRouter features and pricing!
+### **Model Migration System:**
+All removed models automatically migrate to appropriate alternatives:
+- `openai/gpt-4o-mini` → `openai/gpt-4o`
+- `deepseek/deepseek-r1` → `google/gemini-2.5-flash-preview`
+- `anthropic/claude-3-opus-20240229` → `anthropic/claude-3-5-sonnet-20241022`
+- `anthropic/claude-3-sonnet-20240229` → `anthropic/claude-3-5-sonnet-20241022`
+- `meta-llama/llama-3-70b-instruct` → `klusterai/Meta-Llama-3.3-70B-Instruct-Turbo`
+- Plus all other Google model migrations
+
+All models support the latest features: vision capabilities, web search (Claude), and wiki grounding (Sarvam)!

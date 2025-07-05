@@ -3,13 +3,12 @@ import { supabaseAdmin } from "../../lib/supabase";
 import { startOfMonth } from "date-fns";
 import { ChatModel } from "../../types/chatModels";
 
-// @model-multiplier - Model-specific token multipliers for different pricing tiers
+// @model-multiplier - Model-specific token multipliers for streamlined model selection
 export const MODEL_MULTIPLIER: Record<string, number> = {
-  // Free models
-  "google/gemini-2.5-flash-preview": 1.0, // Free model with 1.0x multiplier
+  // Free model
+  "google/gemini-2.5-flash-preview": 1.0, // Default free model with 1.0x multiplier
 
   // Pro models with various multipliers
-  "openai/gpt-4o-mini": 0.5, // Mini model with 0.5x multiplier
   "openai/gpt-4o": 2.0, // Premium model with 2.0x multiplier
   "anthropic/claude-3-5-sonnet-20241022": 1.5, // Premium model with 1.5x multiplier
   "x-ai/grok-3": 1.5, // Premium model with 1.5x multiplier
@@ -17,12 +16,6 @@ export const MODEL_MULTIPLIER: Record<string, number> = {
   "mistralai/Magistral-Small-2506": 1.0, // Standard model with 1.0x multiplier
   "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo": 1.2, // Large model with 1.2x multiplier
   "sarvam-m": 1.0, // Standard model with 1.0x multiplier
-
-  // Legacy models
-  "deepseek/deepseek-r1": 1.0, // Standard model with 1.0x multiplier
-  "anthropic/claude-3-opus-20240229": 2.5, // Premium legacy model with 2.5x multiplier
-  "anthropic/claude-3-sonnet-20240229": 1.2, // Standard legacy model with 1.2x multiplier
-  "meta-llama/llama-3-70b-instruct": 1.0, // Standard model with 1.0x multiplier
 
   // Deprecated models (will be migrated)
   "x-ai/grok-beta": 1.5, // Migrates to grok-3
