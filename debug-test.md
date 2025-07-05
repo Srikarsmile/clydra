@@ -118,10 +118,12 @@ After migration, clear your browser cache/localStorage to remove old model selec
 ## 🆕 **Google Models Available (Streamlined)**
 
 ### **Vision-Capable Models (Only 2 Models):**
+
 - **`google/gemini-2.5-pro`** - Current stable Gemini Pro (supports images)
 - **`google/gemini-2.5-flash-preview`** - Latest fast model (supports images)
 
 ### **Usage Examples:**
+
 ```javascript
 // Text + Image example for Gemini models
 {
@@ -142,7 +144,9 @@ After migration, clear your browser cache/localStorage to remove old model selec
 ```
 
 ### **Model Migration System:**
+
 All other Google models automatically migrate to these two:
+
 - `google/gemini-2.0-flash-001` → `google/gemini-2.5-flash-preview`
 - `google/gemini-2.5-flash-preview-05-20` → `google/gemini-2.5-flash-preview`
 - `google/gemini-1.5-pro` → `google/gemini-2.5-pro`
@@ -197,14 +201,14 @@ The system will be fully functional once the database migration is complete! You
 ## 🔍 **Available Models Summary**
 
 ### **Free Tier:**
-- `openai/gpt-4o-mini` - Fast, affordable model
+- `google/gemini-2.5-flash-preview` - Fast Google model with vision support
 
 ### **Pro Tier:**
+- `openai/gpt-4o-mini` - Fast, affordable OpenAI model
 - `openai/gpt-4o` - Premium OpenAI model
 - `anthropic/claude-3-5-sonnet-20241022` - Latest Claude
 - `x-ai/grok-3` - Latest Grok model
 - `google/gemini-2.5-pro` - Stable Gemini Pro (vision)
-- `google/gemini-2.5-flash-preview` - Fast Gemini (vision)
 - Plus Mistral, Llama, and Sarvam models
 
 **Google Models Streamlined**: Only 2 Google models available with automatic migration from all other Google models.

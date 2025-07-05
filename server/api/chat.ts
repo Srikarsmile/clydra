@@ -43,12 +43,12 @@ const chatInputSchema = z.object({
   model: z
     .enum([
       // @dashboard-redesign - Models matching the design brief with correct OpenRouter identifiers
-      "openai/gpt-4o-mini", // Free model
+      "google/gemini-2.5-flash-preview", // Free model
+      "openai/gpt-4o-mini",
       "openai/gpt-4o",
       "anthropic/claude-3-5-sonnet-20241022", // Updated to Claude 4 Sonnet
       "x-ai/grok-3", // Updated to latest Grok model
       "google/gemini-2.5-pro", // Current stable Gemini Pro model
-      "google/gemini-2.5-flash-preview", // Latest Gemini Flash model
       "mistralai/Magistral-Small-2506", // New vision-capable model via Kluster AI
       "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo", // New large reasoning model via Kluster AI
       "sarvam-m", // New Sarvam AI model

@@ -6,14 +6,14 @@ import { ChatModel } from "../../types/chatModels";
 // @model-multiplier - Model-specific token multipliers for different pricing tiers
 export const MODEL_MULTIPLIER: Record<string, number> = {
   // Free models
-  "openai/gpt-4o-mini": 0.5, // Mini model with 0.5x multiplier
+  "google/gemini-2.5-flash-preview": 1.0, // Free model with 1.0x multiplier
 
   // Pro models with various multipliers
+  "openai/gpt-4o-mini": 0.5, // Mini model with 0.5x multiplier
   "openai/gpt-4o": 2.0, // Premium model with 2.0x multiplier
   "anthropic/claude-3-5-sonnet-20241022": 1.5, // Premium model with 1.5x multiplier
   "x-ai/grok-3": 1.5, // Premium model with 1.5x multiplier
   "google/gemini-2.5-pro": 1.0, // Standard pro model with 1.0x multiplier
-  "google/gemini-2.5-flash-preview": 0.8, // Fast model with 0.8x multiplier
   "mistralai/Magistral-Small-2506": 1.0, // Standard model with 1.0x multiplier
   "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo": 1.2, // Large model with 1.2x multiplier
   "sarvam-m": 1.0, // Standard model with 1.0x multiplier

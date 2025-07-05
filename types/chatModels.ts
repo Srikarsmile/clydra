@@ -1,14 +1,14 @@
 // @fluid-ui - T3.chat model definitions with latest models organized by plan
 export const MODEL_ALIASES = {
   // Free Plan Models - using correct OpenRouter identifiers
-  "openai/gpt-4o-mini": "GPT-4o Mini",
+  "google/gemini-2.5-flash-preview": "Gemini 2.5 Flash", // Latest Gemini Flash model
 
   // Pro Plan Models - using correct OpenRouter identifiers
+  "openai/gpt-4o-mini": "GPT-4o Mini",
   "openai/gpt-4o": "GPT-4o",
   "anthropic/claude-3-5-sonnet-20241022": "Claude 4 Sonnet", // Upgraded to Claude 4 Sonnet
   "x-ai/grok-3": "Grok 3", // Latest Grok model
   "google/gemini-2.5-pro": "Gemini 2.5 Pro", // Current stable Gemini Pro
-  "google/gemini-2.5-flash-preview": "Gemini 2.5 Flash", // Latest Gemini Flash model
   "mistralai/Magistral-Small-2506": "Mistral Small", // Vision-capable model via Kluster AI
   "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo": "Llama 3.3 70B", // Large reasoning model via Kluster AI
   "sarvam-m": "Sarvam M", // Sarvam AI model
@@ -28,13 +28,13 @@ export type ChatModel = keyof typeof MODEL_ALIASES;
 
 // @dashboard-redesign - Model groupings for UI organization
 export const MODEL_GROUPS = {
-  free: ["openai/gpt-4o-mini"],
+  free: ["google/gemini-2.5-flash-preview"],
   pro: [
+    "openai/gpt-4o-mini",
     "openai/gpt-4o",
     "anthropic/claude-3-5-sonnet-20241022",
     "x-ai/grok-3",
     "google/gemini-2.5-pro",
-    "google/gemini-2.5-flash-preview",
     "mistralai/Magistral-Small-2506",
     "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
     "sarvam-m",
@@ -49,10 +49,11 @@ export const MODEL_GROUPS = {
 
 // @dashboard-redesign - Plan-based model organization per design brief
 export const FREE_PLAN_MODELS: ChatModel[] = [
-  "openai/gpt-4o-mini", // Free model with correct identifier
+  "google/gemini-2.5-flash-preview", // Free model with correct identifier
 ];
 
 export const PRO_PLAN_MODELS: ChatModel[] = [
+  "openai/gpt-4o-mini",
   "openai/gpt-4o",
   "anthropic/claude-3-5-sonnet-20241022", // Fixed to use correct identifier
   "x-ai/grok-3", // Latest Grok model
@@ -80,6 +81,7 @@ export const MODELS_WITH_VISION: ChatModel[] = [
   "openai/gpt-4o", // ✅ Supports vision
   "anthropic/claude-3-5-sonnet-20241022", // ✅ Supports vision
   "google/gemini-2.5-pro", // ✅ Supports vision
+  "google/gemini-2.5-flash-preview", // ✅ Supports vision
 ];
 
 // Models that use Kluster AI instead of OpenRouter
