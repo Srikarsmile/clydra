@@ -4,10 +4,55 @@ import { getAuth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "../../../lib/supabase";
 import { getOrCreateUser } from "../../../lib/user-utils";
 
+// @security - Input validation and sanitization
+interface UnsafeMessageInput {
+  role?: unknown;
+  content?: unknown;
+}
+
+function validateAndSanitizeMessageInput(input: unknown) {
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid input format');
+  }
+
+  const unsafeInput = input as UnsafeMessageInput;
+
+  // Validate role
+  if (!['user', 'assistant', 'system'].includes(unsafeInput.role as string)) {
+    throw new Error(`Invalid role: ${unsafeInput.role}`);
+  }
+
+  // Validate and sanitize content
+  if (typeof unsafeInput.content !== 'string') {
+    throw new Error('Content must be a string');
+  }
+
+  if (unsafeInput.content.length > 100000) { // 100KB limit
+    throw new Error('Message content too long');
+  }
+
+  // Basic content sanitization
+  const sanitizedContent = unsafeInput.content
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+    .trim();
+
+  return {
+    role: unsafeInput.role as 'user' | 'assistant' | 'system',
+    content: sanitizedContent,
+  };
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // @security - Set security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
   const { userId } = getAuth(req);
   const { threadId } = req.query;
 
@@ -17,6 +62,12 @@ export default async function handler(
 
   if (!threadId || typeof threadId !== "string") {
     return res.status(400).json({ error: "Thread ID is required" });
+  }
+
+  // @security - Validate thread ID format (UUID)
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(threadId)) {
+    return res.status(400).json({ error: "Invalid thread ID format" });
   }
 
   // Get or create user in Supabase
@@ -90,38 +141,38 @@ export default async function handler(
       res.status(500).json({ error: "Failed to fetch messages" });
     }
   } else if (req.method === "POST") {
+    // @threads - Create a new message in this thread
     try {
-      const { role, content } = req.body;
-
-      if (!role || !content) {
-        return res.status(400).json({ error: "Role and content are required" });
+      // @security - Validate and sanitize input
+      let sanitizedInput;
+      try {
+        sanitizedInput = validateAndSanitizeMessageInput(req.body);
+      } catch (validationError) {
+        return res.status(400).json({ 
+          error: "Invalid input", 
+          details: validationError instanceof Error ? validationError.message : "Validation failed"
+        });
       }
 
-      if (!["user", "assistant"].includes(role)) {
-        return res
-          .status(400)
-          .json({ error: "Role must be 'user' or 'assistant'" });
-      }
-
-      // Insert the message
       const { data: message, error } = await supabaseAdmin
         .from("messages")
         .insert({
           thread_id: threadId,
-          role,
-          content,
+          role: sanitizedInput.role,
+          content: sanitizedInput.content,
         })
-        .select("*")
+        .select()
         .single();
 
       if (error) {
-        throw error;
+        console.error("Error creating message:", error);
+        return res.status(500).json({ error: "Failed to create message" });
       }
 
       res.status(201).json(message);
     } catch (error) {
-      console.error("Failed to save message:", error);
-      res.status(500).json({ error: "Failed to save message" });
+      console.error("Failed to create message:", error);
+      res.status(500).json({ error: "Failed to create message" });
     }
   } else if (req.method === "PUT") {
     // @persistence-fix - Update message content (for streaming updates)

@@ -59,14 +59,25 @@ export default function InputBar({
     adjustTextareaHeight();
   }, [value, adjustTextareaHeight]);
 
+  // @auto-thread - Handle input focus for automatic thread creation
+  const handleFocus = useCallback(() => {
+    if (onFocus) {
+      onFocus();
+    }
+  }, [onFocus]);
+
+  // @ux-improvement - Handle keyboard shortcuts for better UX
   const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+    (e: KeyboardEvent) => {
+      // Ctrl+Enter or Cmd+Enter to submit
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
-        onSubmit();
+        if (!disabled && value.trim()) {
+          onSubmit();
+        }
       }
     },
-    [onSubmit]
+    [disabled, value, onSubmit]
   );
 
   const handleSubmit = useCallback(
@@ -170,35 +181,34 @@ export default function InputBar({
               </div>
 
               {/* Spacious textarea with more room */}
-              <div className="flex-1 relative min-w-0">
+              <div className="flex-1 relative">
                 <textarea
                   ref={textareaRef}
                   value={value}
                   onChange={(e) => onChange(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  onFocus={onFocus} // @auto-thread - Add focus handler for automatic thread creation
+                  onFocus={handleFocus} // @auto-thread - Add focus handler for automatic thread creation
                   placeholder={placeholder}
                   disabled={disabled}
                   rows={1}
                   className={cn(
-                    "w-full resize-none bg-transparent text-gray-900 placeholder-gray-500",
-                    "border-none outline-none focus:outline-none focus:ring-0",
-                    // Important: 16px font size prevents iOS zoom
-                    "text-base leading-6 min-h-[40px] max-h-[80px] overflow-y-auto",
-                    "transition-all duration-200 ease-out px-2 sm:px-3", // Added horizontal padding for better text spacing
-                    "scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent",
-                    "will-change-contents touch-manipulation",
-                    // Additional iOS fixes
-                    "-webkit-appearance-none appearance-none",
-                    "transform-gpu" // Hardware acceleration for smoother performance
+                    "w-full resize-none bg-transparent text-gray-900 placeholder:text-gray-500",
+                    "border-0 outline-none focus:ring-0 text-sm sm:text-base leading-relaxed",
+                    "py-2 sm:py-3 pr-2", // Reduced right padding for tighter layout
+                    "disabled:opacity-50 disabled:cursor-not-allowed",
+                    "max-h-32 overflow-y-auto" // Limit height and add scroll
                   )}
                   style={{
-                    transition: "height 0.2s ease-out",
-                    // Ensure consistent font size across all devices
-                    fontSize: "16px",
+                    minHeight: "20px", // Minimum height for single line
                     lineHeight: "1.5",
                   }}
                 />
+                {/* @ux-improvement - Subtle hint about keyboard shortcut */}
+                {value.trim() && (
+                  <div className="absolute bottom-1 right-1 text-xs text-gray-400 pointer-events-none">
+                    Ctrl+Enter to send
+                  </div>
+                )}
               </div>
 
               {/* Compact send button with simplified icon */}

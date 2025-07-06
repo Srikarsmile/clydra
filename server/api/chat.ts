@@ -255,12 +255,16 @@ export async function processChatRequest(
     );
   }
 
+  // @performance - Set timeout based on model type (Gemini Pro and Grok need more time)
+  const isSlowModel = model.includes("gemini-2.5-pro") || model.includes("grok-3") || model.includes("claude-3-opus");
+  const timeout = isSlowModel ? 45000 : 15000; // 45s for slow models, 15s for others
+  
   const openai = new OpenAI({
     baseURL,
     apiKey,
     defaultHeaders,
-    // @performance - Optimize connection settings for reduced latency
-    timeout: 10000, // Reduced to 10 seconds for faster failures and better UX
+    // @performance - Optimize connection settings with model-specific timeouts
+    timeout: timeout, // Dynamic timeout based on model speed
     maxRetries: 0, // Disable retries for faster responses - let client handle retries
   });
 
@@ -371,7 +375,8 @@ export async function processChatRequest(
                   userId,
                   threadId || input.threadId!,
                   validatedInput.messages,
-                  fullMessage
+                  fullMessage,
+                  model // Pass model information for streaming
                 );
                 finalMessageId = assistantMessageId;
                 console.log(
@@ -491,7 +496,8 @@ export async function processChatRequest(
           userId,
           threadId || input.threadId!,
           validatedInput.messages,
-          assistantMessage
+          assistantMessage,
+          model // Pass model information
         );
         messageId = assistantMessageId;
       } else {
@@ -589,7 +595,8 @@ async function saveMessagesToThread(
   userId: string, // Now expects Supabase UUID
   threadId: string,
   userMessages: Array<{ role: string; content: string }>,
-  assistantResponse: string
+  assistantResponse: string,
+  model?: string // Add model parameter to save model information
 ): Promise<{ userMessageId?: string; assistantMessageId?: string }> {
   try {
     // userId is already a Supabase UUID, no need to convert
@@ -723,20 +730,100 @@ async function saveMessagesToThread(
       }
     }
 
-    // @ui-polish - Auto-title on first user message
-    await supabaseAdmin
-      .from("threads")
-      .update({
-        title: lastUserMessage.content.substring(0, 40),
-      })
-      .eq("id", threadId)
-      .eq("title", "New Chat");
+    // @fix-model-persistence - Save model information to message_responses table
+    if (assistantMessageId && model) {
+      console.log(`💾 Saving model information: ${model} for message ${assistantMessageId}`);
+      const { error: responseError } = await supabaseAdmin
+        .from("message_responses")
+        .insert({
+          message_id: assistantMessageId,
+          model: model,
+          content: assistantResponse,
+          tokens_used: 0, // Will be updated by token tracking
+          is_primary: true, // This is the primary response
+        });
+
+      if (responseError) {
+        console.error("Error saving model response:", responseError);
+        // Don't throw error here as the message was saved successfully
+        // Just log the error for debugging
+      } else {
+        console.log(`✅ Model information saved: ${model}`);
+      }
+    }
+
+    // @ui-polish - Auto-title on first user message with better logic
+    const messageCount = existingMessages?.length || 0;
+    const isFirstMessage = messageCount <= 2; // User + assistant message = first conversation
+    
+    if (isFirstMessage) {
+      // Generate a smart title from the user message
+      const smartTitle = generateSmartTitle(lastUserMessage.content);
+      await supabaseAdmin
+        .from("threads")
+        .update({
+          title: smartTitle,
+        })
+        .eq("id", threadId)
+        .eq("title", "New Chat"); // Only update if it's still the default title
+      
+      console.log(`📝 Updated thread title to: "${smartTitle}"`);
+    }
 
     return { userMessageId, assistantMessageId };
   } catch (error) {
     console.error("Error saving messages to thread:", error);
     return {};
   }
+}
+
+// @ui-polish - Generate a smart title from user message
+function generateSmartTitle(userMessage: string): string {
+  const maxLength = 40;
+  
+  // Clean up the message
+  let title = userMessage.trim();
+  
+  // Remove common prefixes
+  const prefixes = [
+    "can you",
+    "could you",
+    "please",
+    "help me",
+    "i need",
+    "i want",
+    "how do i",
+    "how to",
+    "what is",
+    "what are",
+    "explain",
+    "tell me",
+  ];
+  
+  const lowerTitle = title.toLowerCase();
+  for (const prefix of prefixes) {
+    if (lowerTitle.startsWith(prefix)) {
+      title = title.substring(prefix.length).trim();
+      break;
+    }
+  }
+  
+  // Capitalize first letter
+  if (title.length > 0) {
+    title = title.charAt(0).toUpperCase() + title.slice(1);
+  }
+  
+  // Truncate if too long
+  if (title.length > maxLength) {
+    title = title.substring(0, maxLength - 3) + "...";
+  }
+  
+  // Fallback if title is too short or empty
+  if (title.length < 3) {
+    title = "New Chat";
+  }
+  
+  return title;
 }
 
 // @clydra-core Helper function to save chat to Supabase

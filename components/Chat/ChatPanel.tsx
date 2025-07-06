@@ -53,7 +53,7 @@ export default function ChatPanel({
   const [enableWebSearch, setEnableWebSearch] = useState(false); // @web-search - Enable web search state management
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
-  const [streamingMessage, setStreamingMessage] = useState("");
+  // @fix-flickering - Removed streamingMessage state as we now update messages array directly
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentThreadId, setCurrentThreadId] = useState<string | undefined>(
     threadId
@@ -62,6 +62,114 @@ export default function ChatPanel({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const previousMessagesLength = useRef(0);
+
+  // @ux-improvement - Add keyboard shortcuts for better UX
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ctrl+N or Cmd+N for new chat
+      if ((event.ctrlKey || event.metaKey) && event.key === 'n') {
+        event.preventDefault();
+        if (!isStreaming) {
+          // Clear current messages and create new thread
+          setMessages([]);
+          setCurrentThreadId(undefined);
+          setInput('');
+          
+          // Reset model to default for new chats
+          setModel("google/gemini-2.5-flash-preview");
+          console.log('🔄 Model reset to default for new chat');
+          
+          // Update URL to remove thread parameter
+          router.replace('/dashboard');
+          
+          // Notify parent component to refresh thread list
+          if (onThreadCreated) {
+            console.log('🔄 Notifying parent to refresh thread list');
+            onThreadCreated();
+          }
+          
+          console.log('🎯 New chat started via keyboard shortcut');
+        }
+      }
+      
+      // Escape key to cancel streaming
+      if (event.key === 'Escape' && isStreaming) {
+        event.preventDefault();
+        setIsStreaming(false);
+        console.log('🛑 Streaming cancelled via keyboard shortcut');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isStreaming, router, onThreadCreated]);
+
+  // @ux-improvement - Enhanced new chat function with better UX
+  const startNewChat = useCallback(async () => {
+    if (isStreaming) {
+      console.log('⏸️ Cannot start new chat while streaming');
+      return;
+    }
+    
+    console.log('🎯 Starting new chat...');
+    
+    // Clear current messages and state immediately for instant feedback
+    setMessages([]);
+    setCurrentThreadId(undefined);
+    setInput('');
+    
+    // @fix-new-chat-button - Reset model to default for new chats
+    setModel("google/gemini-2.5-flash-preview");
+    console.log('🔄 Model reset to default for new chat');
+    
+    // Clear localStorage for current thread
+    localStorage.removeItem("clydra-current-thread");
+    
+    // Always create new thread for consistent behavior
+    try {
+      const response = await fetch("/api/threads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.ok) {
+        const { id } = await response.json();
+        console.log("✅ New thread created from pen button:", id);
+
+        // Update URL to include the new thread ID
+        router.replace(`/dashboard?thread=${id}`, undefined, { shallow: true });
+        
+        // Update current thread ID state
+        setCurrentThreadId(id);
+
+        // Notify parent component to refresh thread list
+        if (onThreadCreated) {
+          console.log('🔄 Notifying parent to refresh thread list');
+          onThreadCreated();
+        }
+        
+        console.log('✅ New chat started successfully with thread:', id);
+      } else {
+        console.error("❌ Failed to create new thread:", response.status);
+        // Fallback: still navigate to dashboard for clean state
+        router.replace('/dashboard', undefined, { shallow: true });
+        
+        // Still notify parent to refresh
+        if (onThreadCreated) {
+          onThreadCreated();
+        }
+      }
+    } catch (error) {
+      console.error("❌ Error creating new thread:", error);
+      // Fallback: still navigate to dashboard for clean state
+      router.replace('/dashboard', undefined, { shallow: true });
+      
+      // Still notify parent to refresh
+      if (onThreadCreated) {
+        onThreadCreated();
+      }
+    }
+  }, [isStreaming, router, onThreadCreated]);
 
   // @dashboard-redesign - Load messages when threadId changes
   useEffect(() => {
@@ -98,6 +206,18 @@ export default function ChatPanel({
             })
           );
           setMessages(formattedMessages);
+
+          // @fix-model-persistence - Restore model state from the most recent assistant message
+          const lastAssistantMessage = formattedMessages
+            .filter(msg => msg.role === "assistant" && msg.model)
+            .pop();
+          
+          if (lastAssistantMessage?.model) {
+            console.log("🔄 Restoring model state from last message:", lastAssistantMessage.model);
+            setModel(lastAssistantMessage.model);
+          } else {
+            console.log("🔄 No model found in messages, keeping current model");
+          }
 
           // @persistence-fix - Save messages to localStorage as backup
           localStorage.setItem(
@@ -184,10 +304,15 @@ export default function ChatPanel({
     };
 
     loadMessages();
-  }, [threadId, user]);
+  }, [threadId, user]); // Fixed: Only depend on threadId and user, not model
 
-  // @persistence-fix - Only clear messages when explicitly starting a new chat
-  // Don't clear messages just because threadId is undefined during loading
+  // @persistence-fix - Clear messages when threadId becomes undefined (new chat)
+  useEffect(() => {
+    if (!threadId && currentThreadId) {
+      console.log("🔄 Clearing messages for new chat");
+      setMessages([]);
+    }
+  }, [threadId, currentThreadId]);
 
   // @persistence-fix - Sync current thread ID with prop changes and localStorage
   useEffect(() => {
@@ -196,6 +321,9 @@ export default function ChatPanel({
     // Store thread ID in localStorage for recovery
     if (threadId) {
       localStorage.setItem("clydra-current-thread", threadId);
+    } else {
+      // Clear localStorage when no thread is active
+      localStorage.removeItem("clydra-current-thread");
     }
   }, [threadId]);
 
@@ -330,8 +458,8 @@ export default function ChatPanel({
 
       try {
         setIsStreaming(true);
-        setStreamingMessage("");
-
+        // @fix-flickering - Don't clear streamingMessage here, let it persist until final message is ready
+        
         // @persistence-fix - Create new thread if this is a fresh chat
         let threadIdToUse = currentThreadId;
         if (!threadIdToUse) {
@@ -347,83 +475,45 @@ export default function ChatPanel({
         // @persistence-fix - Save user message immediately to prevent loss on refresh
         console.log("💾 Saving user message immediately...");
         let userMessageSaved = false;
-        try {
-          const saveResponse = await fetch(`/api/messages/${threadIdToUse}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              role: "user",
-              content: userMessage.content,
-            }),
-          });
-
-          if (!saveResponse.ok) {
-            const errorText = await saveResponse.text();
-            console.warn(
-              "Failed to save user message immediately:",
-              saveResponse.status,
-              errorText
-            );
-
-            // @fix-foreign-key - If thread doesn't exist, create a new one
-            if (saveResponse.status === 404 || errorText.includes("thread")) {
-              console.log("🔄 Thread not found, creating new thread...");
-              const newThreadId = await createNewThread();
-              if (newThreadId) {
-                threadIdToUse = newThreadId;
-                console.log(
-                  `✅ New thread created, retrying save: ${newThreadId}`
-                );
-                // Retry saving with new thread
-                const retryResponse = await fetch(
-                  `/api/messages/${threadIdToUse}`,
-                  {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      role: "user",
-                      content: userMessage.content,
-                    }),
-                  }
-                );
-                if (retryResponse.ok) {
-                  const savedMessage = await retryResponse.json();
-                  console.log(
-                    "✅ User message saved with new thread ID:",
-                    savedMessage.id
-                  );
-                  userMessageSaved = true;
-                  // Update the user message with the database ID
-                  setMessages((prev) =>
-                    prev.map((msg) =>
-                      msg.id === userMessage.id
-                        ? { ...msg, id: savedMessage.id.toString() }
-                        : msg
-                    )
-                  );
-                }
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            const userSaveResponse = await fetch(
+              `/api/messages/${threadIdToUse}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  role: "user",
+                  content: userMessageContent,
+                }),
               }
-            }
-          } else {
-            const savedMessage = await saveResponse.json();
-            console.log(
-              "✅ User message saved immediately with ID:",
-              savedMessage.id
             );
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            userMessageSaved = true;
 
-            // Update the user message with the database ID
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === userMessage.id
-                  ? { ...msg, id: savedMessage.id.toString() }
-                  : msg
-              )
+            if (userSaveResponse.ok) {
+              console.log("✅ User message saved immediately");
+              userMessageSaved = true;
+              break;
+            } else {
+              console.warn(
+                `Attempt ${attempt + 1}: Failed to save user message:`,
+                userSaveResponse.status
+              );
+            }
+          } catch (error) {
+            console.warn(
+              `Attempt ${attempt + 1}: Error saving user message:`,
+              error
             );
           }
-        } catch (error) {
-          console.warn("Error saving user message immediately:", error);
+
+          // Wait before retrying
+          if (attempt < 2) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+        }
+
+        if (!userMessageSaved) {
+          console.warn("Failed to save user message after 3 attempts");
         }
 
         // @persistence-fix - Save empty assistant message immediately to prevent loss on refresh
@@ -455,10 +545,10 @@ export default function ChatPanel({
           console.warn("Error saving assistant message placeholder:", error);
         }
 
-        // Add assistant message placeholder with database ID if available
+        // @fix-flickering - Add assistant message placeholder immediately with proper ID
         const assistantMessage: Message = {
           role: "assistant",
-          content: "",
+          content: "", // Start with empty content
           id: assistantMessageDbId || assistantMessageId,
           model,
         };
@@ -471,6 +561,7 @@ export default function ChatPanel({
           modelAlias: model ? MODEL_ALIASES[model] : "undefined",
         });
 
+        // @fix-flickering - Add the assistant message to the messages array immediately
         setMessages((prev) => [...prev, assistantMessage]);
 
         const response = await fetch("/api/chat/proxy", {
@@ -529,14 +620,14 @@ export default function ChatPanel({
                   if (parsed.content) {
                     fullContent += parsed.content;
 
-                    // Update the assistant message in real-time
+                    // @fix-flickering - Update the assistant message in the messages array directly
+                    // This eliminates the need for separate streamingMessage state
                     setMessages((prev) => {
                       const updatedMessages = prev.map((msg) =>
                         msg.id === assistantMessage.id
                           ? { ...msg, content: fullContent }
                           : msg
                       );
-
                       return updatedMessages;
                     });
 
@@ -563,7 +654,7 @@ export default function ChatPanel({
 
                     // Auto-scroll
                     requestAnimationFrame(() => scrollToBottom());
-                  } else if (parsed.messageId && parsed.type === "completion") {
+                  } else if (parsed.messageId) {
                     // Update the message with the database ID (if we didn't already have one)
                     if (!assistantMessageDbId) {
                       console.log(
@@ -575,7 +666,6 @@ export default function ChatPanel({
                             ? { ...msg, id: parsed.messageId.toString() }
                             : msg
                         );
-
                         return updatedMessages;
                       });
                     }
@@ -631,7 +721,7 @@ export default function ChatPanel({
         }
       } finally {
         setIsStreaming(false);
-        setStreamingMessage("");
+        // @fix-flickering - Don't clear streamingMessage here as we're not using it anymore
       }
     };
 
@@ -772,14 +862,43 @@ export default function ChatPanel({
               Clydra
             </span>
           </div>
-          {/* @dashboard-redesign - Mobile-responsive model badge */}
-          <span className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-gray-100 border border-gray-200 text-gray-700 px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm">
-            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gray-400" />
-            <span className="hidden xs:inline">{MODEL_ALIASES[model]}</span>
-            <span className="xs:hidden">
-              {MODEL_ALIASES[model].split(" ")[0]}
+          {/* @dashboard-redesign - Mobile-responsive model badge with new chat button */}
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-gray-100 border border-gray-200 text-gray-700 px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm">
+              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gray-400" />
+              <span className="hidden xs:inline">{MODEL_ALIASES[model]}</span>
+              <span className="xs:hidden">
+                {MODEL_ALIASES[model].split(" ")[0]}
+              </span>
             </span>
-          </span>
+            
+            {/* @ux-improvement - New chat pen icon button */}
+            <button
+              onClick={startNewChat}
+              disabled={isStreaming}
+              className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
+              title="New Chat (Ctrl+N)"
+            >
+              <svg
+                className="w-4 h-4 sm:w-5 sm:h-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                />
+              </svg>
+            </button>
+            
+            {/* @ux-improvement - Keyboard shortcut hint */}
+            <span className="hidden lg:inline text-xs text-gray-500">
+              Ctrl+N for new chat
+            </span>
+          </div>
         </div>
 
         {/* @fluid-scroll - Fixed scrolling container to prevent double scroll */}
@@ -843,34 +962,10 @@ export default function ChatPanel({
                     >
                       {/* @multi-model - Use MultiModelResponse for assistant messages, regular ChatMessage for user messages */}
                       {message.role === "assistant" ? (
-                        message.id ? (
-                          <MultiModelResponse
-                            initialContent={message.content}
-                            initialModel={message.model}
-                          />
-                        ) : (
-                          // Fallback for messages without ID
-                          <>
-                            <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 text-xs text-gray-600">
-                              <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-                              <span className="hidden xs:inline">
-                                {message.model
-                                  ? MODEL_ALIASES[message.model]
-                                  : MODEL_ALIASES[model]}
-                              </span>
-                              <span className="xs:hidden">
-                                {message.model
-                                  ? MODEL_ALIASES[message.model].split(" ")[0]
-                                  : MODEL_ALIASES[model].split(" ")[0]}
-                              </span>
-                            </div>
-                            <ChatMessage
-                              content={message.content}
-                              role="assistant"
-                              timestamp={new Date()}
-                            />
-                          </>
-                        )
+                        <MultiModelResponse
+                          initialContent={message.content}
+                          initialModel={message.model || model}
+                        />
                       ) : (
                         <ChatMessage
                           content={message.content}
@@ -883,27 +978,7 @@ export default function ChatPanel({
                 ))}
 
                 {/* @performance - Mobile-optimized streaming message */}
-                {streamingMessage && (
-                  <div className="flex justify-start animate-fade-in-up">
-                    <div className="w-full max-w-[85%] sm:max-w-xs md:max-w-sm lg:max-w-md xl:max-w-2xl 2xl:max-w-4xl bg-white text-gray-900 shadow-md rounded-2xl px-3 sm:px-6 py-3 sm:py-4 relative">
-                      {/* Show model name when there's actual output - mobile optimized */}
-                      <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 text-xs text-gray-600">
-                        <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-pulse" />
-                        <span className="hidden xs:inline">
-                          {MODEL_ALIASES[model]}
-                        </span>
-                        <span className="xs:hidden">
-                          {MODEL_ALIASES[model].split(" ")[0]}
-                        </span>
-                      </div>
-                      <ChatMessage
-                        content={streamingMessage}
-                        role="assistant"
-                        timestamp={new Date()}
-                      />
-                    </div>
-                  </div>
-                )}
+                {/* Removed streamingMessage display */}
 
                 <div ref={messagesEndRef} className="h-20 sm:h-24" />
               </>

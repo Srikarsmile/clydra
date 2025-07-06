@@ -2,8 +2,6 @@ import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
-import { ChatModel } from "@/types/chatModels";
-import MultiModelResponse from "./MultiModelResponse";
 import { Globe, ExternalLink } from "lucide-react";
 
 interface Citation {
@@ -23,7 +21,6 @@ interface ChatMessageProps {
   timestamp?: Date;
   annotations?: Citation[]; // @web-search - Add citations prop
   webSearchUsed?: boolean; // @web-search - Add web search indicator
-  model?: string;
   id?: string;
 }
 
@@ -33,7 +30,6 @@ function ChatMessage({
   timestamp,
   annotations, // @web-search - Add annotations prop
   webSearchUsed, // @web-search - Add web search indicator
-  model, // Add back missing model prop
   id, // Add back missing id prop
 }: ChatMessageProps) {
   return (
@@ -50,25 +46,8 @@ function ChatMessage({
         "prose-ul:text-gray-800 prose-ol:text-gray-800 prose-li:text-gray-800"
       )}
     >
-      {role === "assistant" && id ? (
-        (() => {
-          console.log("ChatMessage passing to MultiModelResponse:", {
-            messageId: id,
-            model,
-            modelType: typeof model,
-            initialModel: model as ChatModel,
-            contentLength: content?.length || 0,
-          });
-
-          return (
-            <MultiModelResponse
-              initialContent={content}
-              initialModel={model as ChatModel}
-            />
-          );
-        })()
-      ) : (
-        <ReactMarkdown
+      {/* @fix-duplicate-rendering - Don't use MultiModelResponse here since it's handled in ChatPanel */}
+      <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
             // Custom components for better styling
@@ -112,7 +91,6 @@ function ChatMessage({
         >
           {content}
         </ReactMarkdown>
-      )}
 
       {/* @web-search - Display web search citations */}
       {annotations && annotations.length > 0 && (
