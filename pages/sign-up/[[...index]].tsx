@@ -1,32 +1,53 @@
 import { SignUp } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
 
 export default function SignUpPage() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading sign up...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg-base">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md">
         <SignUp
           appearance={{
             elements: {
               rootBox: "mx-auto",
-              card: "bg-surface/80 backdrop-blur-xl border border-border/50 shadow-xl",
-              headerTitle: "text-text-main",
-              headerSubtitle: "text-text-muted",
+              card: "bg-white/80 backdrop-blur-xl border border-gray-200 shadow-xl rounded-lg",
+              headerTitle: "text-gray-900",
+              headerSubtitle: "text-gray-600",
               socialButtonsBlockButton:
-                "bg-surface border border-border/50 text-text-main hover:bg-surface/80",
+                "bg-white border border-gray-200 text-gray-900 hover:bg-gray-50",
               formFieldInput:
-                "bg-surface border border-border/50 text-text-main",
-              formButtonPrimary: "bg-accent hover:bg-accent/90",
-              footerActionLink: "text-accent hover:text-accent/80",
+                "bg-white border border-gray-200 text-gray-900",
+              formButtonPrimary: "bg-blue-600 hover:bg-blue-700 text-white",
+              footerActionLink: "text-blue-600 hover:text-blue-700",
             },
             variables: {
               colorPrimary: "#3B82F6",
+              colorBackground: "#ffffff",
+              colorText: "#111827",
+              colorTextSecondary: "#6B7280",
             },
           }}
           routing="path"
           path="/sign-up"
-          afterSignUpUrl="/dashboard?tab=chat"
+          afterSignUpUrl="/dashboard"
           signInUrl="/sign-in"
-          redirectUrl="/dashboard?tab=chat"
+          redirectUrl="/dashboard"
         />
       </div>
     </div>

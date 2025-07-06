@@ -318,7 +318,6 @@ export default forwardRef<SidebarRef, SidebarProps>(function Sidebar(
               collapsed && !mobileMenuOpen ? "px-2 py-2.5" : "px-3 py-2.5"
             )}
           >
-            <span className="text-lg leading-none">+</span>
             {(!collapsed || mobileMenuOpen) && "New Chat"}
           </button>
         </div>

@@ -8,26 +8,10 @@
 body {
   background: #f8f9fb;
   font-family: Inter, system-ui, sans-serif;
-  /* @mobile-optimization - Prevent overscroll bounce */
-  overscroll-behavior: none;
-  /* @mobile-optimization - Smooth scrolling on mobile */
-  -webkit-overflow-scrolling: touch;
 }
 
 html {
   scroll-behavior: smooth;
-  /* @mobile-optimization - Prevent text size adjustment on mobile */
-  -webkit-text-size-adjust: 100%;
-  -moz-text-size-adjust: 100%;
-  -ms-text-size-adjust: 100%;
-}
-
-/* @mobile-optimization - Enhanced touch and tap handling */
-* {
-  /* Remove tap highlight on mobile */
-  -webkit-tap-highlight-color: transparent;
-  /* Optimize for touch scrolling */
-  -webkit-overflow-scrolling: touch;
 }
 
 /* @performance - Critical animations only */
@@ -81,112 +65,37 @@ html {
   background: rgba(0, 0, 0, 0.2);
 }
 
-/* @mobile-optimization - Enhanced mobile optimizations */
+/* @performance - Mobile optimizations */
 @media screen and (max-width: 640px) {
   html {
     -webkit-text-size-adjust: 100%;
-    /* @mobile-optimization - Prevent horizontal scrolling */
-    overflow-x: hidden;
   }
 
   body {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: none;
-    /* @mobile-optimization - Prevent horizontal scrolling */
-    overflow-x: hidden;
-    /* @mobile-optimization - Optimize touch actions */
-    touch-action: pan-y pinch-zoom;
   }
 
-  /* @mobile-optimization - Prevent zoom on inputs */
+  /* Prevent zoom on inputs */
   input,
   textarea,
   select {
-    font-size: 16px !important;
+    font-size: 16px;
     transform: translateZ(0);
-    /* @mobile-optimization - Prevent zoom on focus */
-    -webkit-user-select: text;
-    user-select: text;
   }
 
-  /* @mobile-optimization - Better touch experience for buttons */
-  button,
-  [role="button"] {
+  /* Better touch experience */
+  button {
     -webkit-tap-highlight-color: transparent;
     user-select: none;
-    /* @mobile-optimization - Minimum touch target size */
-    min-height: 44px;
-    min-width: 44px;
-    /* @mobile-optimization - Improve touch responsiveness */
-    touch-action: manipulation;
   }
 
-  /* @mobile-optimization - Optimize link touch targets */
-  a {
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-
-  /* @mobile-optimization - Prevent text selection on UI elements */
-  .select-none {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-  }
-
-  /* @performance - Reduce motion for performance on mobile */
+  /* Reduce motion for performance */
   @media (prefers-reduced-motion: reduce) {
     * {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
-  }
-}
-
-/* @mobile-optimization - Tablet optimizations */
-@media screen and (min-width: 641px) and (max-width: 1024px) {
-  /* @mobile-optimization - Optimize for tablet touch */
-  button,
-  [role="button"] {
-    min-height: 40px;
-    min-width: 40px;
-  }
-}
-
-/* @performance - Hardware acceleration for animations */
-.animate-fadeInUp,
-.animate-pageEnter,
-.animate-float {
-  transform: translateZ(0);
-  will-change: transform, opacity;
-}
-
-/* @mobile-optimization - Safe area support for devices with notches */
-@supports (padding: max(0px)) {
-  body {
-    padding-left: max(0px, env(safe-area-inset-left));
-    padding-right: max(0px, env(safe-area-inset-right));
-  }
-}
-
-/* @mobile-optimization - Improve focus visibility on mobile */
-@media (any-hover: none) {
-  button:focus,
-  input:focus,
-  textarea:focus,
-  select:focus {
-    outline: 2px solid #5e35b1;
-    outline-offset: 2px;
-  }
-}
-
-/* @performance - Optimize for high-DPI displays */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  /* Optimize images and icons for retina displays */
-  img {
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
   }
 }

@@ -80,7 +80,7 @@ export default function ChatSidebar({
           onClick={onNewChat}
           className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-4 rounded-xl transition-colors duration-200"
         >
-          + New Chat
+          New Chat
         </button>
       </div>
 
