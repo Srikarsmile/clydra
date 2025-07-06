@@ -32,6 +32,27 @@ import {
   modelSupportsWikiGrounding,
 } from "../../types/chatModels";
 
+// @performance - Add response caching
+const responseCache = new Map<string, {
+  response: string;
+  timestamp: number;
+  expiresAt: number;
+}>();
+
+// @performance - Cache cleanup interval
+const CACHE_CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+// @performance - Clean up expired cache entries
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of responseCache.entries()) {
+    if (now > entry.expiresAt) {
+      responseCache.delete(key);
+    }
+  }
+}, CACHE_CLEANUP_INTERVAL);
+
 // @dashboard-redesign - Updated input validation schema to match frontend models
 const chatInputSchema = z.object({
   messages: z.array(
@@ -114,6 +135,18 @@ export class ChatError extends Error {
   }
 }
 
+// @performance - Generate cache key for responses
+function generateCacheKey(
+  userId: string,
+  model: ChatModel,
+  messages: Array<{ role: string; content: string }>,
+  enableWebSearch: boolean,
+  enableWikiGrounding: boolean
+): string {
+  const messageContent = messages.map(m => `${m.role}:${m.content}`).join('|');
+  return `${userId}:${model}:${messageContent}:${enableWebSearch}:${enableWikiGrounding}`;
+}
+
 /**
  * @clydra-core Process chat request with OpenRouter
  * @threads - Updated to support threadId for message persistence
@@ -184,6 +217,36 @@ export async function processChatRequest(
     modelSupportsWikiGrounding(model) &&
     isSarvamAIModel(model); // Only enable for Sarvam AI models
 
+  // @performance - Check cache for non-streaming requests
+  if (!enableStreaming) {
+    const cacheKey = generateCacheKey(
+      userId,
+      model,
+      validatedInput.messages,
+      shouldUseWebSearch,
+      shouldUseWikiGrounding
+    );
+    
+    const cachedResponse = responseCache.get(cacheKey);
+    if (cachedResponse && Date.now() < cachedResponse.expiresAt) {
+      console.log(`📦 Cache hit for user ${userId}`);
+      return {
+        message: {
+          role: "assistant",
+          content: cachedResponse.response,
+        },
+        usage: {
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
+        },
+        timing: {
+          openRouterDuration: 0,
+        },
+      };
+    }
+  }
+
   // @web-search - Prepare the model string for OpenRouter (append :online for web search)
   const openRouterModel = shouldUseWebSearch ? `${model}:online` : model;
 
@@ -228,6 +291,15 @@ export async function processChatRequest(
     baseURL = "https://api.kluster.ai/v1";
     apiKey = process.env.KLUSTER_API_KEY;
     providerName = "Kluster AI";
+    
+    // @performance - Check if API key is available
+    if (!apiKey) {
+      console.warn(`⚠️ Kluster AI API key not configured, falling back to OpenRouter`);
+      // Fall back to OpenRouter with equivalent model
+      baseURL = process.env.OPENROUTER_BASE || "https://openrouter.ai/api/v1";
+      apiKey = process.env.OPENROUTER_API_KEY;
+      providerName = "OpenRouter (fallback)";
+    }
   } else if (isSarvamModel) {
     // Use Sarvam AI configuration
     baseURL = "https://api.sarvam.ai/v1";
@@ -236,6 +308,15 @@ export async function processChatRequest(
       "api-subscription-key": apiKey || "",
     };
     providerName = "Sarvam AI";
+    
+    // @performance - Check if API key is available
+    if (!apiKey) {
+      console.warn(`⚠️ Sarvam AI API key not configured, falling back to OpenRouter`);
+      // Fall back to OpenRouter with equivalent model
+      baseURL = process.env.OPENROUTER_BASE || "https://openrouter.ai/api/v1";
+      apiKey = process.env.OPENROUTER_API_KEY;
+      providerName = "OpenRouter (fallback)";
+    }
   } else {
     // Use OpenRouter configuration
     baseURL = process.env.OPENROUTER_BASE || "https://openrouter.ai/api/v1";
@@ -251,21 +332,20 @@ export async function processChatRequest(
   if (!apiKey) {
     throw new ChatError(
       "INTERNAL_SERVER_ERROR",
-      `${providerName} API key not configured. Please set ${isKlusterModel ? "Kluster AI API key" : "OPENROUTER_API_KEY"} in your environment.`
+      `${providerName} API key not configured. Please set the appropriate API key in your environment.`
     );
   }
 
-  // @performance - Set timeout based on model type (Gemini Pro and Grok need more time)
-  const isSlowModel = model.includes("gemini-2.5-pro") || model.includes("grok-3") || model.includes("claude-3-opus");
-  const timeout = isSlowModel ? 45000 : 15000; // 45s for slow models, 15s for others
+  // @performance - Optimized timeout settings
+  const timeout = 10000; // Reduced to 10 seconds for faster responses
   
   const openai = new OpenAI({
     baseURL,
     apiKey,
     defaultHeaders,
-    // @performance - Optimize connection settings with model-specific timeouts
-    timeout: timeout, // Dynamic timeout based on model speed
-    maxRetries: 0, // Disable retries for faster responses - let client handle retries
+    // @performance - Optimize connection settings
+    timeout: timeout,
+    maxRetries: 1, // Reduced retries for faster responses
   });
 
   try {
@@ -292,7 +372,7 @@ export async function processChatRequest(
         shouldUseWikiGrounding: isSarvamModel ? shouldUseWikiGrounding : false, // Only Sarvam AI supports wiki grounding
         messagesCount: validatedInput.messages.length,
         temperature: 0.7,
-        max_tokens: 2000,
+        max_tokens: 1500, // Reduced for faster responses
         stream: true,
       });
 
@@ -301,7 +381,7 @@ export async function processChatRequest(
         messages: validatedInput.messages,
         // @performance - Optimized parameters for lower latency
         temperature: 0.7, // Balanced for speed and quality
-        max_tokens: 2000, // Reduced for faster completion
+        max_tokens: 1500, // Reduced for faster completion
         top_p: 0.9, // More focused sampling
         frequency_penalty: 0,
         presence_penalty: 0,
@@ -425,7 +505,7 @@ export async function processChatRequest(
         shouldUseWikiGrounding: isSarvamModel ? shouldUseWikiGrounding : false,
         messagesCount: validatedInput.messages.length,
         temperature: 0.5,
-        max_tokens: 3000,
+        max_tokens: 2000, // Reduced for faster responses
         stream: false,
       });
 
@@ -434,7 +514,7 @@ export async function processChatRequest(
         messages: validatedInput.messages,
         // @performance - Optimized parameters for lower latency
         temperature: 0.5, // Reduced for faster, more focused responses
-        max_tokens: 3000, // Slightly reduced for faster completion
+        max_tokens: 2000, // Reduced for faster completion
         top_p: 0.9, // More focused sampling for speed
         frequency_penalty: 0,
         presence_penalty: 0,
@@ -457,11 +537,26 @@ export async function processChatRequest(
       if (!completion.choices[0]?.message?.content) {
         throw new ChatError(
           "INTERNAL_SERVER_ERROR",
-          "Invalid response from OpenRouter"
+          "Invalid response from AI provider"
         );
       }
 
       const assistantMessage = completion.choices[0].message.content;
+
+      // @performance - Cache the response
+      const cacheKey = generateCacheKey(
+        userId,
+        model,
+        validatedInput.messages,
+        shouldUseWebSearch,
+        shouldUseWikiGrounding
+      );
+      
+      responseCache.set(cacheKey, {
+        response: assistantMessage,
+        timestamp: Date.now(),
+        expiresAt: Date.now() + CACHE_TTL,
+      });
 
       // @clydra-core Calculate token usage and costs
       const outputTokens =
@@ -500,92 +595,74 @@ export async function processChatRequest(
           model // Pass model information
         );
         messageId = assistantMessageId;
-      } else {
-        // For non-thread chats, still save to history but no message ID
-        await saveChatToHistory(
-          userId,
-          validatedInput.messages,
-          assistantMessage,
-          model
-        ).catch((error) => {
-          console.error("Chat save operation failed:", error);
-        });
       }
 
       return {
         message: {
           role: "assistant",
           content: assistantMessage,
-          id: messageId, // Include message ID in response
-          annotations: completion.choices[0].message.annotations || undefined, // @web-search - Include citations
+          id: messageId,
         },
         usage: {
-          inputTokens: completion.usage?.prompt_tokens || inputTokens,
-          outputTokens: completion.usage?.completion_tokens || outputTokens,
-          totalTokens: completion.usage?.total_tokens || totalTokens,
+          inputTokens,
+          outputTokens,
+          totalTokens,
         },
-        webSearchUsed: shouldUseWebSearch, // @web-search - Indicate if web search was used
+        webSearchUsed: shouldUseWebSearch,
         timing: {
-          openRouterDuration: t1 - t0, // @performance - Add timing information
+          openRouterDuration: t1 - t0,
         },
       };
     }
   } catch (error) {
+    console.error(`${providerName} API error:`, error);
+
+    // @performance - Determine the appropriate error provider name
     const errorProviderName = isSarvamAIModel(model)
       ? "Sarvam AI"
       : isKlusterAIModel(model)
-        ? "Kluster AI"
-        : "OpenRouter";
-    console.error(`@clydra-core ${errorProviderName} API error:`, error);
+      ? "Kluster AI"
+      : "OpenRouter";
 
-    if (error instanceof ChatError) {
-      throw error;
-    }
-
-    // Enhanced error handling for API errors
-    if (error && typeof error === "object" && "status" in error) {
-      const status = error.status as number;
-      const message =
-        "message" in error
-          ? (error.message as string)
-          : `Unknown ${errorProviderName} error`;
-
-      if (status === 400) {
+    if (error instanceof Error) {
+      // Handle specific API errors
+      if (error.message.includes("timeout")) {
         throw new ChatError(
-          "BAD_REQUEST",
-          `${errorProviderName} API error: ${message}. Model: ${model}`
+          "SERVICE_UNAVAILABLE",
+          `${errorProviderName} API timeout. Please try again.`
         );
       }
-      if (status === 401) {
-        throw new ChatError(
-          "UNAUTHORIZED",
-          `${errorProviderName} API key is invalid or missing`
-        );
-      }
-      if (status === 429) {
+      
+      if (error.message.includes("rate limit")) {
         throw new ChatError(
           "TOO_MANY_REQUESTS",
           `${errorProviderName} rate limit exceeded. Please try again later.`
         );
       }
-      if (status >= 500) {
+      
+      if (error.message.includes("quota")) {
         throw new ChatError(
-          "SERVICE_UNAVAILABLE",
-          `${errorProviderName} service is temporarily unavailable. Please try again later.`
+          "FORBIDDEN",
+          `${errorProviderName} quota exceeded. Please try again later.`
         );
       }
-    }
+      
+      if (error.message.includes("401") || error.message.includes("unauthorized")) {
+        throw new ChatError(
+          "UNAUTHORIZED",
+          `${errorProviderName} API key is invalid or expired.`
+        );
+      }
 
-    if (error instanceof Error) {
       throw new ChatError(
         "INTERNAL_SERVER_ERROR",
-        `${errorProviderName} error: ${error.message}`
+        `${errorProviderName} API error: ${error.message}`
       );
     }
 
     throw new ChatError(
       "INTERNAL_SERVER_ERROR",
-      "Failed to process chat request"
+      `${errorProviderName} API request failed unexpectedly.`
     );
   }
 }

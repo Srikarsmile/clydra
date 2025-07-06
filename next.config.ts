@@ -21,6 +21,14 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false, // Keep type checking enabled
   },
 
+  // Performance optimizations
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
+  },
+
+  // @performance - Enable compression
+  compress: true,
+
   // Image optimizations
   images: {
     remotePatterns: [
@@ -37,13 +45,35 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60,
   },
 
-  // Performance optimizations
-  compiler: {
-    removeConsole: process.env.NODE_ENV === "production",
+  // @performance - Bundle analyzer in development
+  webpack: (config, { dev, isServer }) => {
+    // Enable source maps in development
+    if (dev) {
+      config.devtool = 'eval-source-map';
+    }
+    
+    // Optimize chunks
+    if (!isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          default: {
+            minChunks: 2,
+            priority: -20,
+            reuseExistingChunk: true,
+          },
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            priority: -10,
+            chunks: 'all',
+          },
+        },
+      };
+    }
+    
+    return config;
   },
-
-  // @performance - Enable compression
-  compress: true,
 
   // Security headers
   async headers() {
