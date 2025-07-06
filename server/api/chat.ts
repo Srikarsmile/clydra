@@ -39,9 +39,9 @@ const responseCache = new Map<string, {
   expiresAt: number;
 }>();
 
-// @performance - Cache cleanup interval
-const CACHE_CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+// @performance - Cache cleanup interval - reduced for better performance
+const CACHE_CLEANUP_INTERVAL = 2 * 60 * 1000; // 2 minutes
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 // @performance - Clean up expired cache entries
 setInterval(() => {
@@ -292,13 +292,31 @@ export async function processChatRequest(
     apiKey = process.env.KLUSTER_API_KEY;
     providerName = "Kluster AI";
     
-    // @performance - Check if API key is available
+    // @performance - Check if API key is available, force fallback for now
     if (!apiKey) {
       console.warn(`⚠️ Kluster AI API key not configured, falling back to OpenRouter`);
       // Fall back to OpenRouter with equivalent model
-      baseURL = process.env.OPENROUTER_BASE || "https://openrouter.ai/api/v1";
-      apiKey = process.env.OPENROUTER_API_KEY;
+      const openRouterBaseUrl = process.env.OPENROUTER_BASE || "https://openrouter.ai/api/v1";
+      const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+      
+      if (!openRouterApiKey) {
+        throw new Error("Missing environment variable: OPENROUTER_API_KEY (fallback from KLUSTER_API_KEY)");
+      }
+      
+      baseURL = openRouterBaseUrl;
+      apiKey = openRouterApiKey;
       providerName = "OpenRouter (fallback)";
+      // Map model to OpenRouter equivalent
+      if (model === "mistralai/Magistral-Small-2506") {
+        requestedModel = "mistralai/mistral-small-2407" as ChatModel;
+      } else if (model === "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo") {
+        requestedModel = "meta-llama/llama-3.3-70b-instruct" as ChatModel;
+      }
+    } else {
+      // Validate Kluster API key when actually using it
+      if (!apiKey) {
+        throw new Error("Missing environment variable: KLUSTER_API_KEY");
+      }
     }
   } else if (isSarvamModel) {
     // Use Sarvam AI configuration
@@ -309,18 +327,39 @@ export async function processChatRequest(
     };
     providerName = "Sarvam AI";
     
-    // @performance - Check if API key is available
+    // @performance - Check if API key is available, force fallback for now
     if (!apiKey) {
       console.warn(`⚠️ Sarvam AI API key not configured, falling back to OpenRouter`);
       // Fall back to OpenRouter with equivalent model
-      baseURL = process.env.OPENROUTER_BASE || "https://openrouter.ai/api/v1";
-      apiKey = process.env.OPENROUTER_API_KEY;
+      const openRouterBaseUrl = process.env.OPENROUTER_BASE || "https://openrouter.ai/api/v1";
+      const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+      
+      if (!openRouterApiKey) {
+        throw new Error("Missing environment variable: OPENROUTER_API_KEY (fallback from SARVAM_API_KEY)");
+      }
+      
+      baseURL = openRouterBaseUrl;
+      apiKey = openRouterApiKey;
       providerName = "OpenRouter (fallback)";
+      // Map Sarvam model to OpenRouter equivalent
+      if (model === "sarvam-m") {
+        requestedModel = "google/gemini-2.5-flash-preview" as ChatModel;
+      }
+    } else {
+      // Validate Sarvam API key when actually using it
+      if (!apiKey) {
+        throw new Error("Missing environment variable: SARVAM_API_KEY");
+      }
     }
   } else {
     // Use OpenRouter configuration
     baseURL = process.env.OPENROUTER_BASE || "https://openrouter.ai/api/v1";
     apiKey = process.env.OPENROUTER_API_KEY;
+    
+    if (!apiKey) {
+      throw new Error("Missing environment variable: OPENROUTER_API_KEY");
+    }
+    
     defaultHeaders = {
       "HTTP-Referer":
         process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
@@ -336,8 +375,8 @@ export async function processChatRequest(
     );
   }
 
-  // @performance - Optimized timeout settings
-  const timeout = 10000; // Reduced to 10 seconds for faster responses
+  // @performance - Optimized timeout settings for faster responses
+  const timeout = 8000; // Reduced to 8 seconds for faster responses
   
   const openai = new OpenAI({
     baseURL,
@@ -345,7 +384,7 @@ export async function processChatRequest(
     defaultHeaders,
     // @performance - Optimize connection settings
     timeout: timeout,
-    maxRetries: 1, // Reduced retries for faster responses
+    maxRetries: 0, // No retries for faster responses
   });
 
   try {
@@ -377,11 +416,11 @@ export async function processChatRequest(
       });
 
       const completion = await openai.chat.completions.create({
-        model: isKlusterModel || isSarvamModel ? model : openRouterModel, // Use raw model name for Kluster/Sarvam AI, OpenRouter model for others
+        model: isKlusterModel || isSarvamModel ? model : (requestedModel || openRouterModel), // Use correct model after fallback mapping
         messages: validatedInput.messages,
         // @performance - Optimized parameters for lower latency
         temperature: 0.7, // Balanced for speed and quality
-        max_tokens: 1500, // Reduced for faster completion
+        max_tokens: 1000, // Reduced for faster completion
         top_p: 0.9, // More focused sampling
         frequency_penalty: 0,
         presence_penalty: 0,
@@ -420,6 +459,7 @@ export async function processChatRequest(
                 );
 
                 // Skip intermediate saves for performance - we'll save once at the end
+                // @performance - Reduce chunk processing overhead
               }
 
               // Track token usage from the stream
@@ -510,11 +550,11 @@ export async function processChatRequest(
       });
 
       const completion = await openai.chat.completions.create({
-        model: isKlusterModel || isSarvamModel ? model : openRouterModel, // Use raw model name for Kluster/Sarvam AI, OpenRouter model for others
+        model: isKlusterModel || isSarvamModel ? model : (requestedModel || openRouterModel), // Use correct model after fallback mapping
         messages: validatedInput.messages,
         // @performance - Optimized parameters for lower latency
         temperature: 0.5, // Reduced for faster, more focused responses
-        max_tokens: 2000, // Reduced for faster completion
+        max_tokens: 1500, // Reduced for faster completion
         top_p: 0.9, // More focused sampling for speed
         frequency_penalty: 0,
         presence_penalty: 0,
@@ -728,7 +768,7 @@ async function saveMessagesToThread(
 
     // Look for existing user message with same content
     const existingUserMessage = existingMessages?.find(
-      (msg) => msg.role === "user" && msg.content === lastUserMessage.content
+      (msg: any) => msg.role === "user" && msg.content === lastUserMessage.content
     );
 
     if (existingUserMessage) {
@@ -758,7 +798,7 @@ async function saveMessagesToThread(
 
     // Look for existing assistant message placeholder (saved by ChatPanel)
     const existingAssistantMessage = existingMessages?.find(
-      (msg) =>
+      (msg: any) =>
         msg.role === "assistant" &&
         (msg.content === "" || msg.content.length < 50)
     );

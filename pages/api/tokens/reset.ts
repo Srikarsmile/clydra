@@ -62,7 +62,7 @@ export default async function handler(
 
     // Also reset daily tokens if table exists
     await supabaseAdmin.from("daily_tokens").upsert({
-      user_id: userId,
+      user_id: supabaseUserId,
       date: new Date().toISOString().split("T")[0], // YYYY-MM-DD format
       tokens_granted: 80000,
       tokens_remaining: 80000,

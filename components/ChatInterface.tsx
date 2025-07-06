@@ -165,7 +165,7 @@ export default function ChatInterface({
                     partialMessage += parsed.content;
                     setStreamingMessage(partialMessage);
                   }
-                } catch (e) {
+                } catch {
                   // Handle non-JSON data or completion messages
                   console.log("Non-JSON data received:", data);
                 }

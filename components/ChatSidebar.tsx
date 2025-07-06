@@ -56,7 +56,7 @@ export default function ChatSidebar({
       {/* Header */}
       <div className="p-6 border-b border-border/30">
         <div className="flex items-center space-x-3">
-          {user?.imageUrl && (
+          {user?.imageUrl && user.imageUrl.trim() !== "" && (
             <Image
               src={user.imageUrl}
               alt={userName}

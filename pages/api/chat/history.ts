@@ -7,7 +7,8 @@
 
 import { NextApiRequest, NextApiResponse } from "next";
 import { getAuth } from "@clerk/nextjs/server";
-import { supabase } from "../../../lib/supabase";
+import { supabaseAdmin } from "../../../lib/supabase";
+import { getOrCreateUser } from "../../../lib/user-utils";
 
 export default async function handler(
   req: NextApiRequest,
@@ -22,20 +23,16 @@ export default async function handler(
 
     if (req.method === "GET") {
       // @clydra-core Get chat history for user
-      const { data: user } = await supabase
-        .from("users")
-        .select("id")
-        .eq("clerk_id", userId)
-        .single();
-
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
+      const userResult = await getOrCreateUser(userId);
+      if (!userResult.success || !userResult.user) {
+        return res.status(401).json({ error: "User not found" });
       }
+      const supabaseUserId = userResult.user.id;
 
-      const { data: conversations, error } = await supabase
+      const { data: conversations, error } = await supabaseAdmin
         .from("chat_history")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", supabaseUserId)
         .order("last_message_at", { ascending: false })
         .limit(50);
 
@@ -53,21 +50,17 @@ export default async function handler(
         return res.status(400).json({ error: "Conversation ID required" });
       }
 
-      const { data: user } = await supabase
-        .from("users")
-        .select("id")
-        .eq("clerk_id", userId)
-        .single();
-
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
+      const userResult = await getOrCreateUser(userId);
+      if (!userResult.success || !userResult.user) {
+        return res.status(401).json({ error: "User not found" });
       }
+      const supabaseUserId = userResult.user.id;
 
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from("chat_history")
         .delete()
         .eq("id", conversationId)
-        .eq("user_id", user.id);
+        .eq("user_id", supabaseUserId);
 
       if (error) {
         console.error("Error deleting conversation:", error);

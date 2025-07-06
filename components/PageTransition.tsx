@@ -74,9 +74,9 @@ const PageTransition: React.FC<PageTransitionProps> = ({
 
   return (
     <div
-      className={`page-container ${reduceAnimations ? 'transition-opacity duration-200' : 'transition-all duration-500 ease-out'} ${className}`}
+      className={`page-container ${reduceAnimations ? 'transition-opacity duration-100' : 'transition-all duration-200 ease-out'} ${className}`}
       style={reduceAnimations ? {} : {
-        animation: "pageEnter 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards",
+        animation: "pageEnter 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards",
       }}
     >
       {displayChildren}

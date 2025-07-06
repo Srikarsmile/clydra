@@ -38,7 +38,7 @@ function ProfileChip({ collapsed }: { collapsed: boolean }) {
 
   return (
     <div className="flex items-center gap-1.5 sm:gap-2">
-      {user?.imageUrl ? (
+      {user?.imageUrl && user.imageUrl.trim() !== "" ? (
         <Image
           src={user.imageUrl}
           alt={user.fullName || "User"}

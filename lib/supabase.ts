@@ -1,8 +1,21 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+// Validate required environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl) {
+  throw new Error("Missing environment variable: NEXT_PUBLIC_SUPABASE_URL");
+}
+
+if (!supabaseAnonKey) {
+  throw new Error("Missing environment variable: NEXT_PUBLIC_SUPABASE_ANON_KEY");
+}
+
+if (!supabaseServiceKey) {
+  throw new Error("Missing environment variable: SUPABASE_SERVICE_ROLE_KEY");
+}
 
 // Public client for frontend operations
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -44,6 +57,27 @@ export async function createOrGetUser(
     return { data: newUser, error: insertError };
   } catch (error) {
     return { data: null, error };
+  }
+}
+
+// Utility function to get or create user with just Clerk ID
+export async function getOrCreateUser(clerkUserId: string) {
+  try {
+    // First try to get existing user
+    const { data: existingUser, error: selectError } = await supabaseAdmin
+      .from("users")
+      .select("*")
+      .eq("clerk_id", clerkUserId)
+      .single();
+
+    if (existingUser && !selectError) {
+      return { success: true, user: existingUser };
+    }
+
+    // If user doesn't exist, return error - user should be created via webhook
+    return { success: false, error: "User not found" };
+  } catch (error) {
+    return { success: false, error: error };
   }
 }
 

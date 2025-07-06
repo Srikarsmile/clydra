@@ -1,12 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getAuth } from "@clerk/nextjs/server";
-import { createClient } from "@supabase/supabase-js";
-
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { supabaseAdmin } from "../../lib/supabase";
+import { getOrCreateUser } from "../../lib/user-utils";
 
 export default async function handler(
   req: NextApiRequest,
@@ -23,17 +18,25 @@ export default async function handler(
       return res.status(401).json({ error: "Unauthorized" });
     }
 
+    // Get or create user in Supabase
+    const userResult = await getOrCreateUser(userId);
+    if (!userResult.success || !userResult.user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    const supabaseUserId = userResult.user.id;
+
     // Fetch total chats from chat_history table
-    const { count: totalChats } = await supabase
+    const { count: totalChats } = await supabaseAdmin
       .from("chat_history")
       .select("*", { count: "exact" })
-      .eq("user_id", userId);
+      .eq("user_id", supabaseUserId);
 
     // Fetch total tokens used from user_generations table
-    const { data: tokenData } = await supabase
+    const { data: tokenData } = await supabaseAdmin
       .from("user_generations")
       .select("input_tokens, output_tokens")
-      .eq("user_id", userId);
+      .eq("user_id", supabaseUserId);
 
     const totalTokens =
       tokenData?.reduce(
@@ -43,10 +46,10 @@ export default async function handler(
       ) || 0;
 
     // Get the most recently used model
-    const { data: recentChat } = await supabase
+    const { data: recentChat } = await supabaseAdmin
       .from("chat_history")
       .select("model")
-      .eq("user_id", userId)
+      .eq("user_id", supabaseUserId)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();

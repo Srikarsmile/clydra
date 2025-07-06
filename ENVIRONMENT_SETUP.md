@@ -65,10 +65,10 @@ The application supports three AI providers:
 
 ### Currently Configured API Keys
 
-✅ **Kluster AI**: `9f2ddf46-4401-48d1-b3d7-72c05edb44f2`  
-✅ **Sarvam AI**: `sk_wq9yiszy_Jewt6e5hC7N99X4khkVVNE7m`
+✅ **Kluster AI**: `your-kluster-api-key-here`  
+✅ **Sarvam AI**: `your-sarvam-api-key-here`
 
-_These are hardcoded in `server/api/chat.ts` and don't require environment variables._
+_These are now configured via environment variables in `.env.local`._
 
 ## ⚙️ Application Configuration
 

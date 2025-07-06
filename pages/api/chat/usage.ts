@@ -12,7 +12,7 @@ import {
   getRemainingMessages,
   DAILY_MESSAGE_LIMIT,
 } from "../../../server/lib/usage";
-import { supabase } from "../../../lib/supabase";
+import { getOrCreateUser } from "../../../lib/user-utils";
 
 export default async function handler(
   req: NextApiRequest,
@@ -30,19 +30,15 @@ export default async function handler(
     }
 
     // Get user's Supabase ID
-    const { data: user } = await supabase
-      .from("users")
-      .select("id")
-      .eq("clerk_id", userId)
-      .single();
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
+    const userResult = await getOrCreateUser(userId);
+    if (!userResult.success || !userResult.user) {
+      return res.status(401).json({ error: "User not found" });
     }
+    const supabaseUserId = userResult.user.id;
 
     // @clydra-core Get usage statistics
-    const dailyCount = await getDailyChatCount(user.id);
-    const remaining = await getRemainingMessages(user.id);
+    const dailyCount = await getDailyChatCount(supabaseUserId);
+    const remaining = await getRemainingMessages(supabaseUserId);
 
     return res.status(200).json({
       dailyCount,

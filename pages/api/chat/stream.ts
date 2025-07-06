@@ -2,16 +2,29 @@
 // Returns stream directly with minimal processing for ~400ms first token
 
 import { NextRequest, NextResponse } from "next/server";
+import { getAuth } from "@clerk/nextjs/server";
 import OpenAI from "openai";
+
+// Validate required environment variables
+const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+if (!openRouterApiKey) {
+  throw new Error("Missing environment variable: OPENROUTER_API_KEY");
+}
 
 const openrouter = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: openRouterApiKey,
 });
 
 export default async function handler(req: NextRequest) {
   if (req.method !== "POST") {
     return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+  }
+
+  // Authentication check
+  const { userId } = getAuth(req);
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {

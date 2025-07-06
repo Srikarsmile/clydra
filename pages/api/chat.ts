@@ -20,10 +20,16 @@ interface ChatRequest {
   enableWebSearch?: boolean;
 }
 
+// Validate required environment variables
+const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+if (!openRouterApiKey) {
+  throw new Error("Missing environment variable: OPENROUTER_API_KEY");
+}
+
 // Initialize OpenAI client with OpenRouter
 const openRouterClient = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: openRouterApiKey,
 });
 
 // Web search function using SerpAPI or similar
@@ -113,11 +119,7 @@ export default async function handler(
       validatedModel
     );
 
-    if (!process.env.OPENROUTER_API_KEY) {
-      return res.status(500).json({
-        error: "OpenRouter API key not configured",
-      });
-    }
+    // API key validation is now handled at module level
 
     try {
       // @or Make request using OpenAI client with OpenRouter
