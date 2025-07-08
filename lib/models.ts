@@ -136,7 +136,7 @@ export async function callClaude(
   messages: ChatMessage[],
   options: ModelOptions = {}
 ): Promise<ModelResponse> {
-  return callModel("anthropic/claude-3-5-sonnet-20241022", messages, options);
+  return callModel("anthropic/claude-sonnet-4", messages, options);
 }
 
 export async function callGPT4(
