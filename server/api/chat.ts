@@ -226,7 +226,7 @@ export async function processChatRequest(
   const shouldUseWebSearch =
     validatedInput.enableWebSearch &&
     MODELS_WITH_WEB_SEARCH.includes(model) &&
-    model === "anthropic/claude-3-5-sonnet-20241022"; // Only enable for models that actually support :online
+    model === "anthropic/claude-sonnet-4"; // Only enable for models that actually support :online
 
   // @sarvam - Check if wiki grounding should be enabled (only for supported models)
   const shouldUseWikiGrounding =
