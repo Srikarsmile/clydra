@@ -63,18 +63,19 @@ const chatInputSchema = z.object({
   ),
   model: z
     .enum([
-      // Streamlined model selection - only 8 models
+      // Streamlined model selection - only 7 models (removed verify-reliability)
       "google/gemini-2.5-flash-preview", // Default free model
       "openai/gpt-4o",
-      "anthropic/claude-3-5-sonnet-20241022",
+      "anthropic/claude-sonnet-4", // Updated to new Claude 4 model ID
       "x-ai/grok-3",
       "google/gemini-2.5-pro",
-      "mistralai/Magistral-Small-2506",
-      "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
+      "mistralai/magistral-small-2506",
+      "klusterai/meta-llama-3.3-70b-instruct-turbo",
       "sarvam-m",
       // Deprecated models (temporarily allowed for migration)
       "x-ai/grok-beta", // Will be migrated to x-ai/grok-3
       "google/gemini-2.5-pro-exp-03-25", // Will be migrated to google/gemini-2.5-pro
+      "anthropic/claude-3-5-sonnet-20241022", // Will be migrated to anthropic/claude-sonnet-4
     ])
     .describe("Model to use for chat completion"),
   threadId: z.string().optional(),
@@ -159,7 +160,17 @@ export async function processChatRequest(
   enableStreaming?: boolean // @performance - Add streaming option
 ): Promise<ChatResponse | StreamingChatResponse> {
   // Convert Clerk ID to Supabase UUID
-  const userResult = await getOrCreateUser(clerkUserId);
+  let userResult;
+  try {
+    userResult = await getOrCreateUser(clerkUserId);
+  } catch (error) {
+    console.error("getOrCreateUser failed:", error);
+    throw new ChatError(
+      "INTERNAL_SERVER_ERROR",
+      "User lookup failed"
+    );
+  }
+  
   if (!userResult.success || !userResult.user) {
     throw new ChatError(
       "UNAUTHORIZED",
@@ -178,16 +189,22 @@ export async function processChatRequest(
     // Migration for removed models to appropriate alternatives
     "openai/gpt-4o-mini": "openai/gpt-4o",
     "deepseek/deepseek-r1": "google/gemini-2.5-flash-preview",
-    "anthropic/claude-3-opus-20240229": "anthropic/claude-3-5-sonnet-20241022",
-    "anthropic/claude-3-sonnet-20240229":
-      "anthropic/claude-3-5-sonnet-20241022",
+    "anthropic/claude-3-opus-20240229": "anthropic/claude-sonnet-4",
+    "anthropic/claude-3-sonnet-20240229": "anthropic/claude-sonnet-4",
+    "anthropic/claude-3-5-sonnet-20241022": "anthropic/claude-sonnet-4", // Migrate old Claude ID
     "meta-llama/llama-3-70b-instruct":
-      "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
+      "klusterai/meta-llama-3.3-70b-instruct-turbo",
     // Google model migrations
     "google/gemini-2.5-flash": "google/gemini-2.5-flash-preview",
     "google/gemini-2.0-flash-001": "google/gemini-2.5-flash-preview",
     "google/gemini-2.5-flash-preview-05-20": "google/gemini-2.5-flash-preview",
     "google/gemini-1.5-pro": "google/gemini-2.5-pro",
+    // Fix for direct model access
+    "mistralai/mistral-small-3.2-24b-instruct": "mistralai/magistral-small-2506",
+    "mistralai/mistral-small-latest": "mistralai/magistral-small-2506",
+    "meta-llama/llama-3.3-70b-instruct:free": "klusterai/meta-llama-3.3-70b-instruct-turbo",
+    "shisa-ai/shisa-v2-llama3.3-70b:free": "klusterai/meta-llama-3.3-70b-instruct-turbo",
+    "qwen/qwen-2.5-7b-instruct": "sarvam-m",
   };
 
   // @clydra-core Validate incoming model against MODEL_ALIASES
@@ -259,13 +276,29 @@ export async function processChatRequest(
   }
 
   // @clydra-core Estimate input tokens
-  const inputTokens = estimateConversationTokens(
-    validatedInput.messages,
-    model
-  );
+  let inputTokens: number;
+  try {
+    inputTokens = estimateConversationTokens(
+      validatedInput.messages,
+      model
+    );
+  } catch (error) {
+    console.error("Token estimation error:", error);
+    // Fallback estimation
+    inputTokens = Math.ceil(
+      validatedInput.messages.map(m => m.content).join(' ').length / 4
+    );
+  }
 
   // @grant-80k - Check daily token quota (primary limit)
-  const remainingTokens = await getRemainingDailyTokens(userId);
+  let remainingTokens: number;
+  try {
+    remainingTokens = await getRemainingDailyTokens(userId);
+  } catch (error) {
+    console.error("Daily tokens check error:", error);
+    // Fail open - allow the request to proceed
+    remainingTokens = inputTokens + 1000;
+  }
 
   if (remainingTokens < inputTokens) {
     throw new ChatError(
@@ -287,70 +320,33 @@ export async function processChatRequest(
   let providerName: string;
 
   if (isKlusterModel) {
-    // Use Kluster AI configuration
+    // Use Kluster AI for Kluster models
+    const klusterApiKey = process.env.KLUSTER_API_KEY;
+    
+    if (!klusterApiKey) {
+      throw new ChatError("INTERNAL_SERVER_ERROR", "Kluster AI API key not configured");
+    }
+    
     baseURL = "https://api.kluster.ai/v1";
-    apiKey = process.env.KLUSTER_API_KEY;
+    apiKey = klusterApiKey;
     providerName = "Kluster AI";
     
-    // @performance - Check if API key is available, force fallback for now
-    if (!apiKey) {
-      console.warn(`⚠️ Kluster AI API key not configured, falling back to OpenRouter`);
-      // Fall back to OpenRouter with equivalent model
-      const openRouterBaseUrl = process.env.OPENROUTER_BASE || "https://openrouter.ai/api/v1";
-      const openRouterApiKey = process.env.OPENROUTER_API_KEY;
-      
-      if (!openRouterApiKey) {
-        throw new Error("Missing environment variable: OPENROUTER_API_KEY (fallback from KLUSTER_API_KEY)");
-      }
-      
-      baseURL = openRouterBaseUrl;
-      apiKey = openRouterApiKey;
-      providerName = "OpenRouter (fallback)";
-      // Map model to OpenRouter equivalent
-      if (model === "mistralai/Magistral-Small-2506") {
-        requestedModel = "mistralai/mistral-small-2407" as ChatModel;
-      } else if (model === "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo") {
-        requestedModel = "meta-llama/llama-3.3-70b-instruct" as ChatModel;
-      }
-    } else {
-      // Validate Kluster API key when actually using it
-      if (!apiKey) {
-        throw new Error("Missing environment variable: KLUSTER_API_KEY");
-      }
-    }
+    // Use the model as-is for Kluster AI
+    requestedModel = model as ChatModel;
   } else if (isSarvamModel) {
-    // Use Sarvam AI configuration
+    // Use Sarvam AI API directly
+    const sarvamApiKey = process.env.SARVAM_API_KEY;
+    
+    if (!sarvamApiKey) {
+      throw new ChatError("INTERNAL_SERVER_ERROR", "Sarvam AI API key not configured");
+    }
+    
     baseURL = "https://api.sarvam.ai/v1";
-    apiKey = process.env.SARVAM_API_KEY;
-    defaultHeaders = {
-      "api-subscription-key": apiKey || "",
-    };
+    apiKey = sarvamApiKey;
     providerName = "Sarvam AI";
     
-    // @performance - Check if API key is available, force fallback for now
-    if (!apiKey) {
-      console.warn(`⚠️ Sarvam AI API key not configured, falling back to OpenRouter`);
-      // Fall back to OpenRouter with equivalent model
-      const openRouterBaseUrl = process.env.OPENROUTER_BASE || "https://openrouter.ai/api/v1";
-      const openRouterApiKey = process.env.OPENROUTER_API_KEY;
-      
-      if (!openRouterApiKey) {
-        throw new Error("Missing environment variable: OPENROUTER_API_KEY (fallback from SARVAM_API_KEY)");
-      }
-      
-      baseURL = openRouterBaseUrl;
-      apiKey = openRouterApiKey;
-      providerName = "OpenRouter (fallback)";
-      // Map Sarvam model to OpenRouter equivalent
-      if (model === "sarvam-m") {
-        requestedModel = "google/gemini-2.5-flash-preview" as ChatModel;
-      }
-    } else {
-      // Validate Sarvam API key when actually using it
-      if (!apiKey) {
-        throw new Error("Missing environment variable: SARVAM_API_KEY");
-      }
-    }
+    // Use the model as-is for Sarvam AI
+    requestedModel = model as ChatModel;
   } else {
     // Use OpenRouter configuration
     baseURL = process.env.OPENROUTER_BASE || "https://openrouter.ai/api/v1";
@@ -378,28 +374,60 @@ export async function processChatRequest(
   // @performance - Optimized timeout settings for faster responses
   const timeout = 8000; // Reduced to 8 seconds for faster responses
   
+  // Create OpenAI client with special handling for Sarvam AI
   const openai = new OpenAI({
     baseURL,
-    apiKey,
-    defaultHeaders,
+    apiKey: isSarvamModel ? "sk-dummy" : apiKey, // Dummy key for Sarvam to prevent auth errors
+    defaultHeaders: {
+      ...defaultHeaders,
+      // Add Sarvam-specific headers
+      ...(isSarvamModel ? {
+        'api-subscription-key': apiKey,
+        'Content-Type': 'application/json'
+      } : {})
+    },
     // @performance - Optimize connection settings
     timeout: timeout,
     maxRetries: 0, // No retries for faster responses
+    // Custom fetch for Sarvam to handle auth properly
+    ...(isSarvamModel ? {
+      fetch: async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+        const headers = new Headers(init?.headers);
+        // Remove any Authorization header for Sarvam
+        headers.delete('Authorization');
+        // Ensure Sarvam's required header is present
+        headers.set('api-subscription-key', apiKey);
+        headers.set('Content-Type', 'application/json');
+        
+        const newInit = {
+          ...init,
+          headers: headers,
+        };
+        
+        return fetch(input, newInit);
+      }
+    } : {})
   });
 
   try {
     // @performance - Streaming vs Non-streaming logic
     if (enableStreaming) {
       // @margin-patch - Calculate effective tokens with model multiplier
-      const effectiveInputTokens = await computeEffectiveTokens(
-        model,
-        inputTokens,
-        shouldUseWebSearch
-      );
+      let effectiveInputTokens: number;
+      try {
+        effectiveInputTokens = await computeEffectiveTokens(
+          model,
+          inputTokens,
+          shouldUseWebSearch
+        );
+      } catch (error) {
+        console.error("Effective tokens calculation error:", error);
+        // Fallback - use input tokens directly
+        effectiveInputTokens = inputTokens;
+      }
 
       // @performance - Optimized streaming implementation
-      // Consume input tokens immediately, output tokens after completion
-      await consumeDailyTokens(userId, effectiveInputTokens);
+      // Note: We'll consume all tokens at the end to avoid double consumption
 
       // @debug - Log request details before API call
       console.log(`🔍 ${providerName} API Call Details:`, {
@@ -416,7 +444,7 @@ export async function processChatRequest(
       });
 
       const completion = await openai.chat.completions.create({
-        model: isKlusterModel || isSarvamModel ? model : (requestedModel || openRouterModel), // Use correct model after fallback mapping
+        model: requestedModel || openRouterModel, // Always use the mapped model name
         messages: validatedInput.messages,
         // @performance - Optimized parameters for lower latency
         temperature: 0.7, // Balanced for speed and quality
@@ -468,25 +496,51 @@ export async function processChatRequest(
               }
             }
 
-            // Calculate and consume output tokens
-            const outputTokens = Math.ceil(fullMessage.length / 4); // Rough estimate
-            await Promise.all([
-              consumeDailyTokens(userId, outputTokens),
-              updateUsageMeter(userId, inputTokens + outputTokens),
-              // @model-multiplier - Track effective tokens with model multipliers and web search cost
-              addTokens(
-                userId,
-                inputTokens + outputTokens,
-                model,
-                shouldUseWebSearch
-              ),
-            ]).catch((error) => {
-              console.error("Token consumption failed:", error);
-            });
+            // Calculate and consume ALL tokens (input + output) at once
+            if (fullMessage && fullMessage.length > 0) {
+              const outputTokens = Math.ceil(fullMessage.length / 4); // Rough estimate
+              const totalTokens = inputTokens + outputTokens;
+              
+              // Calculate effective tokens for daily consumption
+              let effectiveTotalTokens: number;
+              try {
+                effectiveTotalTokens = await computeEffectiveTokens(
+                  model,
+                  totalTokens,
+                  shouldUseWebSearch
+                );
+              } catch (error) {
+                console.error("Effective tokens calculation error:", error);
+                effectiveTotalTokens = totalTokens;
+              }
+
+              try {
+                await Promise.all([
+                  consumeDailyTokens(userId, effectiveTotalTokens).catch(err => {
+                    console.error("Daily token consumption failed:", err);
+                  }),
+                  updateUsageMeter(userId, totalTokens).catch(err => {
+                    console.error("Usage meter update failed:", err);
+                  }),
+                  // @model-multiplier - Track effective tokens with model multipliers and web search cost
+                  addTokens(
+                    userId,
+                    totalTokens,
+                    model,
+                    shouldUseWebSearch
+                  ).catch(err => {
+                    console.error("Token tracking failed:", err);
+                  }),
+                ]);
+              } catch (error) {
+                console.error("Token processing failed:", error);
+                // Don't throw - continue with the chat response
+              }
+            }
 
             // Save final message and get database ID
             let finalMessageId: string | undefined;
-            if (threadId || input.threadId) {
+            if ((threadId || input.threadId) && fullMessage && fullMessage.length > 0) {
               try {
                 console.log(
                   `💾 Saving final message to database for thread: ${threadId || input.threadId}`
@@ -504,6 +558,7 @@ export async function processChatRequest(
                 );
               } catch (error) {
                 console.error("❌ Final save failed:", error);
+                // Don't throw - continue with the response
               }
             }
 
@@ -550,7 +605,7 @@ export async function processChatRequest(
       });
 
       const completion = await openai.chat.completions.create({
-        model: isKlusterModel || isSarvamModel ? model : (requestedModel || openRouterModel), // Use correct model after fallback mapping
+        model: requestedModel || openRouterModel, // Always use the mapped model name
         messages: validatedInput.messages,
         // @performance - Optimized parameters for lower latency
         temperature: 0.5, // Reduced for faster, more focused responses
@@ -605,11 +660,18 @@ export async function processChatRequest(
       const totalTokens = inputTokens + outputTokens;
 
       // @margin-patch - Calculate effective tokens with model multiplier
-      const effectiveTotalTokens = await computeEffectiveTokens(
-        model,
-        completion.usage?.total_tokens || totalTokens,
-        shouldUseWebSearch
-      );
+      let effectiveTotalTokens: number;
+      try {
+        effectiveTotalTokens = await computeEffectiveTokens(
+          model,
+          completion.usage?.total_tokens || totalTokens,
+          shouldUseWebSearch
+        );
+      } catch (error) {
+        console.error("Effective tokens calculation error:", error);
+        // Fallback - use total tokens directly
+        effectiveTotalTokens = completion.usage?.total_tokens || totalTokens;
+      }
 
       // Log token calculation for debugging
       console.log(
@@ -617,24 +679,40 @@ export async function processChatRequest(
       );
 
       // @grant-40k - Consume daily tokens and update usage meter
-      await Promise.all([
-        consumeDailyTokens(userId, effectiveTotalTokens),
-        updateUsageMeter(userId, totalTokens),
-        // @model-multiplier - Track effective tokens with model multipliers and web search cost
-        addTokens(userId, effectiveTotalTokens, model, shouldUseWebSearch),
-      ]);
+      try {
+        await Promise.all([
+          consumeDailyTokens(userId, effectiveTotalTokens).catch(err => {
+            console.error("Daily token consumption failed:", err);
+          }),
+          updateUsageMeter(userId, totalTokens).catch(err => {
+            console.error("Usage meter update failed:", err);
+          }),
+          // @model-multiplier - Track effective tokens with model multipliers and web search cost
+          addTokens(userId, effectiveTotalTokens, model, shouldUseWebSearch).catch(err => {
+            console.error("Token tracking failed:", err);
+          }),
+        ]);
+      } catch (error) {
+        console.error("Token processing failed:", error);
+        // Don't throw - continue with the chat response
+      }
 
       // @multi-model - Save chat and get message IDs
       let messageId: string | undefined;
       if (threadId || input.threadId) {
-        const { assistantMessageId } = await saveMessagesToThread(
-          userId,
-          threadId || input.threadId!,
-          validatedInput.messages,
-          assistantMessage,
-          model // Pass model information
-        );
-        messageId = assistantMessageId;
+        try {
+          const { assistantMessageId } = await saveMessagesToThread(
+            userId,
+            threadId || input.threadId!,
+            validatedInput.messages,
+            assistantMessage,
+            model // Pass model information
+          );
+          messageId = assistantMessageId;
+        } catch (error) {
+          console.error("Failed to save messages to thread:", error);
+          // Don't throw - continue with the chat response
+        }
       }
 
       return {
@@ -735,13 +813,16 @@ async function saveMessagesToThread(
 
     if (threadError || !existingThread) {
       console.log("Thread does not exist, creating it:", threadId);
-      // Create the thread if it doesn't exist
+      // Create the thread if it doesn't exist using upsert to avoid race conditions
       const { error: createThreadError } = await supabaseAdmin
         .from("threads")
-        .insert({
+        .upsert({
           id: threadId,
           user_id: userId,
           title: "New Chat",
+        }, { 
+          onConflict: 'id',
+          ignoreDuplicates: false 
         });
 
       if (createThreadError) {

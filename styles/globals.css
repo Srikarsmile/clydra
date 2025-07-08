@@ -65,6 +65,34 @@ html {
   background: rgba(0, 0, 0, 0.2);
 }
 
+/* KaTeX equation styling */
+.katex {
+  font-size: 1.1em !important;
+}
+
+.katex-display {
+  margin: 1em 0 !important;
+  text-align: center;
+}
+
+.katex .katex-html {
+  color: inherit !important;
+}
+
+/* Dark mode support for KaTeX if needed */
+@media (prefers-color-scheme: dark) {
+  .katex .katex-html {
+    color: #e5e5e5 !important;
+  }
+}
+
+/* Ensure math equations don't overflow */
+.katex-display > .katex {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 /* @performance - Mobile optimizations */
 @media screen and (max-width: 640px) {
   html {

@@ -1,5 +1,7 @@
 // @token-meter - Token usage tracking and quota management
 import { supabaseAdmin } from "../../lib/supabase";
+import { withDatabaseConnection, QueryBuilder } from "../../lib/connection-pool";
+import { logger } from "../../lib/logger";
 import { startOfMonth } from "date-fns";
 import { ChatModel } from "../../types/chatModels";
 
@@ -10,16 +12,17 @@ export const MODEL_MULTIPLIER: Record<string, number> = {
 
   // Pro models with various multipliers
   "openai/gpt-4o": 2.0, // Premium model with 2.0x multiplier
-  "anthropic/claude-3-5-sonnet-20241022": 1.5, // Premium model with 1.5x multiplier
+  "anthropic/claude-sonnet-4": 1.5, // Claude 4 Sonnet with 1.5x multiplier
   "x-ai/grok-3": 1.5, // Premium model with 1.5x multiplier
   "google/gemini-2.5-pro": 1.0, // Standard pro model with 1.0x multiplier
-  "mistralai/Magistral-Small-2506": 1.0, // Standard model with 1.0x multiplier
-  "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo": 1.2, // Large model with 1.2x multiplier
+  "mistralai/magistral-small-2506": 1.0, // Standard model with 1.0x multiplier
+  "klusterai/meta-llama-3.3-70b-instruct-turbo": 1.2, // Large model with 1.2x multiplier
   "sarvam-m": 1.0, // Standard model with 1.0x multiplier
 
   // Deprecated models (will be migrated)
   "x-ai/grok-beta": 1.5, // Migrates to grok-3
   "google/gemini-2.5-pro-exp-03-25": 1.0, // Migrates to gemini-2.5-pro
+  "anthropic/claude-3-5-sonnet-20241022": 1.5, // Migrates to claude-sonnet-4
 };
 
 // Web search adds 30% overhead to token consumption
@@ -45,15 +48,17 @@ export async function computeEffectiveTokens( // @fix-name - Renamed to avoid TD
 // Helper function to get Supabase user ID from Clerk ID
 async function getSupabaseUserId(clerkUserId: string): Promise<string | null> {
   try {
-    const { data: user } = await supabaseAdmin
-      .from("users")
-      .select("id")
-      .eq("clerk_id", clerkUserId)
-      .single();
+    return await withDatabaseConnection(async (client) => {
+      const { data: user } = await client
+        .from("users")
+        .select("id")
+        .eq("clerk_id", clerkUserId)
+        .single();
 
-    return user?.id || null;
+      return user?.id || null;
+    });
   } catch (error) {
-    console.error("Error getting Supabase user ID:", error);
+    logger.error("Error getting Supabase user ID", error, { clerkUserId });
     return null;
   }
 }
@@ -94,49 +99,66 @@ export async function addTokens(
     // Normalize user ID (handle both Clerk ID and Supabase UUID)
     const supabaseUserId = await normalizeUserId(userId);
     if (!supabaseUserId) {
-      console.error("User not found for token tracking:", userId);
+      logger.error("User not found for token tracking", undefined, { userId });
       return;
     }
 
-    // First try to get existing record
-    const { data: existing } = await supabaseAdmin
-      .from("token_usage")
-      .select("tokens_used")
-      .eq("user_id", supabaseUserId)
-      .eq("month_start", monthStr)
-      .single();
-
-    if (existing) {
-      // Update existing record
-      const { error } = await supabaseAdmin
+    await withDatabaseConnection(async (client) => {
+      // First try to get existing record
+      const { data: existing } = await client
         .from("token_usage")
-        .update({
-          tokens_used: existing.tokens_used + effectiveTokenCount,
-        })
+        .select("tokens_used")
         .eq("user_id", supabaseUserId)
-        .eq("month_start", monthStr);
+        .eq("month_start", monthStr)
+        .single();
 
-      if (error) {
-        console.error("Error updating tokens:", error);
-        // Don't throw - just log and continue
-        return;
+      if (existing) {
+        // Update existing record
+        const { error } = await client
+          .from("token_usage")
+          .update({
+            tokens_used: existing.tokens_used + effectiveTokenCount,
+          })
+          .eq("user_id", supabaseUserId)
+          .eq("month_start", monthStr);
+
+        if (error) {
+          logger.error("Error updating tokens", error, { 
+            userId, 
+            supabaseUserId, 
+            effectiveTokenCount 
+          });
+          throw error;
+        }
+      } else {
+        // Insert new record
+        const { error } = await client.from("token_usage").insert({
+          user_id: supabaseUserId,
+          month_start: monthStr,
+          tokens_used: effectiveTokenCount,
+        });
+
+        if (error) {
+          logger.error("Error inserting tokens", error, { 
+            userId, 
+            supabaseUserId, 
+            effectiveTokenCount 
+          });
+          throw error;
+        }
       }
-    } else {
-      // Insert new record
-      const { error } = await supabaseAdmin.from("token_usage").insert({
-        user_id: supabaseUserId,
-        month_start: monthStr,
-        tokens_used: effectiveTokenCount,
+
+      logger.debug("Token usage updated", {
+        userId,
+        supabaseUserId,
+        tokensAdded: effectiveTokenCount,
+        model,
+        usedWebSearch,
+        monthStr
       });
-
-      if (error) {
-        console.error("Error inserting tokens:", error);
-        // Don't throw - just log and continue
-        return;
-      }
-    }
+    });
   } catch (error) {
-    console.error("Error in addTokens:", error);
+    logger.error("Error in addTokens", error, { userId, tokens, model });
     // Don't throw - just log and continue to prevent chat failures
     return;
   }
@@ -150,32 +172,91 @@ export async function getUsage(userId: string): Promise<number> {
     // Normalize user ID (handle both Clerk ID and Supabase UUID)
     const supabaseUserId = await normalizeUserId(userId);
     if (!supabaseUserId) {
-      console.error("User not found for usage tracking:", userId);
+      logger.error("User not found for usage tracking", undefined, { userId });
       return 0;
     }
 
-    const { data, error } = await supabaseAdmin
-      .from("token_usage")
-      .select("tokens_used")
-      .eq("user_id", supabaseUserId)
-      .eq("month_start", monthStr)
-      .single();
+    return await withDatabaseConnection(async (client) => {
+      const { data, error } = await client
+        .from("token_usage")
+        .select("tokens_used")
+        .eq("user_id", supabaseUserId)
+        .eq("month_start", monthStr)
+        .single();
 
-    // Handle table not exists or no rows found gracefully
-    if (error && (error.code === "42P01" || error.code === "PGRST116")) {
-      // 42P01 = table doesn't exist, PGRST116 = no rows found
-      return 0;
-    }
+      // Handle table not exists or no rows found gracefully
+      if (error && (error.code === "42P01" || error.code === "PGRST116")) {
+        // 42P01 = table doesn't exist, PGRST116 = no rows found
+        return 0;
+      }
 
-    if (error) {
-      console.error("Error getting usage:", error);
-      // Return 0 instead of throwing to prevent blocking the chat
-      return 0;
-    }
+      if (error) {
+        logger.error("Error getting usage", error, { userId, supabaseUserId });
+        // Return 0 instead of throwing to prevent blocking the chat
+        return 0;
+      }
 
-    return data?.tokens_used ?? 0;
+      const usage = data?.tokens_used ?? 0;
+      logger.debug("Token usage retrieved", {
+        userId,
+        supabaseUserId,
+        usage,
+        monthStr
+      });
+
+      return usage;
+    });
   } catch (error) {
-    console.error("Error in getUsage:", error);
+    logger.error("Error in getUsage", error, { userId });
+    // Return 0 to allow chat to continue even if token tracking fails
+    return 0;
+  }
+}
+
+// Get daily usage for better tracking
+export async function getDailyUsage(userId: string): Promise<number> {
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+
+  try {
+    // Normalize user ID (handle both Clerk ID and Supabase UUID)
+    const supabaseUserId = await normalizeUserId(userId);
+    if (!supabaseUserId) {
+      logger.error("User not found for daily usage tracking", undefined, { userId });
+      return 0;
+    }
+
+    return await withDatabaseConnection(async (client) => {
+      const { data, error } = await client
+        .from("daily_tokens")
+        .select("tokens_granted, tokens_remaining")
+        .eq("user_id", supabaseUserId)
+        .eq("date", today)
+        .single();
+
+      // Handle table not exists or no rows found gracefully
+      if (error && (error.code === "42P01" || error.code === "PGRST116")) {
+        // 42P01 = table doesn't exist, PGRST116 = no rows found
+        return 0;
+      }
+
+      if (error) {
+        logger.error("Error getting daily usage", error, { userId, supabaseUserId });
+        // Return 0 instead of throwing to prevent blocking the chat
+        return 0;
+      }
+
+      const dailyUsage = (data?.tokens_granted ?? 0) - (data?.tokens_remaining ?? 0);
+      logger.debug("Daily token usage retrieved", {
+        userId,
+        supabaseUserId,
+        dailyUsage,
+        today
+      });
+
+      return dailyUsage;
+    });
+  } catch (error) {
+    logger.error("Error in getDailyUsage", error, { userId });
     // Return 0 to allow chat to continue even if token tracking fails
     return 0;
   }

@@ -3,36 +3,75 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getAuth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "../../lib/supabase";
 import { getOrCreateUser } from "../../lib/user-utils";
+import { logger } from "../../lib/logger";
+import { z } from "zod";
+
+// Validation schemas
+const CreateThreadSchema = z.object({
+  title: z.string().min(1, "Thread title is required").max(200, "Title too long"),
+  firstMessage: z.string().min(1, "First message is required").max(10000, "Message too long").optional(),
+});
+
+const UpdateThreadSchema = z.object({
+  title: z.string().min(1, "Thread title is required").max(200, "Title too long").optional(),
+});
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { userId } = getAuth(req);
+  // Set timeout to prevent hanging requests
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      logger.warn("Request timeout, returning empty threads", { endpoint: "/api/threads" });
+      res.status(200).json([]);
+    }
+  }, 10000); // 10 second timeout
 
-  console.log(
-    `🔐 Threads API: method=${req.method}, userId=${userId || "undefined"}`
-  );
+  try {
+    const { userId } = getAuth(req);
 
-  if (!userId) {
-    console.error("❌ Threads API: No userId from getAuth");
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+    logger.info("Threads API request", {
+      method: req.method,
+      userId: userId || "undefined",
+      endpoint: "/api/threads"
+    });
 
-  // Get or create user in Supabase
-  const userResult = await getOrCreateUser(userId);
+    if (!userId) {
+      logger.warn("Unauthorized threads API access", { endpoint: "/api/threads" });
+      clearTimeout(timeout);
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
-  if (!userResult.success || !userResult.user) {
-    console.error(
-      "❌ Threads API: Failed to get or create user:",
-      userResult.error
-    );
-    return res.status(500).json({ error: "Failed to authenticate user" });
-  }
+    // Get or create user in Supabase with timeout handling
+    let userResult;
+    try {
+      userResult = await Promise.race([
+        getOrCreateUser(userId),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('User lookup timeout')), 5000)
+        )
+      ]) as any;
+    } catch (timeoutError) {
+      logger.error("User lookup timeout", timeoutError, { userId });
+      clearTimeout(timeout);
+      return res.status(200).json([]); // Return empty threads instead of error
+    }
 
-  console.log(
-    `✅ Threads API: User ready for ${userId}, ID=${userResult.user.id}`
-  );
+    if (!userResult.success || !userResult.user) {
+      logger.error("Failed to get or create user in threads API", userResult.error, {
+        userId,
+        endpoint: "/api/threads"
+      });
+      clearTimeout(timeout);
+      return res.status(500).json({ error: "Failed to authenticate user" });
+    }
+
+    logger.info("User authenticated for threads API", {
+      userId,
+      supabaseUserId: userResult.user.id,
+      endpoint: "/api/threads"
+    });
 
   if (req.method === "GET") {
     try {
@@ -46,51 +85,127 @@ export default async function handler(
         `
         )
         .eq("user_id", userResult.user.id)
+        .order("updated_at", { ascending: false })
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("❌ Threads API: Error fetching threads:", error);
+        logger.error("Error fetching threads", error, {
+          userId,
+          supabaseUserId: userResult.user.id,
+          endpoint: "/api/threads"
+        });
+        
+        // Check if it's a connection error (Supabase down)
+        if (error.message?.includes('fetch') || error.message?.includes('network') || error.code === 'ECONNREFUSED') {
+          logger.warn("Database connection issue, returning empty threads", {
+            userId,
+            endpoint: "/api/threads",
+            error: error.message
+          });
+          return res.status(200).json([]);
+        }
+        
         throw error;
       }
 
-      console.log(
-        `✅ Threads API: Returning ${data?.length || 0} threads for user ${userResult.user.id}`
-      );
+      logger.info("Threads fetched successfully", {
+        userId,
+        threadCount: data?.length || 0,
+        endpoint: "/api/threads"
+      });
+      clearTimeout(timeout);
       res.status(200).json(data || []);
     } catch (error) {
-      console.error("Failed to fetch threads:", error);
-      res.status(500).json({ error: "Failed to fetch threads" });
+      logger.error("Failed to fetch threads", error, {
+        userId,
+        endpoint: "/api/threads"
+      });
+      
+      // Return empty array instead of error when database is unavailable
+      // This allows the UI to still function during outages
+      logger.warn("Returning empty threads due to database error", {
+        userId,
+        endpoint: "/api/threads"
+      });
+      clearTimeout(timeout);
+      res.status(200).json([]);
     }
   } else if (req.method === "POST") {
     try {
+      // Validate request body if present
+      let validatedData = {};
+      if (req.body && Object.keys(req.body).length > 0) {
+        const validation = CreateThreadSchema.safeParse(req.body);
+        if (!validation.success) {
+          logger.warn("Invalid thread creation data", {
+            errors: validation.error.errors,
+            userId,
+            endpoint: "/api/threads"
+          });
+          clearTimeout(timeout);
+          return res.status(400).json({
+            error: "Invalid request",
+            details: validation.error.errors
+          });
+        }
+        validatedData = validation.data;
+      }
+
       const { data, error } = await supabaseAdmin
         .from("threads")
-        .insert({ user_id: userResult.user.id })
-        .select("id")
+        .insert({ 
+          user_id: userResult.user.id,
+          ...validatedData
+        })
+        .select("id, created_at")
         .single();
 
       if (error) {
-        console.error("❌ Threads API: Error creating thread:", error);
+        logger.error("Error creating thread", error, {
+          userId,
+          supabaseUserId: userResult.user.id,
+          endpoint: "/api/threads"
+        });
         throw error;
       }
 
-      console.log(
-        `✅ Threads API: Created new thread ${data.id} for user ${userResult.user.id}`
-      );
+      logger.info("Thread created successfully", {
+        userId,
+        threadId: data.id,
+        endpoint: "/api/threads"
+      });
+      clearTimeout(timeout);
       res.status(201).json({ id: data.id });
     } catch (error) {
-      console.error("Failed to create thread:", error);
+      logger.error("Failed to create thread", error, {
+        userId,
+        endpoint: "/api/threads"
+      });
+      clearTimeout(timeout);
       res.status(500).json({ error: "Failed to create thread" });
     }
   } else if (req.method === "DELETE") {
     // Improved thread deletion functionality with better error handling
     try {
-      const { threadId } = req.body;
+      // Validate thread ID
+      const threadIdValidation = z.object({
+        threadId: z.string().uuid("Invalid thread ID")
+      }).safeParse(req.body);
 
-      if (!threadId) {
-        console.error("No threadId provided in request body");
-        return res.status(400).json({ error: "Thread ID is required" });
+      if (!threadIdValidation.success) {
+        logger.warn("Invalid thread deletion request", {
+          errors: threadIdValidation.error.errors,
+          userId,
+          endpoint: "/api/threads"
+        });
+        clearTimeout(timeout);
+        return res.status(400).json({ 
+          error: "Invalid request",
+          details: threadIdValidation.error.errors
+        });
       }
+
+      const { threadId } = threadIdValidation.data;
 
       // Verify thread exists and belongs to user before deletion
       const { data: existingThread, error: verifyError } = await supabaseAdmin
@@ -101,9 +216,14 @@ export default async function handler(
         .single();
 
       if (verifyError) {
-        console.error("Error verifying thread ownership:", verifyError);
+        logger.error("Error verifying thread ownership", verifyError, {
+          userId,
+          threadId,
+          endpoint: "/api/threads"
+        });
         if (verifyError.code === "PGRST116") {
           // No rows returned
+          clearTimeout(timeout);
           return res
             .status(404)
             .json({ error: "Thread not found or access denied" });
@@ -112,10 +232,13 @@ export default async function handler(
       }
 
       if (!existingThread) {
-        console.error("Thread not found or user doesn't have access:", {
+        logger.warn("Thread not found or access denied", {
           threadId,
-          userId: userResult.user.id,
+          userId,
+          supabaseUserId: userResult.user.id,
+          endpoint: "/api/threads"
         });
+        clearTimeout(timeout);
         return res
           .status(404)
           .json({ error: "Thread not found or access denied" });
@@ -128,7 +251,12 @@ export default async function handler(
         .eq("thread_id", threadId);
 
       if (messagesError) {
-        console.error("Failed to delete messages:", messagesError);
+        logger.warn("Failed to delete messages during thread deletion", {
+          threadId,
+          userId,
+          endpoint: "/api/threads",
+          error: messagesError
+        });
         // Don't fail the whole operation if message deletion fails
         // Messages will be cleaned up by cascade delete
       }
@@ -141,20 +269,46 @@ export default async function handler(
         .eq("user_id", userResult.user.id);
 
       if (deleteError) {
-        console.error("Failed to delete thread:", deleteError);
+        logger.error("Failed to delete thread", deleteError, {
+          threadId,
+          userId,
+          endpoint: "/api/threads"
+        });
         throw deleteError;
       }
 
+      logger.info("Thread deleted successfully", {
+        threadId,
+        userId,
+        endpoint: "/api/threads"
+      });
+      clearTimeout(timeout);
       res.status(200).json({ success: true });
     } catch (error) {
-      console.error("Failed to delete thread - full error:", error);
+      logger.error("Failed to delete thread - full error", error, {
+        userId,
+        endpoint: "/api/threads"
+      });
+      clearTimeout(timeout);
       res.status(500).json({
         error: "Failed to delete thread",
         details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   } else {
+    logger.warn("Method not allowed for threads API", {
+      method: req.method,
+      endpoint: "/api/threads"
+    });
+    clearTimeout(timeout);
     res.setHeader("Allow", ["GET", "POST", "DELETE"]);
     res.status(405).json({ error: "Method not allowed" });
+  }
+  } catch (outerError) {
+    logger.error("Threads API outer error", outerError, { endpoint: "/api/threads" });
+    clearTimeout(timeout);
+    if (!res.headersSent) {
+      res.status(200).json([]); // Return empty threads on any error
+    }
   }
 }

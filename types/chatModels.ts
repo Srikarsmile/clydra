@@ -3,13 +3,13 @@ export const MODEL_ALIASES = {
   // Free Plan Models - using correct OpenRouter identifiers
   "google/gemini-2.5-flash-preview": "Gemini 2.5 Flash", // Default free model
 
-  // Pro Plan Models - using correct OpenRouter identifiers
+  // Pro Plan Models - arranged by popularity and performance
   "openai/gpt-4o": "GPT-4o",
-  "anthropic/claude-3-5-sonnet-20241022": "Claude 4 Sonnet",
-  "x-ai/grok-3": "Grok 3",
+  "anthropic/claude-sonnet-4": "Claude 4 Sonnet",
   "google/gemini-2.5-pro": "Gemini 2.5 Pro",
-  "mistralai/Magistral-Small-2506": "Mistral Small",
-  "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo": "Llama 3.3 70B",
+  "x-ai/grok-3": "Grok 3", 
+  "klusterai/meta-llama-3.3-70b-instruct-turbo": "Llama 3.3 70B",
+  "mistralai/magistral-small-2506": "Magistral Small",
   "sarvam-m": "Sarvam M",
 
   // Deprecated models (kept temporarily for migration)
@@ -24,11 +24,11 @@ export const MODEL_GROUPS = {
   free: ["google/gemini-2.5-flash-preview"],
   pro: [
     "openai/gpt-4o",
-    "anthropic/claude-3-5-sonnet-20241022",
-    "x-ai/grok-3",
+    "anthropic/claude-sonnet-4",
     "google/gemini-2.5-pro",
-    "mistralai/Magistral-Small-2506",
-    "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
+    "x-ai/grok-3",
+    "klusterai/meta-llama-3.3-70b-instruct-turbo",
+    "mistralai/magistral-small-2506",
     "sarvam-m",
   ],
   legacy: [], // No legacy models in streamlined configuration
@@ -36,38 +36,39 @@ export const MODEL_GROUPS = {
 
 // @dashboard-redesign - Plan-based model organization per design brief
 export const FREE_PLAN_MODELS: ChatModel[] = [
-  "google/gemini-2.5-flash-preview", // Default free model
+  "google/gemini-2.5-flash-preview", // Fastest free model optimized for speed
 ];
 
 export const PRO_PLAN_MODELS: ChatModel[] = [
-  "openai/gpt-4o",
-  "anthropic/claude-3-5-sonnet-20241022",
-  "x-ai/grok-3",
-  "google/gemini-2.5-pro",
-  "mistralai/Magistral-Small-2506",
-  "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
-  "sarvam-m",
+  "openai/gpt-4o", // Most popular and reliable
+  "anthropic/claude-sonnet-4", // Claude 4 Sonnet - High quality reasoning
+  "google/gemini-2.5-pro", // Fast and reliable Google model
+  "x-ai/grok-3", // Latest from X.AI
+  "klusterai/meta-llama-3.3-70b-instruct-turbo", // Open source option
+  "mistralai/magistral-small-2506", // Fast and efficient
+  "sarvam-m", // Specialized features
 ];
 
 // Model features
 export const MODELS_WITH_WEB_SEARCH: ChatModel[] = [
-  // Pro plan models with web search capability (only models that actually support :online in OpenRouter)
-  "anthropic/claude-3-5-sonnet-20241022", // ✅ Confirmed working with :online
+  // Currently no models have web search enabled
+  // Removed Claude Sonnet per user request
 ];
 
 // Models with vision capabilities (can process images)
 export const MODELS_WITH_VISION: ChatModel[] = [
-  "mistralai/Magistral-Small-2506", // ✅ Supports vision as per Kluster AI documentation
+  "google/gemini-2.5-flash-preview", // ✅ Supports vision (Free)
   "openai/gpt-4o", // ✅ Supports vision
-  "anthropic/claude-3-5-sonnet-20241022", // ✅ Supports vision
+  "anthropic/claude-sonnet-4", // ✅ Supports vision
   "google/gemini-2.5-pro", // ✅ Supports vision
-  "google/gemini-2.5-flash-preview", // ✅ Supports vision
+  "klusterai/meta-llama-3.3-70b-instruct-turbo", // ✅ Supports vision
+  "mistralai/magistral-small-2506", // ✅ Supports vision
 ];
 
 // Models that use Kluster AI instead of OpenRouter
 export const KLUSTER_AI_MODELS: ChatModel[] = [
-  "mistralai/Magistral-Small-2506",
-  "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
+  "mistralai/magistral-small-2506",
+  "klusterai/meta-llama-3.3-70b-instruct-turbo"
 ];
 
 // Models that use Sarvam AI instead of OpenRouter

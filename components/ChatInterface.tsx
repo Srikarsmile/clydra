@@ -6,6 +6,7 @@ import React, {
   useMemo,
 } from "react";
 import ChatMessage from "./Chat/ChatMessage";
+import { ChatErrorBoundary } from "./ErrorBoundary";
 
 interface Message {
   id: string;
@@ -86,13 +87,13 @@ export default function ChatInterface({
         color: "bg-green-400",
       },
       {
-        id: "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
+        id: "meta-llama/llama-3.3-70b-instruct",
         name: "Llama 3.3 70B",
         description: "Large language model",
         color: "bg-purple-400",
       },
       {
-        id: "sarvam-m",
+        id: "sarvamai/sarvam-m:free",
         name: "Sarvam M",
         description: "Wiki grounding",
         color: "bg-red-400",
@@ -124,7 +125,7 @@ export default function ChatInterface({
             messages: [...messages, { role: "user", content: userMessage }],
             stream: true,
             enableWebSearch: selectedModel === "anthropic/claude-3-5-sonnet-20241022",
-            enableWikiGrounding: selectedModel === "sarvam-m",
+            enableWikiGrounding: selectedModel === "sarvamai/sarvam-m:free",
           }),
         })) as StreamResponse;
 
@@ -217,7 +218,8 @@ export default function ChatInterface({
   );
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <ChatErrorBoundary>
+      <div className="flex flex-col h-full bg-gray-50">
       {/* Model selection pills */}
       <div className="p-4 border-b border-gray-200 bg-white">
         <div className="flex items-center space-x-2 overflow-x-auto pb-2">
@@ -307,10 +309,11 @@ export default function ChatInterface({
         
         {/* Status indicators */}
         <div className="mt-2 text-xs text-gray-500">
-          {selectedModel === "sarvam-m" && "✨ Wiki grounding enabled"}
+          {selectedModel === "sarvamai/sarvam-m:free" && "✨ Wiki grounding enabled"}
           {selectedModel === "anthropic/claude-3-5-sonnet-20241022" && "🌐 Web search enabled"}
         </div>
       </div>
-    </div>
+      </div>
+    </ChatErrorBoundary>
   );
 }

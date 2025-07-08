@@ -17,6 +17,11 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
+  // Security filtering for common attack paths
+  if (req.nextUrl.pathname.match(/^\/(?:wp|wordpress|phpmyadmin|xmlrpc\.php)/)) {
+    return new Response('Not found', { status: 404 });
+  }
+
   if (!isPublicRoute(req) && isProtectedRoute(req)) {
     await auth.protect();
   }
@@ -29,10 +34,5 @@ export default clerkMiddleware(async (auth, req) => {
 });
 
 export const config = {
-  matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
-    "/(api|trpc)(.*)",
-  ],
+  matcher: "/:path*"
 };

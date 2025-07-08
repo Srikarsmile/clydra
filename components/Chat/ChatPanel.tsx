@@ -3,7 +3,8 @@
  * Redesigned Chat Panel Component with fluid scrolling and smooth animations
  */
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, startTransition } from "react";
+import { flushSync } from "react-dom";
 import { useUser } from "@clerk/nextjs";
 import { Button } from "../ui/button";
 import { ChatModel, MODEL_ALIASES } from "@/types/chatModels";
@@ -13,6 +14,8 @@ import InputBar from "./InputBar"; // @dashboard-redesign
 import MultiModelResponse from "./MultiModelResponse"; // @multi-model
 import { Menu } from "lucide-react";
 import { useRouter } from "next/router"; // @persistence-fix - Add router for URL updates
+import { toast } from "@/lib/toast";
+import { FixedSizeList as List } from "react-window";
 
 interface Message {
   role: "user" | "assistant" | "system";
@@ -61,6 +64,7 @@ export default function ChatPanel({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<List>(null);
   const previousMessagesLength = useRef(0);
 
   // @ux-improvement - Add keyboard shortcuts for better UX
@@ -171,6 +175,61 @@ export default function ChatPanel({
     }
   }, [isStreaming, router, onThreadCreated]);
 
+  // @persistence-fix - Periodic backup recovery check
+  useEffect(() => {
+    const checkForUnsavedMessages = () => {
+      const keys = Object.keys(localStorage).filter(key => key.startsWith('clydra-unsaved-'));
+      keys.forEach(async (key) => {
+        try {
+          const data = JSON.parse(localStorage.getItem(key) || '{}');
+          if (data.threadId && data.messages) {
+            console.log(`🔄 Attempting to recover unsaved messages for thread ${data.threadId}`);
+            
+            // Try to save each unsaved message
+            let allSaved = true;
+            for (const msg of data.messages) {
+              try {
+                const method = msg.messageId ? "PUT" : "POST";
+                const body = msg.messageId 
+                  ? { messageId: msg.messageId, content: msg.content }
+                  : { role: msg.role, content: msg.content };
+                
+                const response = await fetch(`/api/messages/${data.threadId}`, {
+                  method,
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(body),
+                });
+                
+                if (!response.ok) {
+                  allSaved = false;
+                  break;
+                }
+              } catch (error) {
+                allSaved = false;
+                break;
+              }
+            }
+            
+            if (allSaved) {
+              localStorage.removeItem(key);
+              console.log(`✅ Successfully recovered unsaved messages for thread ${data.threadId}`);
+              toast.success("Recovered unsaved messages");
+            }
+          }
+        } catch (error) {
+          console.warn("Failed to process backup:", error);
+          localStorage.removeItem(key);
+        }
+      });
+    };
+
+    // Check immediately and then every 30 seconds
+    checkForUnsavedMessages();
+    const interval = setInterval(checkForUnsavedMessages, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   // @dashboard-redesign - Load messages when threadId changes
   useEffect(() => {
     if (!threadId || !user) {
@@ -224,6 +283,47 @@ export default function ChatPanel({
             `clydra-messages-${threadId}`,
             JSON.stringify(formattedMessages)
           );
+          
+          // @persistence-fix - Check for and recover any unsaved messages
+          const backupKey = `clydra-unsaved-${threadId}`;
+          const unsavedData = localStorage.getItem(backupKey);
+          if (unsavedData) {
+            try {
+              const backupData = JSON.parse(unsavedData);
+              console.log("🔄 Found unsaved messages, attempting to recover...");
+              
+              // Try to save the unsaved messages
+              for (const msg of backupData.messages) {
+                try {
+                  const response = await fetch(`/api/messages/${threadId}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      role: msg.role,
+                      content: msg.content,
+                    }),
+                  });
+                  
+                  if (response.ok) {
+                    console.log("✅ Recovered unsaved message");
+                  }
+                } catch (error) {
+                  console.warn("Failed to recover message:", error);
+                }
+              }
+              
+              // Clear the backup after recovery attempt
+              localStorage.removeItem(backupKey);
+              
+              // Reload messages to include recovered ones
+              if (backupData.messages.length > 0) {
+                setTimeout(() => loadMessages(), 1000);
+              }
+            } catch (error) {
+              console.warn("Failed to parse backup data:", error);
+              localStorage.removeItem(backupKey);
+            }
+          }
         } else if (response.status === 404) {
           // Thread not found, clear messages but don't error
           console.warn("⚠️ Thread not found, clearing messages");
@@ -341,9 +441,13 @@ export default function ChatPanel({
   // @persistence-fix - Create new thread when starting a fresh chat
   const createNewThread = useCallback(async (): Promise<string | null> => {
     try {
+      console.log("🔧 Creating new thread with proper authentication...");
       const response = await fetch("/api/threads", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Ensure cookies/auth are sent
       });
 
       if (response.ok) {
@@ -405,6 +509,10 @@ export default function ChatPanel({
     if (currentLength > previousMessagesLength.current) {
       // New message added, scroll to bottom
       scrollToBottom(true);
+      // Auto-scroll react-window List if available
+      if (listRef.current) {
+        listRef.current.scrollToItem(messages.length - 1, 'end');
+      }
     }
 
     previousMessagesLength.current = currentLength;
@@ -439,7 +547,9 @@ export default function ChatPanel({
     if (isStreaming || !user || !input.trim()) return;
 
     const userMessageContent = input.trim();
-    setInput(""); // Clear input immediately
+    
+    // Clear input immediately for better UX
+    setInput("");
 
     // Add user message
     const userMessage: Message = {
@@ -448,7 +558,9 @@ export default function ChatPanel({
       id: `user-${Date.now()}`,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    startTransition(() => {
+      setMessages((prev) => [...prev, userMessage]);
+    });
     scrollToBottom();
 
     // Process chat response
@@ -464,14 +576,52 @@ export default function ChatPanel({
         let threadIdToUse = currentThreadId;
         if (!threadIdToUse) {
           console.log("🆕 Creating new thread for fresh chat...");
-          const newThreadId = await createNewThread();
+          
+          // Try multiple times to create thread
+          let newThreadId = null;
+          for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+              newThreadId = await createNewThread();
+              if (newThreadId) {
+                console.log(`✅ New thread created on attempt ${attempt + 1}: ${newThreadId}`);
+                break;
+              }
+            } catch (error) {
+              console.warn(`Thread creation attempt ${attempt + 1} failed:`, error);
+              if (attempt < 2) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
+            }
+          }
+          
           if (!newThreadId) {
-            throw new Error("Failed to create new thread");
+            throw new Error("Failed to create new thread after 3 attempts");
           }
           threadIdToUse = newThreadId;
-          console.log(`✅ New thread created: ${threadIdToUse}`);
+          
+          // Update URL immediately with new thread
+          router.push(`/?thread=${threadIdToUse}`, undefined, { shallow: true });
+          setCurrentThreadId(threadIdToUse);
+          if (onThreadCreated) onThreadCreated();
         }
 
+        // @persistence-fix - Verify thread exists before saving messages
+        console.log(`🔍 Verifying thread ${threadIdToUse} exists...`);
+        try {
+          const verifyResponse = await fetch(`/api/messages/${threadIdToUse}`);
+          if (!verifyResponse.ok && verifyResponse.status === 404) {
+            console.warn("⚠️ Thread not found, creating new one...");
+            const newThreadId = await createNewThread();
+            if (newThreadId) {
+              threadIdToUse = newThreadId;
+              router.push(`/?thread=${threadIdToUse}`, undefined, { shallow: true });
+              setCurrentThreadId(threadIdToUse);
+            }
+          }
+        } catch (error) {
+          console.warn("Thread verification failed:", error);
+        }
+        
         // @persistence-fix - Save user message immediately to prevent loss on refresh
         console.log("💾 Saving user message immediately...");
         let userMessageSaved = false;
@@ -513,7 +663,19 @@ export default function ChatPanel({
         }
 
         if (!userMessageSaved) {
-          console.warn("Failed to save user message after 3 attempts");
+          console.warn("Failed to save user message after 3 attempts - saving to localStorage backup");
+          // Save to localStorage as backup
+          const backupKey = `clydra-unsaved-${threadIdToUse || 'new'}`;
+          const backupData = {
+            messages: [{ role: "user", content: userMessageContent, timestamp: Date.now() }],
+            threadId: threadIdToUse,
+          };
+          localStorage.setItem(backupKey, JSON.stringify(backupData));
+          toast.error("Message saving failed - will retry automatically");
+        } else {
+          // Clear any existing backup for this thread
+          const backupKey = `clydra-unsaved-${threadIdToUse}`;
+          localStorage.removeItem(backupKey);
         }
 
         // @persistence-fix - Save empty assistant message immediately to prevent loss on refresh
@@ -562,7 +724,9 @@ export default function ChatPanel({
         });
 
         // @fix-flickering - Add the assistant message to the messages array immediately
-        setMessages((prev) => [...prev, assistantMessage]);
+        startTransition(() => {
+          setMessages((prev) => [...prev, assistantMessage]);
+        });
 
         const response = await fetch("/api/chat/proxy", {
           method: "POST",
@@ -579,6 +743,13 @@ export default function ChatPanel({
         });
 
         if (!response.ok) {
+          // Remove placeholder message first
+          startTransition(() => {
+            setMessages((prev) =>
+              prev.filter((msg) => msg.id !== currentAssistantId)
+            );
+          });
+
           // Get detailed error information
           let errorMessage = `HTTP ${response.status}`;
           try {
@@ -602,10 +773,20 @@ export default function ChatPanel({
         let fullContent = "";
         let lastUpdateTime = 0;
 
+        // Add timeout to prevent infinite hanging
+        const streamTimeout = setTimeout(() => {
+          console.warn("Stream timeout - canceling reader");
+          reader.cancel();
+          setIsStreaming(false);
+        }, 60000); // 60 second timeout
+
         try {
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+              clearTimeout(streamTimeout);
+              break;
+            }
 
             const chunk = decoder.decode(value, { stream: true });
             const lines = chunk.split("\n");
@@ -622,13 +803,15 @@ export default function ChatPanel({
 
                     // @fix-flickering - Update the assistant message in the messages array directly
                     // This eliminates the need for separate streamingMessage state
-                    setMessages((prev) => {
-                      const updatedMessages = prev.map((msg) =>
-                        msg.id === assistantMessage.id
-                          ? { ...msg, content: fullContent }
-                          : msg
-                      );
-                      return updatedMessages;
+                    startTransition(() => {
+                      setMessages((prev) => {
+                        const updatedMessages = prev.map((msg) =>
+                          msg.id === assistantMessage.id
+                            ? { ...msg, content: fullContent }
+                            : msg
+                        );
+                        return updatedMessages;
+                      });
                     });
 
                     // @persistence-fix - Update database content periodically during streaming
@@ -660,13 +843,15 @@ export default function ChatPanel({
                       console.log(
                         `🔄 Updating message ID from ${assistantMessage.id} to ${parsed.messageId}`
                       );
-                      setMessages((prev) => {
-                        const updatedMessages = prev.map((msg) =>
-                          msg.id === assistantMessage.id
-                            ? { ...msg, id: parsed.messageId.toString() }
-                            : msg
-                        );
-                        return updatedMessages;
+                      startTransition(() => {
+                        setMessages((prev) => {
+                          const updatedMessages = prev.map((msg) =>
+                            msg.id === assistantMessage.id
+                              ? { ...msg, id: parsed.messageId.toString() }
+                              : msg
+                          );
+                          return updatedMessages;
+                        });
                       });
                     }
                     console.log(
@@ -683,32 +868,87 @@ export default function ChatPanel({
             }
           }
 
+          clearTimeout(streamTimeout); // Clear timeout on successful completion
+
           // @persistence-fix - Final update to database with complete content
+          let finalMessageSaved = false;
           if (assistantMessageDbId && fullContent) {
+            // Try multiple times to save final message
+            for (let attempt = 0; attempt < 3; attempt++) {
+              try {
+                const response = await fetch(`/api/messages/${threadIdToUse}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    messageId: assistantMessageDbId,
+                    content: fullContent,
+                  }),
+                });
+                
+                if (response.ok) {
+                  console.log("✅ Final message content saved to database");
+                  finalMessageSaved = true;
+                  break;
+                } else {
+                  console.warn(`Attempt ${attempt + 1}: Failed to save final message:`, response.status);
+                }
+              } catch (error) {
+                console.warn(`Attempt ${attempt + 1}: Error saving final message:`, error);
+              }
+              
+              if (attempt < 2) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
+            }
+            
+            if (!finalMessageSaved) {
+              console.warn("Failed to save final message - creating backup");
+              const backupKey = `clydra-unsaved-${threadIdToUse}`;
+              const assistantBackup = {
+                messages: [{ 
+                  role: "assistant", 
+                  content: fullContent, 
+                  messageId: assistantMessageDbId, 
+                  timestamp: Date.now() 
+                }],
+                threadId: threadIdToUse,
+              };
+              localStorage.setItem(backupKey, JSON.stringify(assistantBackup));
+              toast.error("Response saving failed - will retry automatically");
+            }
+              
             try {
-              await fetch(`/api/messages/${threadIdToUse}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  messageId: assistantMessageDbId,
-                  content: fullContent,
-                }),
+              // Use flushSync to ensure final token renders
+              flushSync(() => {
+                setMessages((prev) => {
+                  const updatedMessages = prev.map((msg) =>
+                    msg.id === assistantMessage.id
+                      ? { ...msg, content: fullContent }
+                      : msg
+                  );
+                  return updatedMessages;
+                });
               });
-              console.log("✅ Final message content saved to database");
             } catch (error) {
               console.warn("Failed to save final message content:", error);
             }
           }
         } finally {
+          clearTimeout(streamTimeout); // Ensure timeout is cleared
           reader.releaseLock();
         }
       } catch (error) {
         console.error("Chat error:", error);
 
+        // Ensure streaming is stopped immediately on any error
+        setIsStreaming(false);
+
         // Remove the assistant placeholder message on error
-        setMessages((prev) =>
-          prev.filter((msg) => msg.id !== currentAssistantId)
-        );
+        startTransition(() => {
+          setMessages((prev) =>
+            prev.filter((msg) => msg.id !== currentAssistantId)
+          );
+        });
 
         // Show appropriate error message
         if (error instanceof Error) {
@@ -717,11 +957,15 @@ export default function ChatPanel({
             error.message.includes("429")
           ) {
             setShowUpgrade(true);
+          } else {
+            toast.error('Unable to reach AI service. Please try again.');
           }
+        } else {
+          toast.error('Unable to reach AI service. Please try again.');
         }
       } finally {
+        // Always ensure streaming is stopped
         setIsStreaming(false);
-        // @fix-flickering - Don't clear streamingMessage here as we're not using it anymore
       }
     };
 
@@ -994,6 +1238,7 @@ export default function ChatPanel({
         onSubmit={handleSubmit}
         onFocus={handleInputFocus} // @auto-thread - Pass focus handler for automatic thread creation
         disabled={isStreaming}
+        loading={isStreaming} // Pass loading state for better UX
         placeholder="Type your message..."
         selectedModel={model}
         onModelChange={handleModelChange}

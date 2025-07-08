@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
       "@supabase/supabase-js",
       "react-markdown",
       "remark-gfm",
+      "remark-math",
+      "rehype-katex",
+      "katex",
+      "react-window",
     ],
   },
 

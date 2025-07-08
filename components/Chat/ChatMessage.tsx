@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import { cn } from "@/lib/utils";
-import { Globe, ExternalLink } from "lucide-react";
+import { Globe, ExternalLink, Copy, Check } from "lucide-react";
 
 interface Citation {
   type: "url_citation";
@@ -18,62 +20,137 @@ interface Citation {
 interface ChatMessageProps {
   content: string;
   role: "user" | "assistant" | "system";
-  timestamp?: Date;
-  annotations?: Citation[]; // @web-search - Add citations prop
-  webSearchUsed?: boolean; // @web-search - Add web search indicator
+  timestamp?: Date | string;
+  annotations?: Citation[];
+  webSearchUsed?: boolean;
   id?: string;
 }
 
-function ChatMessage({
+const ChatMessage = React.memo(function ChatMessage({
   content,
   role,
   timestamp,
-  annotations, // @web-search - Add annotations prop
-  webSearchUsed, // @web-search - Add web search indicator
-  id, // Add back missing id prop
+  annotations,
+  webSearchUsed,
+  id,
 }: ChatMessageProps) {
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const copyToClipboard = async (text: string, codeId: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedCode(codeId);
+      setTimeout(() => setCopiedCode(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
   return (
     <div
       id={id ? `message-${id}` : undefined}
       className={cn(
         "prose prose-gray max-w-none",
         role === "assistant" ? "text-gray-800" : "text-gray-900",
-        // Improve markdown styling
         "prose-headings:text-gray-900 prose-strong:text-gray-900",
         "prose-code:text-gray-800 prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded",
         "prose-pre:bg-gray-100 prose-pre:border prose-pre:border-gray-200",
         "prose-blockquote:border-l-gray-300 prose-blockquote:text-gray-700",
-        "prose-ul:text-gray-800 prose-ol:text-gray-800 prose-li:text-gray-800"
+        "prose-ul:text-gray-800 prose-ol:text-gray-800 prose-li:text-gray-800",
+        // KaTeX styling improvements
+        "[&_.katex-display]:my-4 [&_.katex-display]:p-4 [&_.katex-display]:bg-blue-50 [&_.katex-display]:border [&_.katex-display]:border-blue-200 [&_.katex-display]:rounded-lg",
+        "[&_.katex]:text-gray-900"
       )}
     >
-      {/* @fix-duplicate-rendering - Don't use MultiModelResponse here since it's handled in ChatPanel */}
       <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={{
-            // Custom components for better styling
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[[rehypeKatex, { 
+          strict: false,
+          errorColor: '#cc0000',
+          trust: true,
+          output: 'html'
+        }]]}
+        skipHtml={false}
+        components={{
             p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
             strong: ({ children }) => (
-              <strong className="font-semibold text-gray-900">
-                {children}
-              </strong>
+              <strong className="font-semibold text-gray-900">{children}</strong>
             ),
             em: ({ children }) => (
               <em className="italic text-gray-800">{children}</em>
             ),
             code: ({ children, className }) => {
-              const isInline = !className;
-              return isInline ? (
-                <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm font-mono">
-                  {children}
-                </code>
-              ) : (
-                <code className={className}>{children}</code>
+              // Check if this is an inline code or block code
+              const isInline = !className?.includes('language-');
+              
+              if (isInline) {
+                return (
+                  <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm font-mono">
+                    {children}
+                  </code>
+                );
+              }
+              
+              // Handle different languages
+              const language = className?.replace('language-', '') || '';
+              const langLabel = language === 'latex' ? 'LaTeX' : 
+                               language === 'python' ? 'Python' :
+                               language === 'javascript' ? 'JavaScript' :
+                               language === 'typescript' ? 'TypeScript' :
+                               language === 'bash' ? 'Bash' :
+                               language === 'sql' ? 'SQL' :
+                               language.toUpperCase() || 'Code';
+              
+              const codeText = Array.isArray(children) ? children.join('') : String(children);
+              const codeId = `code-${Math.random().toString(36).substr(2, 9)}`;
+              
+              return (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg mb-3 overflow-hidden group">
+                  <div className="flex items-center justify-between bg-gray-100 px-3 py-1 border-b border-gray-200">
+                    <span className="text-xs font-medium text-gray-700">
+                      {langLabel}
+                    </span>
+                    <button
+                      onClick={() => copyToClipboard(codeText, codeId)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-gray-800"
+                      title="Copy code"
+                    >
+                      {copiedCode === codeId ? (
+                        <Check className="w-3 h-3 text-green-600" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </button>
+                  </div>
+                  <pre className="p-3 overflow-x-auto">
+                    <code className={`text-sm font-mono text-gray-800 ${className || ''}`}>
+                      {children}
+                    </code>
+                  </pre>
+                </div>
               );
             },
             pre: ({ children }) => (
-              <pre className="bg-gray-100 border border-gray-200 rounded-lg p-3 overflow-x-auto">
-                {children}
+              // This handles pre blocks without language specification
+              <pre className="bg-gray-100 border border-gray-200 rounded-lg p-3 overflow-x-auto mb-3">
+                <code className="text-sm font-mono text-gray-800">
+                  {children}
+                </code>
               </pre>
+            ),
+            h1: ({ children }) => (
+              <h1 className="text-xl font-bold text-gray-900 mb-3 mt-4 first:mt-0">
+                {children}
+              </h1>
+            ),
+            h2: ({ children }) => (
+              <h2 className="text-lg font-semibold text-gray-900 mb-2 mt-3 first:mt-0">
+                {children}
+              </h2>
+            ),
+            h3: ({ children }) => (
+              <h3 className="text-base font-semibold text-gray-900 mb-2 mt-3 first:mt-0">
+                {children}
+              </h3>
             ),
             ul: ({ children }) => (
               <ul className="list-disc list-inside mb-2">{children}</ul>
@@ -92,7 +169,6 @@ function ChatMessage({
           {content}
         </ReactMarkdown>
 
-      {/* @web-search - Display web search citations */}
       {annotations && annotations.length > 0 && (
         <div className="mt-4 pt-3 border-t border-gray-200">
           <div className="flex items-center gap-2 mb-2">
@@ -128,7 +204,6 @@ function ChatMessage({
         </div>
       )}
 
-      {/* @web-search - Web search indicator */}
       {webSearchUsed && (
         <div className="flex items-center gap-1 mt-2 text-xs text-blue-600">
           <Globe className="w-3 h-3" />
@@ -138,7 +213,7 @@ function ChatMessage({
 
       {timestamp && (
         <p className="mt-2 text-xs text-gray-500 transition-opacity duration-200 opacity-60 hover:opacity-100">
-          {timestamp.toLocaleTimeString([], {
+          {new Date(timestamp).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           })}
@@ -146,7 +221,7 @@ function ChatMessage({
       )}
     </div>
   );
-}
+});
 
 ChatMessage.displayName = "ChatMessage";
 
