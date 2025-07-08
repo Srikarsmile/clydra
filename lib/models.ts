@@ -185,7 +185,7 @@ export async function callVerifyReliability(
   messages: ChatMessage[],
   options: ModelOptions = {}
 ): Promise<ModelResponse> {
-  return callModel("klusterai/verify-reliability", messages, options);
+  return callModel("klusterai/meta-llama-3.3-70b-instruct-turbo", messages, options);
 }
 
 export async function callSarvam(
